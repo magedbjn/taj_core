@@ -2,6 +2,21 @@
 
 Core Customizations and common utilities for Taj ERPNext implementation
 
+## Features
+
+- **Override**
+  - Party Specific Item: Prevent duplicate entries  
+
+- **Enhancement**
+  - Material Request: Function to collect and merge similar items  
+  - Expense Claim: Automatically updates Expense Claim status to `Paid` on payment submission
+    and reverts to `Unpaid` on payment cancellation, with real-time UI updates (Payment Entry or Journal Entry).
+
+- **New Documents**
+  - License: Manage company licenses and certificates with expiry date and email notification  
+  - Company Policy: Manage company documents
+
+
 ### Installation
 
 You can install this app using the [bench](https://github.com/frappe/bench) CLI:
@@ -31,3 +46,5 @@ Pre-commit is configured to use the following tools for checking and formatting 
 ### License
 
 mit
+
+

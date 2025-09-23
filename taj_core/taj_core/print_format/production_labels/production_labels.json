@@ -1,0 +1,14 @@
+{
+  "custom_format": 1,
+  "disabled": 0,
+  "docstatus": 1,
+  "doctype": "Print Format",
+  "doc_type": "Production Plan",
+  "format_data": "",
+  "name": "PP Label 6x4",
+  "module": "Taj Core",
+  "print_format_builder": 0,
+  "print_format_type": "Jinja",
+  "standard": "Yes",
+  "html": "{% set details = doc.production_label_detail if doc.get('production_label_detail') else [] %}\n\n{% if not details or details|length == 0 %}\n<p style=\"font-size:12pt; text-align:center; font-weight:bold;\">No data available</p>\n{% else %}\n\n<style>\nbody {\n    margin: 0;\n    padding: 0;\n    font-size: 8pt;\n    font-family: 'DejaVu Sans', Arial, sans-serif;\n    -webkit-print-color-adjust: exact;\n    color-adjust: exact;\n}\n.label {\n    width: 6cm;\n    height: 4cm;\n    display: block;\n    page-break-after: always;\n    border: 0.5px solid #000;\n    box-sizing: border-box;\n    padding: 0;\n}\ntable {\n    width: 100%;\n    height: 100%;\n    border-collapse: collapse;\n    table-layout: fixed;\n    font-size: 8pt;\n}\ntd {\n    border: 0.5px solid #000;\n    padding: 1mm;\n    vertical-align: middle;\n    word-wrap: break-word;\n}\ntd.gray {\n    background-color: #eee;\n    font-weight: bold;\n    -webkit-print-color-adjust: exact;\n    color-adjust: exact;\n}\n.text-center { text-align: center; }\n.text-left { text-align: left; }\n.bold { font-weight: bold; }\n</style>\n\n{% for row in details %}\n    {% set ns = namespace(remaining=row.planned_qty) %}\n\n    {% for i in range(row.cooking_runs) %}\n        {% if ns.remaining <= row.batch_size %}\n            {% set current_batch = ns.remaining %}\n            {% set current_bom_item_qty = (row.bom_item_qty / row.batch_size) * ns.remaining %}\n        {% else %}\n            {% set current_batch = row.batch_size %}\n            {% set current_bom_item_qty = row.bom_item_qty %}\n        {% endif %}\n\n        <div class=\"label\">\n            <table>\n                <!-- الصف الأول -->\n                <tr>\n                    <td class=\"gray text-left\" style=\"width:25%\">{{ row.assembly_item_code }}</td>\n                    <td colspan=\"3\" class=\"text-left\" style=\"width:75%\">{{ row.assembly_item_name }}</td>\n                </tr>\n                <!-- الصف الثاني -->\n                <tr>\n                    <td colspan=\"4\" class=\"text-left\">{{ row.sub_assembly_item_code }} - {{ row.sub_assembly_item_name }}</td>\n                </tr>\n                <!-- الصف الثالث (4 أعمدة) -->\n                <tr>\n                    <td class=\"gray\">Cooking</td>\n                    <td>{{ i+1 }}/{{ row.cooking_runs }}</td>\n                    <td class=\"gray\">Qty</td>\n                    <td>{{ \"%.2f\"|format(current_bom_item_qty) }}</td>\n                </tr>\n            </table>\n        </div>\n\n        {% set ns.remaining = ns.remaining - current_batch %}\n    {% endfor %}\n{% endfor %}\n\n{% endif %}"
+}

@@ -1,244 +1,51 @@
 app_name = "taj_core"
 app_title = "Taj Core"
-app_publisher = "m.bajandooh@tajff.sa"
+app_publisher = "Maged Bajandooh"
 app_description = "Core Customizations and common utilities for Taj ERPNext implementation"
 app_email = "m.bajandooh@tajff.sa"
 app_license = "mit"
 
-# Apps
-# ------------------
 
-# required_apps = []
+doctype_js = {
+    "Material Request": "custom/material_request.js",
+    "Producation Plan": "public/js/production_plan/producatio_plan.js",
+}
 
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "taj_core",
-# 		"logo": "/assets/taj_core/logo.png",
-# 		"title": "Taj Core",
-# 		"route": "/taj_core",
-# 		"has_permission": "taj_core.api.permission.has_app_permission"
-# 	}
+
+scheduler_events = {
+	"daily": [
+		"taj_core.company_documents.doctype.license.license.scheduled_status_update",
+	],
+    "monthly": [
+        "taj_core.public.js.production_plan.delete_old_production_stickers",
+    ]
+}
+
+override_doctype_class = {                
+    "Party Specific Item": "taj_core.overrides.party_specific_item.TajPartySpecificItem",
+}
+
+doc_events = {
+    "Payment Entry": {
+        "on_submit": "taj_core.custom.expenses_claim.update_expense_claim_status_on_payment",
+        "on_cancel": "taj_core.custom.expenses_claim.revert_expense_claim_status_on_cancel"
+    },
+    "Journal Entry": {
+        "on_submit": "taj_core.custom.expenses_claim.update_expense_claim_status_on_payment",
+        "on_cancel": "taj_core.custom.expenses_claim.revert_expense_claim_status_on_cancel",
+    },
+    "Purchase Invoice": {
+        "before_validate": "taj_core.custom.purchase_invoice.before_validate",
+        "before_save": "taj_core.custom.purchase_invoice.before_save"
+    }
+}
+
+after_install = "taj_core.install.after_install"
+
+before_uninstall = "taj_core.uninstall.before_uninstall"
+
+# Migrations
+# after_migrate = [
+#     "taj_core.patches.delete_slnee.execute",
+#     "taj_core.patches.delete_custom_fields.execute"
 # ]
-
-# Includes in <head>
-# ------------------
-
-# include js, css files in header of desk.html
-# app_include_css = "/assets/taj_core/css/taj_core.css"
-# app_include_js = "/assets/taj_core/js/taj_core.js"
-
-# include js, css files in header of web template
-# web_include_css = "/assets/taj_core/css/taj_core.css"
-# web_include_js = "/assets/taj_core/js/taj_core.js"
-
-# include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "taj_core/public/scss/website"
-
-# include js, css files in header of web form
-# webform_include_js = {"doctype": "public/js/doctype.js"}
-# webform_include_css = {"doctype": "public/css/doctype.css"}
-
-# include js in page
-# page_js = {"page" : "public/js/file.js"}
-
-# include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
-# doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
-# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
-
-# Svg Icons
-# ------------------
-# include app icons in desk
-# app_include_icons = "taj_core/public/icons.svg"
-
-# Home Pages
-# ----------
-
-# application home page (will override Website Settings)
-# home_page = "login"
-
-# website user home page (by Role)
-# role_home_page = {
-# 	"Role": "home_page"
-# }
-
-# Generators
-# ----------
-
-# automatically create page for each record of this doctype
-# website_generators = ["Web Page"]
-
-# Jinja
-# ----------
-
-# add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "taj_core.utils.jinja_methods",
-# 	"filters": "taj_core.utils.jinja_filters"
-# }
-
-# Installation
-# ------------
-
-# before_install = "taj_core.install.before_install"
-# after_install = "taj_core.install.after_install"
-
-# Uninstallation
-# ------------
-
-# before_uninstall = "taj_core.uninstall.before_uninstall"
-# after_uninstall = "taj_core.uninstall.after_uninstall"
-
-# Integration Setup
-# ------------------
-# To set up dependencies/integrations with other apps
-# Name of the app being installed is passed as an argument
-
-# before_app_install = "taj_core.utils.before_app_install"
-# after_app_install = "taj_core.utils.after_app_install"
-
-# Integration Cleanup
-# -------------------
-# To clean up dependencies/integrations with other apps
-# Name of the app being uninstalled is passed as an argument
-
-# before_app_uninstall = "taj_core.utils.before_app_uninstall"
-# after_app_uninstall = "taj_core.utils.after_app_uninstall"
-
-# Desk Notifications
-# ------------------
-# See frappe.core.notifications.get_notification_config
-
-# notification_config = "taj_core.notifications.get_notification_config"
-
-# Permissions
-# -----------
-# Permissions evaluated in scripted ways
-
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
-
-# DocType Class
-# ---------------
-# Override standard doctype classes
-
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
-
-# Document Events
-# ---------------
-# Hook on document methods and events
-
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
-
-# Scheduled Tasks
-# ---------------
-
-# scheduler_events = {
-# 	"all": [
-# 		"taj_core.tasks.all"
-# 	],
-# 	"daily": [
-# 		"taj_core.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"taj_core.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"taj_core.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"taj_core.tasks.monthly"
-# 	],
-# }
-
-# Testing
-# -------
-
-# before_tests = "taj_core.install.before_tests"
-
-# Overriding Methods
-# ------------------------------
-#
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "taj_core.event.get_events"
-# }
-#
-# each overriding function accepts a `data` argument;
-# generated from the base implementation of the doctype dashboard,
-# along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "taj_core.task.get_dashboard_data"
-# }
-
-# exempt linked doctypes from being automatically cancelled
-#
-# auto_cancel_exempted_doctypes = ["Auto Repeat"]
-
-# Ignore links to specified DocTypes when deleting documents
-# -----------------------------------------------------------
-
-# ignore_links_on_delete = ["Communication", "ToDo"]
-
-# Request Events
-# ----------------
-# before_request = ["taj_core.utils.before_request"]
-# after_request = ["taj_core.utils.after_request"]
-
-# Job Events
-# ----------
-# before_job = ["taj_core.utils.before_job"]
-# after_job = ["taj_core.utils.after_job"]
-
-# User Data Protection
-# --------------------
-
-# user_data_fields = [
-# 	{
-# 		"doctype": "{doctype_1}",
-# 		"filter_by": "{filter_by}",
-# 		"redact_fields": ["{field_1}", "{field_2}"],
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_2}",
-# 		"filter_by": "{filter_by}",
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_3}",
-# 		"strict": False,
-# 	},
-# 	{
-# 		"doctype": "{doctype_4}"
-# 	}
-# ]
-
-# Authentication and authorization
-# --------------------------------
-
-# auth_hooks = [
-# 	"taj_core.auth.validate"
-# ]
-
-# Automatically update python controller files with type annotations for this app.
-# export_python_type_annotations = True
-
-# default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
-# }
-

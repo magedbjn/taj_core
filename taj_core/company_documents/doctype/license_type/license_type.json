@@ -1,0 +1,105 @@
+{
+ "actions": [],
+ "autoname": "field:type_english",
+ "creation": "2025-08-27 08:13:35.077072",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "disabled",
+  "type_english",
+  "type_arabic",
+  "renew",
+  "allowed_roles"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "type_english",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Type English",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "type_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Type Arabic",
+   "reqd": 1
+  },
+  {
+   "default": "30",
+   "description": "Renew before the expiration date",
+   "fieldname": "renew",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Renew",
+   "reqd": 1
+  },
+  {
+   "description": "Select roles that will receive notifications",
+   "fieldname": "allowed_roles",
+   "fieldtype": "Table MultiSelect",
+   "label": "Allowed Roles",
+   "options": "Has Role"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-08-27 11:58:56.850356",
+ "modified_by": "Administrator",
+ "module": "Company Documents",
+ "name": "License Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "type_arabic",
+ "sort_field": "type_english",
+ "sort_order": "ASC",
+ "states": []
+}

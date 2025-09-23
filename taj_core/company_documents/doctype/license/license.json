@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "autoname": "field:license_english",
+ "creation": "2025-08-27 08:24:02.508313",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "license_english",
+  "license_arabic",
+  "expiry_date",
+  "status",
+  "attachment"
+ ],
+ "fields": [
+  {
+   "fieldname": "license_english",
+   "fieldtype": "Link",
+   "label": "License English",
+   "options": "License Type",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "license_english.type_arabic",
+   "fieldname": "license_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "License Arabic",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expiry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Expiry Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nRenew\nExpired",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "in_list_view": 1,
+   "label": "Attachment"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-08-27 13:46:45.471912",
+ "modified_by": "m.bajandooh@tajff.sa",
+ "module": "Company Documents",
+ "name": "License",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Green",
+   "title": "Active"
+  },
+  {
+   "color": "Blue",
+   "title": "Renew"
+  },
+  {
+   "color": "Red",
+   "title": "Expired"
+  }
+ ]
+}
