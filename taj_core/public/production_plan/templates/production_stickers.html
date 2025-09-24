@@ -13,43 +13,29 @@
       font-family: Arial, sans-serif;
       direction: ltr;
       margin: 0;
-      padding: 5px;
+      padding: 0;
     }
 
-    /* للعرض في الشاشة */
     .sticker-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
+      display: block; /* تجاهل flex عند الطباعة */
     }
 
     .sticker {
-      width: 6cm;
-      height: 4cm;
+      width: 100%;
+      height: 100%;
       border: 1px solid #000;
-      font-size: 12px;
-      display: inline-block;
-    }
-
-    /* عند الطباعة فقط */
-    @media print {
-      .sticker {
-        page-break-after: always; /* كل استكر يطبع لوحده */
-        margin: 0;
-        border: 1px solid #000;
-        width: 100%;
-        height: 100%;
-      }
-
-      .sticker-container {
-        display: block; /* تجاهل الـ flex عند الطباعة */
-      }
+      box-sizing: border-box;
+      padding: 5px;
+      page-break-after: always; /* كل استكر في صفحة مستقلة */
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
 
     table.sticker-table {
       width: 100%;
       height: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
     }
 
     table.sticker-table th,
@@ -58,6 +44,22 @@
       padding: 2px;
       font-size: 11px;
       text-align: center;
+      word-wrap: break-word;
+    }
+
+    /* للعرض على الشاشة */
+    @media screen {
+      .sticker {
+        width: 6cm;
+        height: 4cm;
+        display: inline-block;
+        margin: 2px;
+      }
+      .sticker-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+      }
     }
   </style>
 </head>
@@ -67,25 +69,34 @@
     <div class="sticker">
       <table class="sticker-table">
         <tr>
-          <th>{{ s.assembly_item_code }}</th>
-          <td colspan="3">{{ s.assembly_item_name }}</td>
+          <th>{{ s.assembly_item_code or '' }}</th>
+          <td colspan="3">{{ s.assembly_item_name or '' }}</td>
         </tr>
         <tr>
-          <th colspan="4">{{ s.sub_assembly_item_code }}</th>
+          <th colspan="4">{{ s.sub_assembly_item_code or '' }}</th>
         </tr>
         <tr>
-          <th colspan="4">{{ s.sub_assembly_item_name }}</th>
+          <th colspan="4">{{ s.sub_assembly_item_name or '' }}</th>
         </tr>
+        {% if s.sub_assembly_operation %}
         <tr>
           <th colspan="2">Operation</th>
           <td colspan="2">{{ s.sub_assembly_operation }}</td>
         </tr>
+        {% endif %}
+        {% if s.cooking_runs > 1 %}
         <tr>
           <th>Run</th>
-          <td>{{ s.cooking_run }}/{{ s.cooking_runs }}</td>
+          <td>{{ s.cooking_run or 0 }}/{{ s.cooking_runs or 0 }}</td>
           <th>QTY</th>
-          <td><strong>{{ s.qty }}</strong></td>
+          <td><strong>{{ s.qty or 0 }}</strong></td>
         </tr>
+        {% else %}
+        <tr>
+          <th colspan="2">QTY</th>
+          <td colspan="2"><strong>{{ s.qty or 0 }}</strong></td>
+        </tr>
+        {% endif %}
       </table>
     </div>
     {% endfor %}

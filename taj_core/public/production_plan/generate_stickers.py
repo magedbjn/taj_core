@@ -31,17 +31,19 @@ def open_production_stickers(plan_name):
             bo.batch_size AS sub_assembly_batch_size,
             b.quantity AS bom_qty,
 
-            CASE 
+            CASE
+                WHEN bi.operation IS NULL OR bi.operation = '' THEN NULL
                 WHEN bo.batch_size = 1 THEN 1
-                ELSE CEIL(poi.planned_qty / bo.batch_size)
+                ELSE CEIL(poi.planned_qty / NULLIF(bo.batch_size, 0))
             END AS cooking_runs
 
         FROM `tabProduction Plan Item` poi
-        LEFT JOIN `tabBOM Item` bi 
+        LEFT JOIN `tabBOM Item` bi
             ON bi.parent = poi.bom_no
+        /* NULL-safe comparison: treats NULL = NULL as true, and otherwise compares values */
         LEFT JOIN `tabBOM Operation` bo
             ON bo.parent = poi.bom_no
-        AND bo.operation = bi.operation
+            AND bo.operation <=> bi.operation
         LEFT JOIN `tabBOM` b
             ON b.name = poi.bom_no
         WHERE poi.parent = %s
@@ -52,29 +54,33 @@ def open_production_stickers(plan_name):
     stickers = []
     for row in data:
         remaining_qty = row.assembly_qty
-        batch_size = row.sub_assembly_batch_size or 0  # التعامل مع None بأمان
-        if batch_size > 1: # لان الكمية سوف تكون كلها ولا يحتاج إلى لاصق أو إستكر
-            for run in range(int(row.cooking_runs)):
-                if remaining_qty <= batch_size:
-                    qty = (row.sub_assembly_qty / row.bom_qty) * remaining_qty
-                else:
-                    qty = row.sub_assembly_qty
+        batch_size = row.sub_assembly_batch_size or 0 
+        bom_qty = row.bom_qty
 
-                stickers.append({
-                    "assembly_item_code": row.assembly_item_code,
-                    "assembly_item_name": row.assembly_item_name,
-                    "sub_assembly_item_code": row.sub_assembly_item_code,
-                    "sub_assembly_item_name": row.sub_assembly_item_name,
-                    "sub_assembly_operation": row.sub_assembly_operation,
-                    "cooking_run": run + 1,
-                    "cooking_runs": int(row.cooking_runs),
-                    "qty": round(qty, 2),
-                    "assembly_qty": row.assembly_qty,
-                    "assembly_uom": row.assembly_uom
-                })
+        runs = int(row.cooking_runs) if row.cooking_runs else 1  
+        for run in range(runs):
+            if batch_size <= 1 or batch_size == bom_qty:
+                qty = (row.sub_assembly_qty / bom_qty) * min(remaining_qty, bom_qty)
+            else:  # batch_size != bom_qty
+                qty = (row.sub_assembly_qty / bom_qty) * min(remaining_qty, batch_size)
 
-                # تحديث الكمية المتبقية
-                remaining_qty -= batch_size
+            stickers.append({
+                "assembly_item_code": row.assembly_item_code,
+                "assembly_item_name": row.assembly_item_name,
+                "sub_assembly_item_code": row.sub_assembly_item_code,
+                "sub_assembly_item_name": row.sub_assembly_item_name,
+                "sub_assembly_operation": row.sub_assembly_operation,
+                "cooking_run": run + 1,
+                "cooking_runs": runs,
+                "qty": round(qty, 2),
+                "assembly_qty": row.assembly_qty,
+                "assembly_uom": row.assembly_uom
+            })
+
+            remaining_qty -= batch_size
+
+
+    # frappe.msgprint(_("Total stickers generated: {0}").format(len(stickers)))
 
     # تحميل القالب
     base_path = os.path.dirname(__file__)
@@ -151,6 +157,41 @@ def delete_old_production_stickers():
             return _("Deleted files: ") + ", ".join(deleted_files)
         else:
             return _("No old sticker HTML files to delete.")
+
+    except Exception as e:
+        frappe.log_error(message=str(e), title="Delete Old Production Stickers Error")
+        frappe.throw(_("An error occurred while deleting old sticker HTML files."))
+
+
+@frappe.whitelist()
+def delete_old_production_stickers():
+    """
+    Delete Production Plan sticker HTML files older than 1 month.
+    """
+    try:
+        base_path = os.path.dirname(__file__)
+        public_path = os.path.abspath(os.path.join(base_path, '../../public/production_plan'))
+
+        if not os.path.exists(public_path):
+            return "Folder does not exist."
+
+        deleted_files = []
+        now = datetime.now()
+        one_month_ago = now - timedelta(days=30)  # تقريبًا شهر
+
+        for filename in os.listdir(public_path):
+            if filename.endswith("_stickers.html"):
+                file_path = os.path.join(public_path, filename)
+                file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+
+                if file_mtime < one_month_ago:
+                    try:
+                        os.remove(file_path)
+                        deleted_files.append(filename)
+                    except Exception as e:
+                        frappe.log_error(f"Failed to delete {filename}: {str(e)}", "delete_old_production_stickers")
+
+        return f"Deleted files: {', '.join(deleted_files) if deleted_files else 'None'}"
 
     except Exception as e:
         frappe.log_error(message=str(e), title="Delete Old Production Stickers Error")

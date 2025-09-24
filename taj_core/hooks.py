@@ -8,7 +8,7 @@ app_license = "mit"
 
 doctype_js = {
     "Material Request": "custom/material_request.js",
-    "Producation Plan": "public/js/production_plan/producatio_plan.js",
+    "Production Plan": "public/production_plan/production_plan.js",
 }
 
 
@@ -17,7 +17,7 @@ scheduler_events = {
 		"taj_core.company_documents.doctype.license.license.scheduled_status_update",
 	],
     "monthly": [
-        "taj_core.public.js.production_plan.delete_old_production_stickers",
+        "taj_core.public.production_plan.generate_stickers.delete_old_production_stickers",
     ]
 }
 

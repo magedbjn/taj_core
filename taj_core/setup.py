@@ -12,6 +12,7 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 def after_install():
 	create_taj_hrms_fields()
+	run_post_install_patches()
 
 def before_uninstall():
 	delete_custom_fields(get_taj_hrms_fields())
@@ -83,3 +84,25 @@ def delete_custom_fields(custom_fields: dict):
 		)
 
 		frappe.clear_cache(doctype=doctype)
+
+def get_post_install_patches():
+	return (
+		"taj_core.patches.delete_slnee",
+		"taj_core.patches.delete_custom_fields",
+	)
+
+def run_post_install_patches():
+	print("\nPatching Existing Data...")
+
+	POST_INSTALL_PATCHES = get_post_install_patches()
+	frappe.flags.in_patch = True
+
+	try:
+		for patch in POST_INSTALL_PATCHES:
+			patch_name = patch.split(".")[-1]
+			if not patch_name:
+				continue
+
+			frappe.get_attr(f"taj_core.patches.{patch_name}.execute")()
+	finally:
+		frappe.flags.in_patch = False
