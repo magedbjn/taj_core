@@ -1,24 +1,62 @@
 import frappe
 from jinja2 import Environment, FileSystemLoader
-import os
 from frappe.utils import nowdate
 from frappe import _
 from datetime import datetime, timedelta
+import os
 
 @frappe.whitelist()
 def open_production_stickers(plan_name):
+    """
+    Generate HTML stickers for a Production Plan and save as File Doctype.
+    """
     if not plan_name:
         frappe.throw(_("Production Plan name is required"))
 
-    # استعلام SQL وتجهيز الاستكرات كما عندك
-    data = frappe.db.sql(""" ... """, plan_name, as_dict=True)
+    # استعلام SQL للبيانات
+    data = frappe.db.sql("""
+        SELECT 
+            poi.item_code AS assembly_item_code,
+            poi.description AS assembly_item_name,
+            poi.bom_no AS assembly_bom_no,
+            poi.planned_qty AS assembly_qty,
+            poi.stock_uom AS assembly_uom,
 
+            bi.item_code AS sub_assembly_item_code,
+            bi.item_name AS sub_assembly_item_name,
+            bi.operation AS sub_assembly_operation,
+            bi.qty AS sub_assembly_qty,
+            bi.uom AS sub_assembly_uom,
+
+            bo.batch_size AS sub_assembly_batch_size,
+            b.quantity AS bom_qty,
+
+            CASE
+                WHEN bi.operation IS NULL OR bi.operation = '' THEN NULL
+                WHEN bo.batch_size = 1 THEN 1
+                ELSE CEIL(poi.planned_qty / NULLIF(bo.batch_size, 0))
+            END AS cooking_runs
+
+        FROM `tabProduction Plan Item` poi
+        LEFT JOIN `tabBOM Item` bi
+            ON bi.parent = poi.bom_no
+        LEFT JOIN `tabBOM Operation` bo
+            ON bo.parent = poi.bom_no
+            AND bo.operation <=> bi.operation
+        LEFT JOIN `tabBOM` b
+            ON b.name = poi.bom_no
+        WHERE poi.parent = %s
+        ORDER BY poi.item_code, bi.item_code
+    """, (plan_name,), as_dict=True)  # ✅ تمرير tuple
+
+    # تجهيز الاستكرات
     stickers = []
     for row in data:
         remaining_qty = row.assembly_qty
         batch_size = row.sub_assembly_batch_size or 0
         bom_qty = row.bom_qty
         runs = int(row.cooking_runs) if row.cooking_runs else 1
+
         for run in range(runs):
             if batch_size <= 1 or batch_size == bom_qty:
                 qty = (row.sub_assembly_qty / bom_qty) * min(remaining_qty, bom_qty)
@@ -50,7 +88,7 @@ def open_production_stickers(plan_name):
         stickers_count=len(stickers)
     )
 
-    # حفظ الملف باستخدام File Doctype (موافق Cloud)
+    # حفظ الملف باستخدام File Doctype
     file_name = f"{plan_name}_stickers.html"
     file_doc = frappe.get_doc({
         "doctype": "File",
@@ -61,12 +99,40 @@ def open_production_stickers(plan_name):
         "attached_to_name": plan_name
     }).insert(ignore_permissions=True)
 
-    return file_doc.file_url  # مثال: /files/MFG-PP-23-00006_stickers.html
+    return file_doc.file_url  # مثال: /files/MFG-PP-23-00002_stickers.html
+
 
 @frappe.whitelist()
+def delete_production_stickers(plan_name):
+    """
+    Delete stickers for a Production Plan manually.
+    """
+    if not plan_name:
+        frappe.throw(_("Production Plan name is required"))
+
+    old_files = frappe.get_all("File",
+        filters={
+            "attached_to_doctype": "Production Plan",
+            "attached_to_name": plan_name,
+            "file_name": ["like", "%_stickers.html"]
+        },
+        fields=["name", "file_name"]
+    )
+
+    deleted_files = []
+    for f in old_files:
+        try:
+            frappe.delete_doc("File", f.name, force=True)
+            deleted_files.append(f.file_name)
+        except Exception as e:
+            frappe.log_error(f"Failed to delete {f.file_name}: {str(e)}", "delete_production_stickers")
+
+    return f"Deleted files: {', '.join(deleted_files) if deleted_files else 'None'}"
+
+
 def delete_old_production_stickers():
     """
-    Delete Production Plan sticker HTML files older than 30 days.
+    Delete Production Plan sticker HTML files older than 30 days (Scheduler).
     """
     cutoff_date = datetime.now() - timedelta(days=30)
     old_files = frappe.get_all("File",
