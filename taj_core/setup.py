@@ -52,22 +52,6 @@ def get_taj_hrms_fields():
 				"insert_after": "date_of_joining"
 			},
 		],
-		"Production Plan": [
-			{
-				"fieldname": "taj_label",
-				"label": _("Taj Label"),
-				"fieldtype": "Tab Break",
-				"insert_after":"amended_from"
-			},
-			{
-				"fieldname": "production_label_detail",
-				"fieldtype": "Table",
-				"label": _("Production Label Detail"),
-				"options": "Production Label Detail",
-				"read_only": 1,
-				"insert_after":"taj_label"
-			},
-		],
 	}
 
 def delete_custom_fields(custom_fields: dict):
