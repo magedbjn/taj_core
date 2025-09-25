@@ -17,7 +17,7 @@ scheduler_events = {
 		"taj_core.company_documents.doctype.license.license.scheduled_status_update",
 	],
     "monthly": [
-        "taj_core.public.production_plan.generate_stickers.delete_old_production_stickers",
+        "taj_core.public.production_plan.generate_stickers.delete_old_production_stickers"
     ]
 }
 
