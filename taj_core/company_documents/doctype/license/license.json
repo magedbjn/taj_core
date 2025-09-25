@@ -47,15 +47,14 @@
   {
    "fieldname": "attachment",
    "fieldtype": "Attach",
-   "in_list_view": 1,
    "label": "Attachment"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-27 13:46:45.471912",
- "modified_by": "m.bajandooh@tajff.sa",
+ "modified": "2025-09-25 21:06:21.599839",
+ "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "License",
  "naming_rule": "By fieldname",
