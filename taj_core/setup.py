@@ -39,7 +39,7 @@ def get_taj_hrms_fields():
 				"fieldname": "taj_ignore_due_date_validation",
 				"fieldtype": "Check",
 				"label": _("Ignore due date validation"),
-				"description": _("If enabled, the system will skip the validation “Due Date cannot be before Posting / Supplier Invoice Date” for this supplier."),
+				"description": _("If enabled, the system will skip the validation “Due Date cannot be before Posting / Supplier Invoice Date”"),
 				"insert_after": "disabled"
 			}
 		],

@@ -46,15 +46,15 @@
   {
    "description": "Select roles that will receive notifications",
    "fieldname": "allowed_roles",
-   "fieldtype": "Table MultiSelect",
+   "fieldtype": "Link",
    "label": "Allowed Roles",
-   "options": "Has Role"
+   "options": "Role"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-25 21:05:11.977571",
+ "modified": "2025-09-26 02:43:46.924327",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "License Type",

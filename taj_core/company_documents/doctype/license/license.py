@@ -101,9 +101,9 @@ def update_status_bulk(doctype, filters=None):
     return updated_docs
 
 def send_license_notification(doc):
-    """Send notification to Allowed Roles via Telegram or Email"""
+    """Send notification to Allowed Role via Telegram or Email"""
     license_type = frappe.get_doc("License Type", doc.license_english)
-    allowed_roles = [row.role for row in license_type.allowed_roles]
+    allowed_role = license_type.allowed_roles  # now it's a single role (Link field)
 
     users_to_notify = frappe.get_all(
         "User",
@@ -113,7 +113,7 @@ def send_license_notification(doc):
 
     for user in users_to_notify:
         roles = frappe.get_roles(user['name'])
-        if any(role in allowed_roles for role in roles):
+        if allowed_role in roles:
             subject = _("License {0} Renewal Reminder").format(doc.name)
             message = _("The license {0} has reached the 'Renew' status. Please take the necessary action.").format(doc.name)
 
@@ -122,3 +122,4 @@ def send_license_notification(doc):
                 subject=subject,
                 message=message
             )
+
