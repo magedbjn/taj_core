@@ -1,0 +1,177 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-27 05:28:57.951900",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_visitor_info_section",
+  "post_date",
+  "full_name",
+  "company",
+  "email",
+  "purpose_of_visit",
+  "health_questions_section",
+  "typhoid_or_paratyphoid",
+  "vomiting",
+  "abroad",
+  "ill",
+  "burnes",
+  "skin_or_gastrointestinal",
+  "answered_yes",
+  "administrative__approval_fields_section",
+  "status",
+  "email_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_visitor_info_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Visitor Info"
+  },
+  {
+   "default": "Today",
+   "fieldname": "post_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Post Date"
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Full Name"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Company"
+  },
+  {
+   "fieldname": "purpose_of_visit",
+   "fieldtype": "Small Text",
+   "label": "Purpose of Visit"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email"
+  },
+  {
+   "fieldname": "health_questions_section",
+   "fieldtype": "Section Break",
+   "label": "Health Questions"
+  },
+  {
+   "default": "0",
+   "fieldname": "typhoid_or_paratyphoid",
+   "fieldtype": "Check",
+   "label": "Typhoid / Paratyphoid last 3 month"
+  },
+  {
+   "default": "0",
+   "fieldname": "vomiting",
+   "fieldtype": "Check",
+   "label": "Vomiting / Diarrhea last 7 days"
+  },
+  {
+   "default": "0",
+   "fieldname": "abroad",
+   "fieldtype": "Check",
+   "label": "Been abroad last 3 weeks"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.abroad==1",
+   "fieldname": "ill",
+   "fieldtype": "Check",
+   "label": "If abroad, were you ill"
+  },
+  {
+   "fieldname": "burnes",
+   "fieldtype": "Select",
+   "label": "Suffering from",
+   "options": "None\nSkin trouble affecting hands, arms or face\nBurnes or wounds\nDischarge from eye, ear or gums/mouth"
+  },
+  {
+   "fieldname": "skin_or_gastrointestinal",
+   "fieldtype": "Select",
+   "label": "Chronic disorder",
+   "options": "None\nA chronic skin or ear trouble\nA chronic gastrointestinal disorder"
+  },
+  {
+   "depends_on": "eval: doc.typhoid_or_paratyphoid==1 || doc.vomiting==1 || doc.abroad==1",
+   "fieldname": "answered_yes",
+   "fieldtype": "Small Text",
+   "label": "Additional info if answered YES",
+   "mandatory_depends_on": "eval: doc.typhoid_or_paratyphoid==1 || doc.vomiting==1 || doc.abroad==1"
+  },
+  {
+   "fieldname": "administrative__approval_fields_section",
+   "fieldtype": "Section Break",
+   "label": "Administrative / Approval Fields"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nApproved\nRejected"
+  },
+  {
+   "fieldname": "email_status",
+   "fieldtype": "Select",
+   "label": "Email Status",
+   "options": "Not Sent\nSending\nSent\nPartially Sent\nError"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-28 08:14:18.620148",
+ "modified_by": "m.bajandooh@tajff.sa",
+ "module": "Taj QC",
+ "name": "Visitor",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QC User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Quality Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
