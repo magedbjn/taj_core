@@ -3,26 +3,33 @@
 
 import frappe
 from frappe.model.document import Document
-
+from frappe import _
+from frappe.utils import validate_email_address
 
 class Visitor(Document):
     def validate(self):
-        # Check for duplicate visitor entries (same email + date)
+        # Validate email format
+        try:
+            validate_email_address(self.email, True)
+        except frappe.ValidationError:
+            frappe.throw(_("Invalid email address."))
+
+        # Check for duplicate visitor entries (same email + status Open)
         existing_email = frappe.get_all('Visitor', 
             filters={
                 'email': self.email, 
-                'post_date': self.post_date,
-                'name': ('!=', self.name)  # Exclude current document
+                'status': 'Open'
             },
             limit=1
         )
         if existing_email:
-            frappe.throw("This visitor already exists for the selected date!")
+            frappe.throw(_("This visitor already exists."))
             
     def on_submit(self):
         # Ensure only approved/rejected statuses can be submitted
         if self.status not in ["Approved", "Rejected"]:
-            frappe.throw("Only status 'Approved' and 'Rejected' can be submitted.")
+            frappe.throw(_("Only status 'Approved' and 'Rejected' can be submitted."))
+
         
         # Send notification email
         self.send_email()
@@ -34,21 +41,21 @@ class Visitor(Document):
             return False
 
         # Prepare email content based on status
-        subject = "Access to Production Area - Taj Factory"
-        message = f"Dear {self.name1},<br><br>We hope this message finds you well.<br><br>"
-        
+        subject = _("Access to Production Area - TajFF")
+        message = _("Dear {name},<br><br>We hope this message finds you well.<br><br>").format(name=self.name1)
+
         if self.status == 'Approved':
-            message += (
+            message += _(
                 "We are pleased to inform you that your request for access to the production area has been approved. "
                 "Please ensure all safety protocols and guidelines are followed while in the area.<br><br>"
             )
         elif self.status == 'Rejected':
-            message += (
+            message += _(
                 "After reviewing your request, we regret to inform you that access to the production area "
                 "cannot be granted at this time. This decision was made to ensure safety compliance.<br><br>"
             )
-        
-        message += (
+
+        message += _(
             "If you have any questions or require further assistance, please contact us.<br><br>"
             "Best regards,<br>Quality Control Team<br>Taj Food Factory For Ready Meals"
         )

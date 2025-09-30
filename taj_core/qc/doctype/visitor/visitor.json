@@ -1,0 +1,245 @@
+{
+ "actions": [],
+ "allow_copy": 1,
+ "allow_rename": 1,
+ "autoname": "format:QC-VST-{YY}-{##}",
+ "creation": "2025-01-07 13:42:19.856254",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sb1",
+  "post_date",
+  "email",
+  "full_name",
+  "column_break_xawu",
+  "company",
+  "job_title",
+  "purpose_of_visit",
+  "sb2",
+  "typhoid_or_paratyphoid",
+  "vomiting",
+  "abroad",
+  "ill",
+  "burnes",
+  "skin_or_gastrointestinal",
+  "answered_yes",
+  "sb3",
+  "status",
+  "email_status",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "job_title",
+   "fieldtype": "Data",
+   "label": "Job Title"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "label": "Company"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb2",
+   "fieldtype": "Section Break",
+   "label": "Please answer to the following questions: "
+  },
+  {
+   "default": "0",
+   "fieldname": "typhoid_or_paratyphoid",
+   "fieldtype": "Check",
+   "label": "Have you ever had or are you known to be a carrier of, enteric fever, typhoid or paratyphoid in last 3 months ? "
+  },
+  {
+   "default": "0",
+   "fieldname": "vomiting",
+   "fieldtype": "Check",
+   "label": "Have you now, or have you suffered from diarrhea and/or vomiting over the last seven days ?"
+  },
+  {
+   "default": "0",
+   "fieldname": "abroad",
+   "fieldtype": "Check",
+   "label": "Have you been abroad in the last three weeks?"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.abroad==1",
+   "fieldname": "ill",
+   "fieldtype": "Check",
+   "label": "If YES, were you ill?"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb1",
+   "fieldtype": "Section Break",
+   "label": "To be completed by all visitors"
+  },
+  {
+   "fieldname": "burnes",
+   "fieldtype": "Select",
+   "label": "At present are you suffering from:",
+   "options": "None\nSkin trouble affecting hands, arms or face\nBurnes or wounds\nDischarge from eye, ear or gums/mouth",
+   "reqd": 1
+  },
+  {
+   "fieldname": "skin_or_gastrointestinal",
+   "fieldtype": "Select",
+   "label": "Do you suffer from",
+   "options": "None\nA chronic skin or ear trouble\nA chronic gastrointestinal disorder",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.typhoid_or_paratyphoid==1 || doc.vomiting==1 || doc.abroad==1 ",
+   "description": "If you answered YES to any of the above questions please provide below any further details, which may assist in determining your suitability or not to enter food-handling areas",
+   "fieldname": "answered_yes",
+   "fieldtype": "Small Text",
+   "label": "If you answered YES",
+   "mandatory_depends_on": "eval: doc.typhoid_or_paratyphoid==1 || doc.vomiting==1 || doc.abroad==1"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb3",
+   "fieldtype": "Section Break",
+   "label": "To be completed by FSTL "
+  },
+  {
+   "default": "Open",
+   "description": "Enter food-handling areas.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "I declare that I have reviewed the responses on the visitor\u2019s health questionnaire and determined that the applicant is :",
+   "options": "Open\nApproved\nRejected",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Visitor",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "purpose_of_visit",
+   "fieldtype": "Data",
+   "label": "Purpose of Visit"
+  },
+  {
+   "fieldname": "column_break_xawu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "post_date",
+   "fieldtype": "Date",
+   "label": "Post Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Not Sent",
+   "fieldname": "email_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Email Status",
+   "options": "Not Sent\nSending\nSent\nPartially Sent\nError",
+   "read_only": 1
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Full Name",
+   "placeholder": "please type your full name",
+   "reqd": 1
+  }
+ ],
+ "hide_toolbar": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-09-30 07:45:50.114010",
+ "modified_by": "m.bajandooh@tajff.sa",
+ "module": "QC",
+ "name": "Visitor",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QC User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Quality Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QC User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Quality Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

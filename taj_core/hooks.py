@@ -37,6 +37,9 @@ doc_events = {
     "Purchase Invoice": {
         "before_validate": "taj_core.custom.purchase_invoice.before_validate",
         "before_save": "taj_core.custom.purchase_invoice.before_save"
+    },
+    "Item":{
+        'before_save': "taj_core.qc.doctype.raw_material_specification.override.item.raw_material_specification"
     }
 }
 

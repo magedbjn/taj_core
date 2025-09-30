@@ -51,6 +51,18 @@ def get_taj_hrms_fields():
 				"options": "Country",
 				"insert_after": "date_of_joining"
 			},
+			# {
+			# 	"fieldname": "taj_id_number",
+			# 	"fieldtype": "Data",
+			# 	"label": "ID No.",
+			# 	"insert_after": "passport_details_section"
+			# },
+			# {
+			# 	"fieldname": "taj_id_expiry_date",
+			# 	"fieldtype": "Date",
+			# 	"label": "ID Expiry Date",
+			# 	"insert_after": "column_break_73"
+			# }
 		],
 	}
 

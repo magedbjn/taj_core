@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-05-09 07:15:37.880028",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "cooked_liquid_section",
+  "salt",
+  "brix",
+  "ph",
+  "pass",
+  "column_break_oemn",
+  "viscosity",
+  "spindel_type",
+  "rpm",
+  "temperature",
+  "sb1_section",
+  "chemical_test",
+  "after_retort",
+  "after_incubation"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "chemical_test",
+   "fieldtype": "Select",
+   "label": "Chemical Test",
+   "options": "Salt Content (%)\nBrix Content / TSS (%)\nViscosity (cP)\npH Value"
+  },
+  {
+   "columns": 2,
+   "fieldname": "after_retort",
+   "fieldtype": "Data",
+   "label": "After Retort"
+  },
+  {
+   "columns": 2,
+   "fieldname": "after_incubation",
+   "fieldtype": "Data",
+   "label": "After Incubation"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "pass",
+   "fieldtype": "Check",
+   "label": "PASS"
+  },
+  {
+   "fieldname": "cooked_liquid_section",
+   "fieldtype": "Section Break",
+   "label": "Cooked Liquid"
+  },
+  {
+   "columns": 1,
+   "fieldname": "salt",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Salt"
+  },
+  {
+   "columns": 1,
+   "fieldname": "brix",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Brix"
+  },
+  {
+   "columns": 1,
+   "fieldname": "ph",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "pH"
+  },
+  {
+   "fieldname": "column_break_oemn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "viscosity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Viscosity"
+  },
+  {
+   "columns": 1,
+   "fieldname": "spindel_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Spindel Type"
+  },
+  {
+   "columns": 1,
+   "fieldname": "rpm",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "RPM"
+  },
+  {
+   "columns": 1,
+   "fieldname": "temperature",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Temperature"
+  },
+  {
+   "fieldname": "sb1_section",
+   "fieldtype": "Section Break",
+   "label": "SB1"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-01-20 08:15:08.449726",
+ "modified_by": "Administrator",
+ "module": "QC",
+ "name": "Chemical Test",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

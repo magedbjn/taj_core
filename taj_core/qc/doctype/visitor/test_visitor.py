@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Maged Bajandooh and Contributors
+# Copyright (c) 2025, Maged BAjandooh and Contributors
 # See license.txt
 
 # import frappe

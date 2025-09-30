@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "autoname": "QC-MIC-T-.Y.-.####",
+ "creation": "2024-05-07 13:12:33.179843",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "microbes_section",
+  "incubation",
+  "degree",
+  "limits",
+  "test_result",
+  "method",
+  "overall_result"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "incubation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Test Name",
+   "options": "Microbes Incubation"
+  },
+  {
+   "columns": 2,
+   "fieldname": "degree",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Incubation Degree",
+   "options": "35c\n55c\n55c & 35c"
+  },
+  {
+   "columns": 2,
+   "fieldname": "limits",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Limits",
+   "options": "No Abnormality\nND < 1\nND < 10"
+  },
+  {
+   "columns": 1,
+   "fieldname": "test_result",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Test Result",
+   "options": "No sign of Abnormality\nND < 1\nND < 10"
+  },
+  {
+   "columns": 2,
+   "fieldname": "method",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Method",
+   "options": "GSO 950/1995 Commerical Sterillity\nAOAC 990.12 (3m Petrifilm)\nIn-House method based on AOAC 990.12 (3m Petrifilm)\nCompendium method chapter 18\nCompendium method chapter 19\nCompendium method chapter 21"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "description": "If you check that is PASS, ",
+   "fieldname": "overall_result",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "PASS"
+  },
+  {
+   "fieldname": "microbes_section",
+   "fieldtype": "Section Break",
+   "label": "Microbes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-05-15 09:16:58.395061",
+ "modified_by": "Administrator",
+ "module": "QC",
+ "name": "Microbes Test",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

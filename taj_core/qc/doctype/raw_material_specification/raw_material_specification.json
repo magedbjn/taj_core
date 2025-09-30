@@ -1,0 +1,514 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "field:item_code",
+ "creation": "2024-08-07 12:34:14.177606",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "tab_break_9juh",
+  "item_code",
+  "item_english",
+  "item_arabic",
+  "column_break_kehy",
+  "status",
+  "specification_tab",
+  "sb",
+  "column_break_yraz",
+  "msds",
+  "coa",
+  "localer",
+  "halal",
+  "fumigation_cart",
+  "specification_column",
+  "packing",
+  "handling_storage",
+  "shelf_life",
+  "expiry_date",
+  "general",
+  "physical_attributes_tab",
+  "section_break_mwcm",
+  "physical_attributes",
+  "color",
+  "appearance",
+  "column_break_ympw",
+  "odor",
+  "flavor",
+  "microbiological_analysis_tab",
+  "section_break_xcgc",
+  "microbilogical",
+  "enterobaceriaceae",
+  "yeasts_moulds",
+  "aerobi_plate_count",
+  "column_break_jllg",
+  "escherichia_coli",
+  "salmonella",
+  "staphylococcus",
+  "column_break_vblq",
+  "clostridium_botutinum",
+  "clostridium_perfringens",
+  "allergic_tab",
+  "section_break_3okb",
+  "celery",
+  "cereal",
+  "crustaceance",
+  "eggs",
+  "fish",
+  "lupine",
+  "mastered",
+  "column_break_zvgl",
+  "milk",
+  "mollusks",
+  "nuts",
+  "peanut",
+  "sesame",
+  "soybeans",
+  "sulfite"
+ ],
+ "fields": [
+  {
+   "fieldname": "specification_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "packing",
+   "fieldtype": "Data",
+   "label": "Packing"
+  },
+  {
+   "fieldname": "handling_storage",
+   "fieldtype": "Data",
+   "label": "Handling / Storage"
+  },
+  {
+   "description": "Material Shelf from date of manufacturing",
+   "fieldname": "shelf_life",
+   "fieldtype": "Int",
+   "label": "Shelf Life In Days"
+  },
+  {
+   "fieldname": "general",
+   "fieldtype": "Data",
+   "label": "Addtional Information"
+  },
+  {
+   "default": "0",
+   "fieldname": "msds",
+   "fieldtype": "Check",
+   "label": "Material Safety Data Sheet MSDS"
+  },
+  {
+   "default": "0",
+   "fieldname": "coa",
+   "fieldtype": "Check",
+   "label": "Certificate of Analysis COA"
+  },
+  {
+   "default": "0",
+   "fieldname": "halal",
+   "fieldtype": "Check",
+   "label": "Halal"
+  },
+  {
+   "default": "0",
+   "fieldname": "fumigation_cart",
+   "fieldtype": "Check",
+   "label": "Fumigation Cart"
+  },
+  {
+   "fieldname": "physical_attributes",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Data",
+   "label": "Color"
+  },
+  {
+   "fieldname": "appearance",
+   "fieldtype": "Data",
+   "label": "Appearance"
+  },
+  {
+   "fieldname": "section_break_xcgc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "odor",
+   "fieldtype": "Data",
+   "label": "Odor"
+  },
+  {
+   "fieldname": "flavor",
+   "fieldtype": "Data",
+   "label": "Flavor"
+  },
+  {
+   "fieldname": "microbilogical",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "enterobaceriaceae",
+   "fieldtype": "Data",
+   "label": "Enterobaceriaceae"
+  },
+  {
+   "fieldname": "yeasts_moulds",
+   "fieldtype": "Data",
+   "label": "Yeasts and Moulds"
+  },
+  {
+   "fieldname": "section_break_3okb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "salmonella",
+   "fieldtype": "Data",
+   "label": "Salmonella"
+  },
+  {
+   "fieldname": "staphylococcus",
+   "fieldtype": "Data",
+   "label": "Staphylococcus Anreus"
+  },
+  {
+   "default": "0",
+   "fieldname": "cereal",
+   "fieldtype": "Check",
+   "label": "Cereal containing gluten and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "fish",
+   "fieldtype": "Check",
+   "label": "Fish and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "peanut",
+   "fieldtype": "Check",
+   "label": "Peanut and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "milk",
+   "fieldtype": "Check",
+   "label": "Milk and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "eggs",
+   "fieldtype": "Check",
+   "label": "Eggs and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "mastered",
+   "fieldtype": "Check",
+   "label": "Mastered and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "celery",
+   "fieldtype": "Check",
+   "label": "Celery and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "sesame",
+   "fieldtype": "Check",
+   "label": "Sesame seeds and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "mollusks",
+   "fieldtype": "Check",
+   "label": "Mollusks and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "lupine",
+   "fieldtype": "Check",
+   "label": "Lupine and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "soybeans",
+   "fieldtype": "Check",
+   "label": "Soybeans and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "crustaceance",
+   "fieldtype": "Check",
+   "label": "Crustaceans and products thereof"
+  },
+  {
+   "default": "0",
+   "fieldname": "sulfite",
+   "fieldtype": "Check",
+   "label": "Sulfite"
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_english",
+   "fieldtype": "Read Only",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item English"
+  },
+  {
+   "fetch_from": "item_code.item_name_arabic",
+   "fieldname": "item_arabic",
+   "fieldtype": "Read Only",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item Arabic"
+  },
+  {
+   "fieldname": "tab_break_9juh",
+   "fieldtype": "Tab Break",
+   "label": "Item"
+  },
+  {
+   "fieldname": "column_break_kehy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_yraz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ympw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_jllg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.coa == 1",
+   "fieldname": "localer",
+   "fieldtype": "Check",
+   "label": "Localer"
+  },
+  {
+   "description": "Less than xx days",
+   "fieldname": "expiry_date",
+   "fieldtype": "Int",
+   "label": "Expiry Date Upon Receiving In Days"
+  },
+  {
+   "fieldname": "aerobi_plate_count",
+   "fieldtype": "Data",
+   "label": "Aerobi Plate Count"
+  },
+  {
+   "fieldname": "escherichia_coli",
+   "fieldtype": "Data",
+   "label": "Escherichia Coli"
+  },
+  {
+   "fieldname": "clostridium_botutinum",
+   "fieldtype": "Data",
+   "label": "Clostridium Botutinum"
+  },
+  {
+   "fieldname": "clostridium_perfringens",
+   "fieldtype": "Data",
+   "label": "Clostridium Perfringens"
+  },
+  {
+   "default": "0",
+   "fieldname": "nuts",
+   "fieldtype": "Check",
+   "label": "Nuts and products thereof nut"
+  },
+  {
+   "default": "Open",
+   "description": "Rejected: Purchasing or using  in manufacturing is not allowed",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Open\nApproved\nRejected",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_zvgl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_vblq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "specification_tab",
+   "fieldtype": "Tab Break",
+   "label": "Specification"
+  },
+  {
+   "fieldname": "sb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "physical_attributes_tab",
+   "fieldtype": "Tab Break",
+   "label": "Physical Attributes"
+  },
+  {
+   "fieldname": "section_break_mwcm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "microbiological_analysis_tab",
+   "fieldtype": "Tab Break",
+   "label": "Microbiological Analysis"
+  },
+  {
+   "fieldname": "allergic_tab",
+   "fieldtype": "Tab Break",
+   "label": "Allergic"
+  }
+ ],
+ "links": [],
+ "modified": "2025-07-20 22:21:44.479323",
+ "modified_by": "Administrator",
+ "module": "QC",
+ "name": "Raw Material Specification",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QC User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Quality Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing Manager",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing User",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock User",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Purchase Invoice",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Purchase User",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Purchase Taj",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "states": [
+  {
+   "color": "Red",
+   "title": "Draft"
+  },
+  {
+   "color": "Green",
+   "title": "Approved"
+  },
+  {
+   "color": "Orange",
+   "title": "Rejected"
+  },
+  {
+   "color": "Gray",
+   "title": "Cancelled"
+  }
+ ],
+ "title_field": "item_code",
+ "track_changes": 1
+}

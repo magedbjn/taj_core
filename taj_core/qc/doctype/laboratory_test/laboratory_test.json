@@ -1,0 +1,174 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "QC-MIC-.YY.-.###",
+ "creation": "2024-05-07 13:07:00.771251",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "test_for",
+  "section_break_ksom",
+  "batch_no",
+  "date",
+  "column_break_e1se",
+  "item_rnd",
+  "item",
+  "item_name",
+  "item_name_arabic",
+  "tab_break_ayit",
+  "laboratory_test",
+  "tab_break_hpw7",
+  "chemical_test",
+  "tab_break_p4zj",
+  "microbes_test"
+ ],
+ "fields": [
+  {
+   "description": "Select the item type",
+   "fieldname": "section_break_ksom",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "Raw Material\nFinished Product\nSwab Test",
+   "reqd": 1
+  },
+  {
+   "fieldname": "batch_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Batch No",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.test_for == 'Production'",
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "mandatory_depends_on": "eval:doc.test_for == 'Production'",
+   "options": "Item"
+  },
+  {
+   "depends_on": "eval:doc.test_for == 'Production'",
+   "fetch_from": "item.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.test_for == 'Production'",
+   "fetch_from": "item.item_name_arabic",
+   "fieldname": "item_name_arabic",
+   "fieldtype": "Data",
+   "label": "Item Name Arabic",
+   "read_only": 1
+  },
+  {
+   "fieldname": "microbes_test",
+   "fieldtype": "Table",
+   "label": "Microbes Test",
+   "options": "Microbes Test"
+  },
+  {
+   "fieldname": "column_break_e1se",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "laboratory_test",
+   "fieldtype": "Table",
+   "label": "Physical Test",
+   "options": "Physical Test"
+  },
+  {
+   "fieldname": "chemical_test",
+   "fieldtype": "Table",
+   "label": "Chemical Test",
+   "options": "Chemical Test"
+  },
+  {
+   "fieldname": "test_for",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Test For",
+   "options": "RND\nProduction"
+  },
+  {
+   "fieldname": "tab_break_ayit",
+   "fieldtype": "Tab Break",
+   "label": "Physical"
+  },
+  {
+   "fieldname": "tab_break_hpw7",
+   "fieldtype": "Tab Break",
+   "label": "Chemical"
+  },
+  {
+   "fieldname": "tab_break_p4zj",
+   "fieldtype": "Tab Break",
+   "label": "Microbiological"
+  },
+  {
+   "depends_on": "eval:doc.test_for == 'RND'",
+   "fieldname": "item_rnd",
+   "fieldtype": "Data",
+   "label": "Item RND",
+   "placeholder": "New Item for RND",
+   "unique": 1
+  }
+ ],
+ "links": [],
+ "modified": "2025-01-31 19:56:11.879037",
+ "modified_by": "Administrator",
+ "module": "QC",
+ "name": "Laboratory Test",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QC User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Quality Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
