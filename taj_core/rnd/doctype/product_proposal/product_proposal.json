@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-01 15:15:59.362810",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "product_info_tab",
+  "section_break_aslf",
+  "date",
+  "product_name",
+  "cuisine",
+  "source_of_proposal",
+  "target_segment",
+  "column_break_sctj",
+  "expected_market_size",
+  "weight",
+  "compatibility_with_current_production_capabilities",
+  "aligns_with_vision",
+  "section_break_ovbw",
+  "special_requirements",
+  "contents_tab",
+  "pp_solid_liquid",
+  "section_break_vwgz",
+  "pp_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "product_name",
+   "fieldtype": "Data",
+   "label": "Product Name"
+  },
+  {
+   "fieldname": "cuisine",
+   "fieldtype": "Select",
+   "label": "Cuisine",
+   "options": "Asian\nIndian\nMiddle Eastern\nWestern\nItalian\nMexican\nJapanese\nChinese\nKorean\nMediterranean\nThai\nTurkish\nLocal\nTraditional\nFusion"
+  },
+  {
+   "fieldname": "source_of_proposal",
+   "fieldtype": "Select",
+   "label": "Source of Proposal",
+   "options": "Sales\nCustomer\nCompetitor\nManagement\nR&D"
+  },
+  {
+   "fieldname": "section_break_aslf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "target_segment",
+   "fieldtype": "Data",
+   "label": "Target Segment",
+   "options": "Military Sector\nHajj & Umrah\nRetail\nGovernment\nPrivate Sector\nExport"
+  },
+  {
+   "fieldname": "column_break_sctj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_market_size",
+   "fieldtype": "Select",
+   "label": "Expected Market Size",
+   "options": "Low\nMedium\nHigh"
+  },
+  {
+   "fieldname": "weight",
+   "fieldtype": "Data",
+   "label": "Weight"
+  },
+  {
+   "fieldname": "compatibility_with_current_production_capabilities",
+   "fieldtype": "Select",
+   "label": "Compatibility with Current Production Capabilities",
+   "options": "Compatible\nMinor Adjustments\nMajor Changes\nNot Compatible"
+  },
+  {
+   "default": "0",
+   "fieldname": "aligns_with_vision",
+   "fieldtype": "Check",
+   "label": "Aligns with Company Vision & Goals"
+  },
+  {
+   "fieldname": "section_break_ovbw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "special_requirements",
+   "fieldtype": "Small Text",
+   "label": "Special Requirements"
+  },
+  {
+   "fieldname": "contents_tab",
+   "fieldtype": "Tab Break",
+   "label": "Components"
+  },
+  {
+   "fieldname": "pp_solid_liquid",
+   "fieldtype": "Table",
+   "label": "Solid Liquid",
+   "options": "Product Proposal Solid Liquid"
+  },
+  {
+   "fieldname": "section_break_vwgz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "pp_items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Product Proposal Raw Material"
+  },
+  {
+   "fieldname": "product_info_tab",
+   "fieldtype": "Tab Break",
+   "label": "Product Info"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-01 16:06:54.792683",
+ "modified_by": "Administrator",
+ "module": "RND",
+ "name": "Product Proposal",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
