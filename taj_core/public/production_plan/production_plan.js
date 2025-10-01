@@ -22,7 +22,7 @@ frappe.ui.form.on('Production Plan', {
                     }
                 });
             },
-            __("Taj Label")
+            __("Taj")
         );
 
         // زر لحذف الملصقات يدويًا
@@ -42,7 +42,9 @@ frappe.ui.form.on('Production Plan', {
                     }
                 );
             },
-            __("Taj Label")
+            __("Taj")
         );
+
     }
 });
+

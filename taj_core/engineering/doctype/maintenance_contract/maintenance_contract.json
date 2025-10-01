@@ -1,0 +1,179 @@
+{
+ "actions": [],
+ "autoname": "format:{contract_name}-{YY}-{##}",
+ "creation": "2025-10-01 12:07:02.683008",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_name",
+  "purchase_order",
+  "supplier",
+  "column_break_rjwy",
+  "start_date",
+  "end_date",
+  "column_break_lrqo",
+  "total_visits",
+  "visits_count",
+  "contract_status",
+  "section_break_hhga",
+  "maintenance_visit"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_name",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Contract Name",
+   "options": "Air Compresser\nChiller\nTest Water for Boiler\nTest Water for Chiller\nPest Control"
+  },
+  {
+   "fieldname": "purchase_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Purchase Order",
+   "options": "Purchase Order"
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "column_break_rjwy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "column_break_lrqo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_visits",
+   "fieldtype": "Int",
+   "label": "Total Visits"
+  },
+  {
+   "fieldname": "section_break_hhga",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "maintenance_visit",
+   "fieldtype": "Table",
+   "label": "Maintenance Visit",
+   "options": "Maintenance Contract Visit"
+  },
+  {
+   "fieldname": "visits_count",
+   "fieldtype": "Int",
+   "label": "Visits Count ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contract_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Contract Status",
+   "options": "Draft\nActive\nCompleted",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-01 14:08:28.616240",
+ "modified_by": "Administrator",
+ "module": "Engineering",
+ "name": "Maintenance Contract",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Maintenance Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Maintenance User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QC User",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Quality Manager",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

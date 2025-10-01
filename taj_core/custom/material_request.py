@@ -1,42 +1,85 @@
 import frappe
 from frappe import _
+from frappe.utils import flt
 
 @frappe.whitelist()
 def collect_similar_items(docname):
-    doc = frappe.get_doc("Material Request", docname)
+    """
+    Collect similar items in Material Request by summing quantities
+    and removing duplicates while preserving the first occurrence.
+    """
+    try:
+        # Validate document exists and is in draft state
+        doc = frappe.get_doc("Material Request", docname)
+        
+        if doc.docstatus != 0:
+            frappe.throw(_("This operation can only be performed on draft documents"))
+        
+        if not doc.items:
+            frappe.msgprint(_("No items found in this Material Request"))
+            return doc.as_dict()
 
-    total_stock_qty = {}
-    item_count = {}
-    items_to_delete = []
+        total_stock_qty = {}
+        total_qty = {}
+        item_count = {}
+        items_to_delete = []
+        first_occurrence_index = {}
 
-    # اجمع الكميات لكل صنف واحسب مرات التكرار
-    for item in doc.items:
-        item_code = item.item_code
-        total_stock_qty[item_code] = total_stock_qty.get(item_code, 0) + item.stock_qty
-        item_count[item_code] = item_count.get(item_code, 0) + 1
+        # Collect data for all items
+        for idx, item in enumerate(doc.items):
+            item_code = item.item_code
+            
+            # Initialize if first time seeing this item
+            if item_code not in first_occurrence_index:
+                first_occurrence_index[item_code] = idx
+                total_stock_qty[item_code] = 0
+                total_qty[item_code] = 0
+                item_count[item_code] = 0
+            
+            # Sum quantities
+            total_stock_qty[item_code] += flt(item.stock_qty)
+            total_qty[item_code] += flt(item.qty)
+            item_count[item_code] += 1
 
-        # إذا مكرر → ضيفه في قائمة الحذف (نترك فقط الأول)
-        if item_count[item_code] > 1:
-            items_to_delete.append(item)
+            # Mark for deletion if duplicate (keep first occurrence)
+            if idx != first_occurrence_index[item_code]:
+                items_to_delete.append(item)
 
-    # حذف العناصر المكررة
-    for item in reversed(items_to_delete):
-        doc.remove(item)
+        # Delete duplicate items (reverse to avoid index issues)
+        for item in reversed(items_to_delete):
+            doc.remove(item)
 
-    # تحديث العناصر المتبقية
-    for item in doc.items:
-        stock_qty = total_stock_qty.get(item.item_code, 0)
-        if stock_qty:
-            if item_count[item.item_code] > 1:
-                # إذا الصنف مكرر → نثبت النتيجة بالـ Stock UOM
-                stock_uom = frappe.db.get_value("Item", item.item_code, "stock_uom")
+        # Update remaining items
+        for item in doc.items:
+            item_code = item.item_code
+            
+            if item_count[item_code] > 1:
+                # For duplicated items, update quantities and reset to stock UOM
+                stock_uom = frappe.db.get_value("Item", item_code, "stock_uom")
+                
                 item.uom = stock_uom
-                item.conversion_factor = 1
-                item.qty = stock_qty
-                item.stock_qty = stock_qty
-            else:
-                # إذا غير مكرر → نتركه كما هو لكن نضمن تحديث stock_qty
-                item.stock_qty = item.qty * (item.conversion_factor or 1)
+                item.conversion_factor = 1.0
+                item.qty = total_qty[item_code]
+                item.stock_qty = total_stock_qty[item_code]
+                
+                # Update rate if applicable
+                if hasattr(item, 'rate'):
+                    # You can add custom rate calculation logic here
+                    pass
 
-    frappe.msgprint(_("Similar items were collected. Please save the document to apply changes."))
-    return doc.as_dict()
+        # Save the document to apply changes
+        doc.save()
+        
+        # Add summary message
+        if items_to_delete:
+            frappe.msgprint(_(
+                "Successfully consolidated {0} duplicate item(s) into {1} unique item(s). Document has been saved."
+            ).format(len(items_to_delete), len(doc.items)))
+        else:
+            frappe.msgprint(_("No duplicate items found to consolidate"))
+
+        return doc.as_dict()
+
+    except Exception as e:
+        frappe.log_error(f"Error in collect_similar_items: {str(e)}")
+        frappe.throw(_("Failed to collect similar items: {0}").format(str(e)))

@@ -23,6 +23,15 @@ def create_taj_hrms_fields():
 
 def get_taj_hrms_fields():
 	return {
+		"Item": [
+			{
+				"fieldname": "taj_sub_warehouse",
+				"fieldtype": "Select",
+				"label": _("Sub Warehouse"),
+				"options": "\nDry\nChiller\nFreezer",
+				"insert_after": "item_group"
+			},
+		],
 		"Payroll Settings": [
 			{
 				"fieldname": "taj_salary_days_basis",

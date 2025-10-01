@@ -7,8 +7,8 @@ app_license = "mit"
 
 
 doctype_js = {
-    "Material Request": "custom/material_request.js",
     "Production Plan": "public/production_plan/production_plan.js",
+    "Material Request": "public/js/material_request.js"
 }
 
 
