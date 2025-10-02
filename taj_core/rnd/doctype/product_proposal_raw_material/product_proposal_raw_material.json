@@ -7,9 +7,13 @@
  "engine": "InnoDB",
  "field_order": [
   "new_item_name",
-  "item",
+  "item_code",
+  "item_name",
   "weight",
   "uom",
+  "column_break_mcyp",
+  "temperature",
+  "duration",
   "notes",
   "purchase_section",
   "availability_status",
@@ -17,29 +21,20 @@
  ],
  "fields": [
   {
-   "columns": 2,
    "fieldname": "new_item_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "New Item Name"
-  },
-  {
-   "columns": 2,
-   "fieldname": "item",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Item",
-   "options": "Item"
   },
   {
    "columns": 1,
    "fieldname": "weight",
-   "fieldtype": "Data",
+   "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Weight"
+   "label": "Quantity"
   },
   {
    "columns": 1,
+   "default": "Gram",
    "fieldname": "uom",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -55,7 +50,6 @@
    "columns": 2,
    "fieldname": "availability_status",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "label": "Availability Status",
    "options": "Available\nNot Available\nReplace Required"
   },
@@ -68,13 +62,48 @@
    "fieldname": "purchase_section",
    "fieldtype": "Section Break",
    "label": "Purchase"
+  },
+  {
+   "fieldname": "column_break_mcyp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "temperature",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Temperature"
+  },
+  {
+   "columns": 1,
+   "fieldname": "duration",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Duration (minutes)"
+  },
+  {
+   "columns": 2,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item"
+  },
+  {
+   "columns": 3,
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-02 08:50:53.428369",
+ "modified": "2025-10-02 11:36:24.714243",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal Raw Material",

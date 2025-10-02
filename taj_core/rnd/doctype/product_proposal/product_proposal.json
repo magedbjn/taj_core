@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "format:{product_name}-{##}",
+ "autoname": "field:product_name",
  "creation": "2025-10-01 15:15:59.362810",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -24,25 +24,25 @@
   "section_break_vwgz",
   "pp_items",
   "sensory_evaluation_tab",
-  "appearance",
-  "texture",
-  "taste",
-  "spicy",
-  "column_break_yiln",
+  "pp_sensory_evaluation",
+  "section_break_efwd",
   "sensory_decision",
-  "amended_from"
+  "amended_from",
+  "column_break_flof",
+  "note"
  ],
  "fields": [
   {
    "fieldname": "product_name",
    "fieldtype": "Data",
-   "label": "Product Name"
+   "label": "Product Name",
+   "unique": 1
   },
   {
    "fieldname": "cuisine",
    "fieldtype": "Select",
    "label": "Cuisine",
-   "options": "Asian\nIndian\nMiddle Eastern\nWestern\nItalian\nMexican\nJapanese\nChinese\nKorean\nMediterranean\nThai\nTurkish\nLocal\nTraditional\nFusion"
+   "options": "Asian\nChinese\nFusion\nIndian\nItalian\nJapanese\nKorean\nLocal\nMediterranean\nMexican\nMiddle Eastern\nThai\nTraditional\nTurkish\nWestern"
   },
   {
    "fieldname": "source_of_proposal",
@@ -134,34 +134,6 @@
    "label": "Sensory Evaluation"
   },
   {
-   "fieldname": "appearance",
-   "fieldtype": "Select",
-   "label": "Appearance",
-   "options": "Good\nFair\nPoor"
-  },
-  {
-   "fieldname": "texture",
-   "fieldtype": "Select",
-   "label": "Texture",
-   "options": "Chewy\nDry\nFirm\nGrainy\nHard\nLumpy\nSoggy\nThin\nViscous\nWatery"
-  },
-  {
-   "fieldname": "taste",
-   "fieldtype": "Select",
-   "label": "Taste",
-   "options": "Bitter\nBland\nFragrant\nGood flavour\nOff flavour\nPeppery\nPungent\nRancid\nSalty\nSweet"
-  },
-  {
-   "fieldname": "spicy",
-   "fieldtype": "Select",
-   "label": "Spicy",
-   "options": "Mild\nMedium\nHot\nExtra Hot"
-  },
-  {
-   "fieldname": "column_break_yiln",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -177,17 +149,36 @@
    "fieldtype": "Select",
    "label": "Sensory Evaluation Decision",
    "options": "Open\nApprove\nReject\nNeeds Improvement"
+  },
+  {
+   "fieldname": "pp_sensory_evaluation",
+   "fieldtype": "Table",
+   "label": "Sensory Evaluation",
+   "options": "Product Proposal Sensory Evaluation"
+  },
+  {
+   "fieldname": "section_break_efwd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_flof",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-02 08:42:57.155365",
+ "modified": "2025-10-02 11:47:47.647157",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal",
- "naming_rule": "Expression",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

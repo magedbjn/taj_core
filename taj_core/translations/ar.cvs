@@ -36,3 +36,75 @@ Interview Feedback,تعليق عن المقابلة
 Grievance Type,نوع الشكوى
 Employee Grievance,شكاوى الموظفين
 Monthly Consumption Comparison,مقارنة الاستهلاك الشهري
+Product Name,اسم المنتج
+Cuisine,المطبخ
+Source of Proposal,مصدر الاقتراح
+Target Segment,الشريحة المستهدفة
+Expected Market Size,حجم السوق المتوقع
+Compatibility with Current Production Capabilities,توافق مع قدرات الإنتاج الحالية
+Aligns with Company Vision & Goals,يتماشى مع رؤية وأهداف الشركة
+Special Requirements,متطلبات خاصة
+Solid Liquid,صلبة/سائلة
+Appearance,المظهر
+Texture,القوام
+Taste,الطعم
+Spicy,حار
+Sensory Evaluation Decision,قرار التقييم الحسي
+Component Type,نوع المكون
+Asian,آسيوي
+Chinese,صيني
+Fusion,مزيج
+Indian,هندي
+Italian,إيطالي
+Japanese,ياباني
+Korean,كوري
+Local,محلي
+Mediterranean,متوسطي
+Mexican,مكسيكي
+Middle Eastern,شرق أوسطي
+Thai,تايلاندي
+Traditional,تقليدي
+Turkish,تركي
+Western,غربي
+Sales,مبيعات
+Customer,عميل
+Competitor,منافس
+Management,إدارة
+RND,بحث وتطوير
+Military Sector,القطاع العسكري
+Hajj & Umrah,الحج والعمرة
+Retail,تجزئة
+Government,حكومة
+Private Sector,القطاع الخاص
+Export,تصدير
+Low,منخفض
+Medium,متوسط
+High,مرتفع
+Chewy,مطاطي
+Dry,جاف
+Firm,صلب
+Grainy,حبيبي
+Hard,قاسي
+Lumpy,متكتل
+Soggy,رطب/مبتل
+Thin,رقيق
+Viscous,لزج
+Watery,مائي
+Bitter,مر
+Bland,فاتر
+Fragrant,عطر
+Good flavour,نكهة جيدة
+Off flavour,نكهة غير مرغوبة
+Peppery,فلفلي
+Pungent,حاد/لاذع
+Rancid,متأكسد
+Salty,مالح
+Sweet,حلو
+Mild,خفيف
+Medium,متوسط
+Hot,حار
+Extra Hot,حار جدًا
+Needs Improvement,يحتاج تحسين
+Replace Required,يحتاج استبدال
+Solid,صلب
+Liquid,سائل

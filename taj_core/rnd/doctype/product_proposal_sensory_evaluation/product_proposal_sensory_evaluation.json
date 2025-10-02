@@ -1,0 +1,70 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-02 11:17:20.345737",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "evaluation_date",
+  "appearance",
+  "texture",
+  "taste",
+  "spicy"
+ ],
+ "fields": [
+  {
+   "default": "Today",
+   "fieldname": "evaluation_date",
+   "fieldtype": "Data",
+   "label": "Evaluation Date",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "appearance",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Appearance",
+   "options": "Good\nFair\nPoor"
+  },
+  {
+   "columns": 2,
+   "fieldname": "texture",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Texture",
+   "options": "Chewy\nDry\nFirm\nGrainy\nHard\nLumpy\nSoggy\nThin\nViscous\nWatery"
+  },
+  {
+   "columns": 2,
+   "fieldname": "taste",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Taste",
+   "options": "Bitter\nBland\nFragrant\nGood flavour\nOff flavour\nPeppery\nPungent\nRancid\nSalty\nSweet"
+  },
+  {
+   "columns": 2,
+   "fieldname": "spicy",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Spicy",
+   "options": "Mild\nMedium\nHot\nExtra Hot"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-02 11:20:44.699238",
+ "modified_by": "Administrator",
+ "module": "RND",
+ "name": "Product Proposal Sensory Evaluation",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

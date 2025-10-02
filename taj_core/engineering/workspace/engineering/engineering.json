@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"Y0n-BFTiDW\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Engineering</span>\",\"col\":12}},{\"id\":\"dgHS5vTXvN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Maintenance Contract\",\"col\":3}}]",
+ "content": "[{\"id\":\"Y0n-BFTiDW\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Engineering</span>\",\"col\":12}},{\"id\":\"dgHS5vTXvN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Maintenance Contract\",\"col\":4}},{\"id\":\"FS7iw8zWLo\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}}]",
  "creation": "2025-10-01 13:55:20.571310",
  "custom_blocks": [],
  "docstatus": 0,
@@ -12,8 +12,28 @@
  "indicator_color": "green",
  "is_hidden": 0,
  "label": "Engineering",
- "links": [],
- "modified": "2025-10-01 14:03:01.036554",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Report",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Consumption Comparison",
+   "link_count": 0,
+   "link_to": "Monthly Consumption Comparison",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-10-02 11:54:33.599578",
  "modified_by": "Administrator",
  "module": "Engineering",
  "name": "Engineering",
