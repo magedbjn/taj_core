@@ -1,6 +1,6 @@
 {
  "actions": [],
- "allow_rename": 1,
+ "autoname": "format:{product_name}-{##}",
  "creation": "2025-10-01 15:15:59.362810",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -22,7 +22,15 @@
   "contents_tab",
   "pp_solid_liquid",
   "section_break_vwgz",
-  "pp_items"
+  "pp_items",
+  "sensory_evaluation_tab",
+  "appearance",
+  "texture",
+  "taste",
+  "spicy",
+  "column_break_yiln",
+  "sensory_decision",
+  "amended_from"
  ],
  "fields": [
   {
@@ -119,20 +127,71 @@
    "fieldname": "product_info_tab",
    "fieldtype": "Tab Break",
    "label": "Product Info"
+  },
+  {
+   "fieldname": "sensory_evaluation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Sensory Evaluation"
+  },
+  {
+   "fieldname": "appearance",
+   "fieldtype": "Select",
+   "label": "Appearance",
+   "options": "Good\nFair\nPoor"
+  },
+  {
+   "fieldname": "texture",
+   "fieldtype": "Select",
+   "label": "Texture",
+   "options": "Chewy\nDry\nFirm\nGrainy\nHard\nLumpy\nSoggy\nThin\nViscous\nWatery"
+  },
+  {
+   "fieldname": "taste",
+   "fieldtype": "Select",
+   "label": "Taste",
+   "options": "Bitter\nBland\nFragrant\nGood flavour\nOff flavour\nPeppery\nPungent\nRancid\nSalty\nSweet"
+  },
+  {
+   "fieldname": "spicy",
+   "fieldtype": "Select",
+   "label": "Spicy",
+   "options": "Mild\nMedium\nHot\nExtra Hot"
+  },
+  {
+   "fieldname": "column_break_yiln",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Product Proposal",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "sensory_decision",
+   "fieldtype": "Select",
+   "label": "Sensory Evaluation Decision",
+   "options": "Open\nApprove\nReject\nNeeds Improvement"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-10-01 16:06:54.792683",
+ "modified": "2025-10-02 08:42:57.155365",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
    "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -140,6 +199,35 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RND User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RND Manager",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
