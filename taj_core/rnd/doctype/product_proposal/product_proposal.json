@@ -17,6 +17,8 @@
   "weight",
   "compatibility_with_current_production_capabilities",
   "aligns_with_vision",
+  "selling_price",
+  "expected_quantity",
   "section_break_ovbw",
   "special_requirements",
   "contents_tab",
@@ -168,13 +170,23 @@
    "fieldname": "note",
    "fieldtype": "Small Text",
    "label": "Note"
+  },
+  {
+   "fieldname": "selling_price",
+   "fieldtype": "Currency",
+   "label": "Selling Price"
+  },
+  {
+   "fieldname": "expected_quantity",
+   "fieldtype": "Int",
+   "label": "Expected Quantity"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-02 11:47:47.647157",
+ "modified": "2025-10-02 15:50:29.332714",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal",
