@@ -12,6 +12,9 @@
   "weight",
   "uom",
   "column_break_mcyp",
+  "operation",
+  "procees_type",
+  "cooking_type",
   "temperature",
   "duration",
   "notes",
@@ -97,13 +100,31 @@
    "in_list_view": 1,
    "label": "Item Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Link",
+   "label": "Operation",
+   "options": "Operation"
+  },
+  {
+   "fieldname": "procees_type",
+   "fieldtype": "Select",
+   "label": "Procees Type",
+   "options": "Blended\nCubes\nMarinade\nPaste\nSlices\nSoak12H\nWash\nWeight"
+  },
+  {
+   "fieldname": "cooking_type",
+   "fieldtype": "Select",
+   "label": "Cooking Type",
+   "options": "\nBlanch\nBoiled\nFry"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-02 11:36:24.714243",
+ "modified": "2025-10-02 15:33:18.445707",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal Raw Material",
