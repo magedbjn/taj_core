@@ -11,14 +11,15 @@
   "product_name",
   "cuisine",
   "source_of_proposal",
-  "target_segment",
   "column_break_sctj",
+  "target_segment",
   "expected_market_size",
+  "expected_quantity",
+  "column_break_havn",
   "weight",
   "compatibility_with_current_production_capabilities",
-  "aligns_with_vision",
   "selling_price",
-  "expected_quantity",
+  "aligns_with_vision",
   "section_break_ovbw",
   "special_requirements",
   "contents_tab",
@@ -55,12 +56,6 @@
   {
    "fieldname": "section_break_aslf",
    "fieldtype": "Section Break"
-  },
-  {
-   "default": "Today",
-   "fieldname": "date",
-   "fieldtype": "Date",
-   "label": "Date"
   },
   {
    "fieldname": "target_segment",
@@ -117,7 +112,8 @@
   },
   {
    "fieldname": "section_break_vwgz",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Raw Materials"
   },
   {
    "fieldname": "pp_items",
@@ -180,13 +176,23 @@
    "fieldname": "expected_quantity",
    "fieldtype": "Int",
    "label": "Expected Quantity"
+  },
+  {
+   "fieldname": "column_break_havn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-02 15:50:29.332714",
+ "modified": "2025-10-02 16:08:23.389765",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal",
