@@ -43,6 +43,7 @@ doc_events = {
 }
 
 after_install = "taj_core.install.after_install"
+# after_install = "taj_core.qc.doctype.visitor.visitor.create_new_visitor_notification"
 
 before_uninstall = "taj_core.uninstall.before_uninstall"
 

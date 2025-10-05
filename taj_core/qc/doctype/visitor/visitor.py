@@ -79,3 +79,28 @@ class Visitor(Document):
             )
             frappe.msgprint("Error sending email notification. Please check error logs.", alert=True)
             return False
+        
+
+def create_new_visitor_notification():
+    if not frappe.db.exists("Notification", "New Visitor"):
+        notif = frappe.get_doc({
+            "doctype": "Notification",
+            "name": "New Visitor",
+            "document_type": "Visitor",
+            "subject": _("New Visitor Registered"),
+            "message": _("A new visitor has been registered: {{ doc.full_name }}. Please review."),
+            "enabled": 1,
+            "event": "New",  
+            "recipients": []
+        })
+
+        # Add roles to Notification Recipients
+        notif.append("recipients", {"receiver_by_role": "QC User"})
+        notif.append("recipients", {"receiver_by_role": "Quality Manager"})
+
+        notif.insert(ignore_permissions=True)
+        frappe.db.commit()
+        frappe.msgprint(_("Notification 'New Visitor' created successfully."))
+    else:
+        frappe.msgprint(_("Notification 'New Visitor' already exists."))
+

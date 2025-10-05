@@ -5,7 +5,7 @@ frappe.ready(function() {
     
     // الانتظار قليلاً لتحميل DOM
     setTimeout(() => {
-        const lang = localStorage.getItem('visitor_language') || (navigator.language.startsWith('ar') ? 'Ar' : 'En');
+        const lang = localStorage.getItem('visitor_language') || (navigator.language && navigator.language.startsWith('ar') ? 'Ar' : 'En');
         create_language_switcher(lang);
         set_interface_language(lang);
         hide_unwanted_elements();
@@ -21,6 +21,7 @@ const translations = {
             'company': 'Company',
             'purpose_of_visit': 'Purpose of Visit',
             'email': 'Email',
+            'job _title': 'Job Title',
             'typhoid_or_paratyphoid': 'Typhoid / Paratyphoid last 3 months',
             'vomiting': 'Vomiting / Diarrhea last 7 days',
             'abroad': 'Been abroad last 3 weeks',
@@ -47,11 +48,29 @@ const translations = {
         'Submit':'Submit',
         'Discard':'Discard',
         'Basic Visitor Info': 'Basic Visitor Info',
+        'Please answer to the following questions:': 'Please answer to the following questions:',
         'InvalidEmail':'Invalid Email',
         'InvalidEmailMsg':'Please enter a valid email address.',
         'SuccessMsg':'✅ The form has been submitted successfully. Thank you for registering.',
         'SubmitAnotherResponse': 'Submit another response',
-        'ErrorRequired':'is required'
+        'ErrorRequired':'is required',
+
+        // نص القواعد للعرض فقط (بدون حقول)
+        'Rules & Regulations': 'Rules & Regulations',
+        rules_html: `
+          <h3 style="margin-top:0;">Rules & Regulations</h3>
+          <ol>
+            <li>Please remove watch and any loose jewellery.</li>
+            <li>Please do not use handphone or take any photographs in the production area without permission.</li>
+            <li>Please wear the Personal Protective Equipment (PPE) provided during active production or as per instructed.</li>
+            <li>Please do not handle food, touch any equipment, unless invited to do so.</li>
+            <li>Please do not change any equipment settings.</li>
+            <li>Eating, chewing, smoking or drinking in the production area is prohibited.</li>
+            <li>Please do not spit, blow your nose, sneeze or cough over the food.</li>
+            <li>Please wash and sanitize your hands each time you enter the work areas.</li>
+            <li>Please sign/acknowledge below to confirm that you have read and understood the above rules.</li>
+          </ol>
+        `
     },
     'Ar': {
         fields: {
@@ -59,6 +78,7 @@ const translations = {
             'company': 'الشركة',
             'purpose_of_visit': 'الغرض من الزيارة',
             'email': 'البريد الإلكتروني',
+            'job _title': 'المسمى الوظيفي',
             'typhoid_or_paratyphoid': 'التيفوئيد / البارايبوئيد آخر 3 أشهر',
             'vomiting': 'قيء / إسهال آخر 7 أيام',
             'abroad': 'تم السفر إلى الخارج آخر 3 أسابيع',
@@ -85,11 +105,29 @@ const translations = {
         'Submit':'إعتماد',
         'Discard':'تجاهل',
         'Basic Visitor Info': 'معلومات أساسية عن الزائر',
+        'Please answer to the following questions:': 'الرجاء الإجابة على الأسئلة التالية:',
         'InvalidEmail':'خطأ في البريد الإلكتروني',
         'InvalidEmailMsg':'يرجى إدخال بريد إلكتروني صحيح.',
         'SuccessMsg':'✅ تم حفظ النموذج بنجاح. شكراً لتسجيلك.',
         'SubmitAnotherResponse': 'تسجيل إدخال آخر',
-        'ErrorRequired':'مطلوب'
+        'ErrorRequired':'مطلوب',
+
+        // نص القواعد للعرض فقط (بدون حقول)
+        'Rules & Regulations': 'القواعد والأنظمة',
+        rules_html: `
+          <h3 style="margin-top:0;">القواعد والأنظمة</h3>
+          <ol>
+            <li>يرجى إزالة الساعة وأي مجوهرات فضفاضة.</li>
+            <li>يرجى عدم استخدام الهاتف أو التقاط الصور في منطقة الإنتاج دون إذن.</li>
+            <li>يرجى ارتداء معدات الحماية الشخصية (PPE) المقدمة أثناء الإنتاج أو حسب التعليمات.</li>
+            <li>يرجى عدم التعامل مع الطعام أو لمس أي معدات إلا إذا طُلب منك ذلك.</li>
+            <li>يرجى عدم تغيير إعدادات أي جهاز.</li>
+            <li>يُمنع الأكل أو المضغ أو التدخين أو الشرب في منطقة الإنتاج.</li>
+            <li>يرجى عدم البصق أو مسح/نفخ الأنف أو العطس أو السعال فوق الطعام.</li>
+            <li>يرجى غسل وتعقيم اليدين في كل مرة تدخل فيها مناطق العمل.</li>
+            <li>يرجى التوقيع/الإقرار أدناه للتأكيد على قراءة البنود وفهمها.</li>
+          </ol>
+        `
     }
 };
 
@@ -107,6 +145,7 @@ function translate_fields(lang) {
 // ===== ترجمة خيارات Select =====
 function translate_select_options(lang) {
     const dict = translations[lang] || translations['En'];
+    if (!dict.options) return;
     Object.keys(dict.options).forEach(fieldname => {
         const select = $(`[data-fieldname="${fieldname}"]`);
         if (select.length) {
@@ -174,6 +213,34 @@ function create_language_switcher(currentLang){
     });
 }
 
+// ===== حقن نص القواعد (بدون أي حقول) =====
+function render_rules_block(lang) {
+    const dict = translations[lang] || translations['En'];
+
+    // ابحث عن Section Break الخاص بالأسئلة الصحية (sb2) لنضع بعده البلوك
+    const $sb2 = $('[data-fieldname="sb2"]');
+
+    // أنشئ الحاوية إن لم تكن موجودة
+    let $container = $('#rules_container');
+    if (!$container.length) {
+        $container = $('<div id="rules_container" class="rules-wrapper"></div>');
+        if ($sb2.length) {
+            $sb2.after($container);
+        } else {
+            // في حال لم نجد sb2 لأي سبب، أضِف في نهاية النموذج
+            const $formArea = $('.web-form, .web-form-page, form').first();
+            if ($formArea.length) {
+                $formArea.append($container);
+            } else {
+                $('body').append($container); // حل أخير
+            }
+        }
+    }
+
+    // حقن المحتوى حسب اللغة
+    $container.html(dict.rules_html);
+}
+
 // ===== ضبط اللغة =====
 function set_interface_language(lang){
     const dict = translations[lang] || translations['En'];
@@ -185,7 +252,7 @@ function set_interface_language(lang){
     // ترجمة العنوان والنص
     $('.web-form-title h1, h1').text(dict['Visitor Registration']);
     $('.web-form-introduction p, .introduction-text, .web-form-description').text(dict['Please fill in your information below to register.']);
-    $('.section-head').text(dict['Basic Visitor Info']);
+    $('.section-head').first().text(dict['Basic Visitor Info']);
     
     // ترجمة الأزرار
     $('button, .btn').each(function(){
@@ -203,7 +270,10 @@ function set_interface_language(lang){
     $('.success-page .success-message').text(dict['SuccessMsg']);
     $('.success-page .new-btn').text(dict['SubmitAnotherResponse']);
 
-    // ترجمة رسائل الخطأ
+    // --- عرض القواعد كنص فقط ---
+    render_rules_block(lang);
+
+    // ترجمة رسائل الخطأ (بدون أي حقول للقواعد الآن)
     translate_error_modal(lang);
 }
 
@@ -222,9 +292,10 @@ function translate_error_modal(lang){
     $('.modal-body .msgprint').each(function(){
         let html = $(this).html();
         Object.keys(field_map).forEach(label => {
-            if(dict.fields[field_map[label]]) {
+            const key = field_map[label];
+            if (dict.fields && dict.fields[key]) {
                 const re = new RegExp(`Error: Value missing for Visitor: ${label}`, 'g');
-                html = html.replace(re, `${dict.fields[field_map[label]]} ${dict['ErrorRequired']}`);
+                html = html.replace(re, `${dict.fields[key]} ${dict['ErrorRequired']}`);
             }
         });
         $(this).html(html);

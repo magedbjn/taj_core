@@ -2,13 +2,17 @@
 import click
 
 from taj_core.setup import after_install as setup
-
+from taj_core.qc.doctype.visitor.visitor import create_new_visitor_notification
 
 def after_install():
 	try:
 		print("Setting up Tajff...")
+
 		setup()
 
+		# إنشاء Notification "New Visitor"
+		create_new_visitor_notification()
+	
 		click.secho("Thank you for installing Taj Food Factory for Ready Meals!", fg="green")
 
 	except Exception as e:
