@@ -58,7 +58,7 @@ const translations = {
         // نص القواعد للعرض فقط (بدون حقول)
         'Rules & Regulations': 'Rules & Regulations',
         rules_html: `
-          <h3 style="margin-top:0;">Rules & Regulations</h3>
+          <h6 style="margin-top:0;">Rules & Regulations</h6>
           <ol>
             <li>Please remove watch and any loose jewellery.</li>
             <li>Please do not use handphone or take any photographs in the production area without permission.</li>
@@ -115,7 +115,7 @@ const translations = {
         // نص القواعد للعرض فقط (بدون حقول)
         'Rules & Regulations': 'القواعد والأنظمة',
         rules_html: `
-          <h3 style="margin-top:0;">القواعد والأنظمة</h3>
+          <h6 style="margin-top:0;">القواعد والأنظمة</h6>
           <ol>
             <li>يرجى إزالة الساعة وأي مجوهرات فضفاضة.</li>
             <li>يرجى عدم استخدام الهاتف أو التقاط الصور في منطقة الإنتاج دون إذن.</li>

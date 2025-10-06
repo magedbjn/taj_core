@@ -6,7 +6,6 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "new_item_name",
   "item_code",
   "item_name",
   "weight",
@@ -17,17 +16,9 @@
   "cooking_type",
   "temperature",
   "duration",
-  "notes",
-  "purchase_section",
-  "availability_status",
-  "purchasing_remarks"
+  "notes"
  ],
  "fields": [
-  {
-   "fieldname": "new_item_name",
-   "fieldtype": "Data",
-   "label": "New Item Name"
-  },
   {
    "columns": 1,
    "fieldname": "weight",
@@ -48,23 +39,6 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
-  },
-  {
-   "columns": 2,
-   "fieldname": "availability_status",
-   "fieldtype": "Select",
-   "label": "Availability Status",
-   "options": "Available\nNot Available\nReplace Required"
-  },
-  {
-   "fieldname": "purchasing_remarks",
-   "fieldtype": "Small Text",
-   "label": "Purchasing Remarks"
-  },
-  {
-   "fieldname": "purchase_section",
-   "fieldtype": "Section Break",
-   "label": "Purchase"
   },
   {
    "fieldname": "column_break_mcyp",
@@ -98,8 +72,7 @@
    "fieldname": "item_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Item Name",
-   "read_only": 1
+   "label": "Item Name"
   },
   {
    "fieldname": "operation",
@@ -124,7 +97,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-02 15:33:18.445707",
+ "modified": "2025-10-06 09:38:19.637880",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal Raw Material",
