@@ -5,6 +5,19 @@ from frappe.utils import cint
 from frappe import _
 
 class ProductProposal(Document):
+    def validate(self):
+        """Ensure only one document per product_name is set as default."""
+        if self.is_default:
+            # Unset is_default for all other docs with same product_name
+            frappe.db.sql(
+                """
+                UPDATE `tabProduct Proposal`
+                SET is_default = 0
+                WHERE product_name = %s AND name != %s
+                """,
+                (self.product_name, self.name),
+            )
+
     def autoname(self):
         """Name format: {product_name}-{NN} e.g., My Product-01"""
         product = (self.product_name or "").strip()

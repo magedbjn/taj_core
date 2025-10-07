@@ -1,0 +1,134 @@
+{
+ "actions": [],
+ "creation": "2025-10-06 14:56:59.515345",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "post_date",
+  "link_target_doctype",
+  "version_target_doctype",
+  "type",
+  "item_code",
+  "item_name",
+  "version",
+  "column_break_jrot",
+  "weight_gram",
+  "size",
+  "qty",
+  "retort",
+  "holding_time",
+  "remark"
+ ],
+ "fields": [
+  {
+   "default": "Today",
+   "fieldname": "post_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Post Date"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item Code",
+   "options": "link_target_doctype"
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_jrot",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "weight_gram",
+   "fieldtype": "Float",
+   "label": "Weight (gram)"
+  },
+  {
+   "fieldname": "size",
+   "fieldtype": "Data",
+   "label": "Size"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Int",
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "retort",
+   "fieldtype": "Select",
+   "label": "Retort"
+  },
+  {
+   "fieldname": "holding_time",
+   "fieldtype": "Time",
+   "label": "Holding Time"
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Data",
+   "label": "Remark"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "BOM\nProduct Proposal"
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Dynamic Link",
+   "label": "Version",
+   "options": "version_target_doctype"
+  },
+  {
+   "fieldname": "link_target_doctype",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "link_target_doctype",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "version_target_doctype",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "version_target_doctype",
+   "options": "DocType",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-07 14:22:39.793431",
+ "modified_by": "Administrator",
+ "module": "RND",
+ "name": "Product Development",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

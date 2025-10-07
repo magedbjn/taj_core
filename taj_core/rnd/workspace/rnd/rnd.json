@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"wEnp0wzZob\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">RND</span>\",\"col\":12}},{\"id\":\"jnATZIMT2y\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Product Proposal\",\"col\":3}}]",
+ "content": "[{\"id\":\"wEnp0wzZob\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">RND</span>\",\"col\":12}},{\"id\":\"jnATZIMT2y\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Product Proposal\",\"col\":3}},{\"id\":\"CJ2FC0ulOM\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Product Development\",\"col\":3}}]",
  "creation": "2025-10-02 09:09:24.552269",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_hidden": 0,
  "label": "RND",
  "links": [],
- "modified": "2025-10-02 09:10:13.975129",
+ "modified": "2025-10-06 15:06:58.642680",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "RND",
@@ -30,6 +30,14 @@
    "doc_view": "List",
    "label": "Product Proposal",
    "link_to": "Product Proposal",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Product Development",
+   "link_to": "Product Development",
    "stats_filter": "[]",
    "type": "DocType"
   }

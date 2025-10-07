@@ -6,5 +6,5 @@ frappe.ui.form.on('Product Proposal', {
                     frappe.set_route("Form", frm.doctype, new_pp.name);
                 });
         };
-    }
+    },
 });
