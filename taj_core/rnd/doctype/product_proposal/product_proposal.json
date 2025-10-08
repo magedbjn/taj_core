@@ -196,6 +196,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "Pouches that can be produced from the Raw Materials",
    "fieldname": "quantity",
    "fieldtype": "Int",
    "label": "Quantity"
@@ -212,7 +213,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-07 12:12:08.409011",
+ "modified": "2025-10-07 15:39:36.902733",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal",
