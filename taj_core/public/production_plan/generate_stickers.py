@@ -100,3 +100,24 @@ def open_production_stickers(plan_name):
     }).insert(ignore_permissions=True)
 
     return file_doc.file_url  # مثال: /files/MFG-PP-23-00002_stickers.html
+
+@frappe.whitelist()
+def delete_old_production_stickers(days=7):
+    """
+    حذف ملفات الاستيكرات الأقدم من X أيام
+    """
+    cutoff_date = datetime.now() - timedelta(days=int(days))
+    old_files = frappe.db.get_all(
+        "File",
+        filters={
+            "file_name": ["like", "%_stickers.html"],
+            "creation": ["<", cutoff_date]
+        },
+        fields=["name"]
+    )
+
+    for f in old_files:
+        frappe.delete_doc("File", f.name, ignore_permissions=True)
+
+    frappe.db.commit()
+    return f"Deleted {len(old_files)} old sticker files"
