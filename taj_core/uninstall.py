@@ -13,7 +13,7 @@ def before_uninstall():
 
     except Exception as e:
         # حدّث هذا الرابط إلى مستودعك الفعلي
-        BUG_REPORT_URL = "https://github.com/your-org/taj_core/issues/new"
+        BUG_REPORT_URL = "https://github.com/magedbjn/taj_core/issues/new"
         click.secho(
             "Removing customizations for Taj Core failed due to an error."
             " Please try again or"

@@ -1,55 +1,81 @@
 # setup.py
-
+import click
 import frappe
 from frappe import _
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 
-def after_install():
-    """
-    يُنشئ الحقول الأساسية دائمًا (Core)،
-    ويُنشئ حقول HRMS فقط في حال كان تطبيق HRMS مثبتًا.
-    """
-    create_core_fields()
 
-    if "hrms" in frappe.get_installed_apps():
-        create_hrms_fields()
+def after_install():
+    """للتثبيت الأولي"""
+    create_all_custom_fields()
+    click.secho("✅ Taj Core custom fields created successfully", fg="green")
+
+
+def after_migrate():
+    """للتأكد من وجود الحقول بعد كل تحديث"""
+    create_all_custom_fields()
+    click.secho("✅ Taj Core custom fields verified after migration", fg="green")
 
 
 def before_uninstall():
-    """
-    يحذف الحقول التي أُنشئت بواسطة التطبيق، مع استثناء الحقول المحمية.
-    """
     KEEP_FIELDS = {
-        # لا نحذف هذين الحقلين عند إزالة التطبيق:
         "Employee": ["taj_nationality"],
         "Item": ["taj_sub_warehouse"],
     }
-
-    # حذف حقول Core (مع الاستثناءات)
-    delete_custom_fields(get_core_fields(), keep=KEEP_FIELDS)
-
-    # حذف حقول HRMS فقط إن كانت مثبتة (مع الاستثناءات)
-    if "hrms" in frappe.get_installed_apps():
-        delete_custom_fields(get_hrms_fields(), keep=KEEP_FIELDS)
+    delete_custom_fields(get_all_custom_fields(), keep=KEEP_FIELDS)
 
 
-# -------------------------------
-# إنشاء الحقول
-# -------------------------------
+def create_all_custom_fields():
+    """ينشئ كل الحقول مع التحقق من الوجود أولاً"""
+    core_fields = get_core_fields()
+    hrms_fields = get_hrms_fields() if "hrms" in frappe.get_installed_apps() else {}
+    
+    # دمج كل الحقول
+    all_fields = merge_field_dicts(core_fields, hrms_fields)
+    
+    # إنشاء الحقول مع التحقق
+    create_custom_fields_safely(all_fields)
 
-def create_core_fields():
-    create_custom_fields(get_core_fields(), ignore_validate=True)
+
+def create_custom_fields_safely(custom_fields: dict):
+    """ينشئ الحقول فقط إذا لم تكن موجودة مسبقاً"""
+    for doctype, fields in custom_fields.items():
+        existing_fields = frappe.get_all("Custom Field", 
+            filters={"dt": doctype}, 
+            pluck="fieldname"
+        )
+        
+        fields_to_create = [
+            field for field in fields 
+            if field.get("fieldname") not in existing_fields
+        ]
+        
+        if fields_to_create:
+            create_custom_fields({doctype: fields_to_create}, ignore_validate=True)
+            frappe.db.commit()
+            click.secho(f"✅ Created {len(fields_to_create)} fields in {doctype}", fg="green")
 
 
-def create_hrms_fields():
-    create_custom_fields(get_hrms_fields(), ignore_validate=True)
+def merge_field_dicts(dict1: dict, dict2: dict) -> dict:
+    """يدمج قاموسين للحقول"""
+    result = dict1.copy()
+    for doctype, fields in dict2.items():
+        if doctype in result:
+            result[doctype].extend(fields)
+        else:
+            result[doctype] = fields
+    return result
+
+
+def get_all_custom_fields() -> dict:
+    """يرجع كل الحقول المخصصة (للاستخدام في الإزالة)"""
+    core_fields = get_core_fields()
+    hrms_fields = get_hrms_fields()
+    return merge_field_dicts(core_fields, hrms_fields)
 
 
 def get_core_fields():
-    """
-    حقول عامة (ERPNext Core) تُنشأ دائمًا.
-    """
     return {
         "Item": [
             {
@@ -66,7 +92,7 @@ def get_core_fields():
                 "fieldtype": "Check",
                 "label": _("Ignore due date validation"),
                 "description": _(
-                    "If enabled, the system will skip the validation “Due Date cannot be before Posting / Supplier Invoice Date”."
+                    "If enabled, the system will skip the validation 'Due Date cannot be before Posting / Supplier Invoice Date'."
                 ),
                 "insert_after": "disabled",
             },
@@ -95,23 +121,7 @@ def get_core_fields():
 
 
 def get_hrms_fields():
-    """
-    حقول تتطلب HRMS (لن تُنشأ أو تُحذف إلا إذا كان HRMS مُثبتًا).
-    """
     return {
-        "Payroll Settings": [
-            {
-                "fieldname": "taj_salary_days_basis",
-                "fieldtype": "Select",
-                "label": _("Salary Days Calculation"),
-                "options": "Actual Month Days\nFixed 30 Days",
-                "default": "Fixed 30 Days",
-                "description": _(
-                    "Choose whether salary is calculated based on actual month days (28-31) or fixed 30 days."
-                ),
-                "insert_after": "payroll_based_on",
-            },
-        ],
         "Employee": [
             {
                 "fieldname": "taj_nationality",
@@ -124,17 +134,9 @@ def get_hrms_fields():
     }
 
 
-# -------------------------------
-# حذف الحقول (مع استثناءات)
-# -------------------------------
-
 def delete_custom_fields(custom_fields: dict, keep: dict | None = None):
     """
     يحذف الحقول المعرفة في custom_fields مع السماح باستثناء حقول محددة.
-
-    :param custom_fields: dict مثل {'Doctype': [{'fieldname': 'x', ...}, ...], ...}
-    :param keep: dict مثل {'Doctype': ['fieldname1', 'fieldname2', ...]}
-                 أي حقل ضمن keep لن يُحذف حتى لو كان ضمن custom_fields.
     """
     keep = keep or {}
     for doctype, fields in custom_fields.items():
@@ -148,8 +150,14 @@ def delete_custom_fields(custom_fields: dict, keep: dict | None = None):
         if not names_to_delete:
             continue
 
-        frappe.db.delete(
+        # تحسين: التحقق من وجود الحقول قبل الحذف
+        existing_fields = frappe.get_all(
             "Custom Field",
-            {"fieldname": ("in", names_to_delete), "dt": doctype},
+            filters={"fieldname": ("in", names_to_delete), "dt": doctype},
+            pluck="name"
         )
-        frappe.clear_cache(doctype=doctype)
+        
+        if existing_fields:
+            frappe.db.delete("Custom Field", {"name": ("in", existing_fields)})
+            frappe.clear_cache(doctype=doctype)
+            click.secho(f"🗑️ Deleted {len(existing_fields)} fields from {doctype}", fg="yellow")
