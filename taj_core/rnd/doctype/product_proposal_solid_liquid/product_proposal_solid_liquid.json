@@ -9,7 +9,15 @@
   "component_type",
   "component_name",
   "size",
-  "weight"
+  "weight",
+  "column_break_nwwk",
+  "salt",
+  "brix",
+  "ph",
+  "viscosity",
+  "spindel_type",
+  "rpm",
+  "temperature"
  ],
  "fields": [
   {
@@ -42,13 +50,60 @@
    "in_list_view": 1,
    "label": "Size",
    "placeholder": "2*2"
+  },
+  {
+   "depends_on": "eval:doc.component_type != 'Liquid'",
+   "fieldname": "column_break_nwwk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.component_type != 'Liquid'",
+   "fieldname": "salt",
+   "fieldtype": "Float",
+   "label": "Salt"
+  },
+  {
+   "depends_on": "eval:doc.component_type != 'Liquid'",
+   "fieldname": "brix",
+   "fieldtype": "Float",
+   "label": "Brix"
+  },
+  {
+   "depends_on": "eval:doc.component_type != 'Liquid'",
+   "fieldname": "ph",
+   "fieldtype": "Float",
+   "label": "pH"
+  },
+  {
+   "depends_on": "eval:doc.component_type != 'Liquid'",
+   "fieldname": "viscosity",
+   "fieldtype": "Float",
+   "label": "Viscosity"
+  },
+  {
+   "depends_on": "eval:doc.component_type != 'Liquid'",
+   "fieldname": "spindel_type",
+   "fieldtype": "Data",
+   "label": "Spindel Type"
+  },
+  {
+   "depends_on": "eval:doc.component_type != 'Liquid'",
+   "fieldname": "rpm",
+   "fieldtype": "Float",
+   "label": "RPM"
+  },
+  {
+   "depends_on": "eval:doc.component_type != 'Liquid'",
+   "fieldname": "temperature",
+   "fieldtype": "Float",
+   "label": "Temperature"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-06 14:25:29.152307",
+ "modified": "2025-10-14 16:17:45.963463",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal Solid Liquid",

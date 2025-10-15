@@ -2,7 +2,11 @@ import frappe
 from frappe import _
 from frappe.model.workflow import apply_workflow
 from frappe.utils import get_link_to_form
-from frappe.workflow.doctype.workflow.workflow import get_transitions
+
+try:
+    from frappe.model.workflow import get_transitions  # لمسار فريبي 15
+except ImportError:
+    from frappe.workflow.doctype.workflow.workflow import get_transitions  # لمسارات الإصدارات الأقدم
 
 
 def update_expense_claim_status_on_payment(doc, method):

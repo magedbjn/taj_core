@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-09 09:54:47.263957",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "cb1",
+  "certificate_type",
+  "certificate_no",
+  "issuer",
+  "issue_date",
+  "expiry_date",
+  "attachment",
+  "certificate_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break",
+   "options": "ISO 9001\nISO 22000\nHACCP\nGMP"
+  },
+  {
+   "fieldname": "certificate_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Certificate Type",
+   "options": "HACCP\nISO 9001\nISO 22000"
+  },
+  {
+   "fieldname": "certificate_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Certificate No"
+  },
+  {
+   "fieldname": "issuer",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Issuer"
+  },
+  {
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date"
+  },
+  {
+   "fieldname": "expiry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Expiry Date"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Attachment"
+  },
+  {
+   "fieldname": "certificate_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Certificate Status",
+   "options": "Active\nExpired\nPending Renewal",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-13 08:34:17.221207",
+ "modified_by": "Administrator",
+ "module": "QC",
+ "name": "Supplier Certificate",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

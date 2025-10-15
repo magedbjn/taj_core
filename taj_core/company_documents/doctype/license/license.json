@@ -7,6 +7,7 @@
  "field_order": [
   "license_english",
   "license_arabic",
+  "no_expiry",
   "expiry_date",
   "status",
   "attachment"
@@ -33,7 +34,7 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Expiry Date",
-   "reqd": 1
+   "mandatory_depends_on": "eval:!doc.no_expiry"
   },
   {
    "fieldname": "status",
@@ -48,12 +49,21 @@
    "fieldname": "attachment",
    "fieldtype": "Attach",
    "label": "Attachment"
+  },
+  {
+   "default": "0",
+   "fetch_from": "license_english.no_expiry",
+   "fieldname": "no_expiry",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "No Expiry",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-25 21:06:21.599839",
+ "modified": "2025-10-14 14:32:22.810644",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "License",

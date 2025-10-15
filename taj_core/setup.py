@@ -3,111 +3,153 @@
 import frappe
 from frappe import _
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
-# from frappe.desk.page.setup_wizard.install_fixtures import (
-# 	_,  # NOTE: this is not the real translation function
-# )
-# from frappe.desk.page.setup_wizard.setup_wizard import make_records
-# from frappe.installer import update_site_config
 
 
 def after_install():
-	create_taj_hrms_fields()
-	run_post_install_patches()
+    """
+    يُنشئ الحقول الأساسية دائمًا (Core)،
+    ويُنشئ حقول HRMS فقط في حال كان تطبيق HRMS مثبتًا.
+    """
+    create_core_fields()
+
+    if "hrms" in frappe.get_installed_apps():
+        create_hrms_fields()
+
 
 def before_uninstall():
-	delete_custom_fields(get_taj_hrms_fields())
+    """
+    يحذف الحقول التي أُنشئت بواسطة التطبيق، مع استثناء الحقول المحمية.
+    """
+    KEEP_FIELDS = {
+        # لا نحذف هذين الحقلين عند إزالة التطبيق:
+        "Employee": ["taj_nationality"],
+        "Item": ["taj_sub_warehouse"],
+    }
 
-def create_taj_hrms_fields():
-	if "hrms" in frappe.get_installed_apps():
-		create_custom_fields(get_taj_hrms_fields(), ignore_validate=True)
+    # حذف حقول Core (مع الاستثناءات)
+    delete_custom_fields(get_core_fields(), keep=KEEP_FIELDS)
 
-def get_taj_hrms_fields():
-	return {
-		"Item": [
-			{
-				"fieldname": "taj_sub_warehouse",
-				"fieldtype": "Select",
-				"label": _("Sub Warehouse"),
-				"options": "\nDry\nChiller\nFreezer",
-				"insert_after": "item_group"
-			},
-		],
-		"Payroll Settings": [
-			{
-				"fieldname": "taj_salary_days_basis",
-				"fieldtype": "Select",
-				"label": _("Salary Days Calculation"),
-				"options": "Actual Month Days\nFixed 30 Days",
-				"default": "Fixed 30 Days",
-				"description": _("Choose whether salary is calculated based on actual month days (28-31) or fixed 30 days."),
-				"insert_after": "payroll_based_on"
-			},
-		],
-		"Supplier": [
-			{
-				"fieldname": "taj_ignore_due_date_validation",
-				"fieldtype": "Check",
-				"label": _("Ignore due date validation"),
-				"description": _("If enabled, the system will skip the validation “Due Date cannot be before Posting / Supplier Invoice Date”"),
-				"insert_after": "disabled"
-			}
-		],
-		"Employee": [
-			{
-				"fieldname": "taj_nationality",
-				"fieldtype": "Link",
-				"label": _("Nationality"),
-				"options": "Country",
-				"insert_after": "date_of_joining"
-			},
-			# {
-			# 	"fieldname": "taj_id_number",
-			# 	"fieldtype": "Data",
-			# 	"label": "ID No.",
-			# 	"insert_after": "passport_details_section"
-			# },
-			# {
-			# 	"fieldname": "taj_id_expiry_date",
-			# 	"fieldtype": "Date",
-			# 	"label": "ID Expiry Date",
-			# 	"insert_after": "column_break_73"
-			# }
-		],
-	}
+    # حذف حقول HRMS فقط إن كانت مثبتة (مع الاستثناءات)
+    if "hrms" in frappe.get_installed_apps():
+        delete_custom_fields(get_hrms_fields(), keep=KEEP_FIELDS)
 
-def delete_custom_fields(custom_fields: dict):
-	"""
-	:param custom_fields: a dict like `{'Leave Application': [{fieldname: 'Travels', ...}]}`
-	"""
-	for doctype, fields in custom_fields.items():
-		frappe.db.delete(
-			"Custom Field",
-			{
-				"fieldname": ("in", [field["fieldname"] for field in fields]),
-				"dt": doctype,
-			},
-		)
 
-		frappe.clear_cache(doctype=doctype)
+# -------------------------------
+# إنشاء الحقول
+# -------------------------------
 
-def get_post_install_patches():
-	return (
-		"taj_core.patches.delete_slnee",
-		"taj_core.patches.delete_custom_fields",
-	)
+def create_core_fields():
+    create_custom_fields(get_core_fields(), ignore_validate=True)
 
-def run_post_install_patches():
-	print("\nPatching Existing Data...")
 
-	POST_INSTALL_PATCHES = get_post_install_patches()
-	frappe.flags.in_patch = True
+def create_hrms_fields():
+    create_custom_fields(get_hrms_fields(), ignore_validate=True)
 
-	try:
-		for patch in POST_INSTALL_PATCHES:
-			patch_name = patch.split(".")[-1]
-			if not patch_name:
-				continue
 
-			frappe.get_attr(f"taj_core.patches.{patch_name}.execute")()
-	finally:
-		frappe.flags.in_patch = False
+def get_core_fields():
+    """
+    حقول عامة (ERPNext Core) تُنشأ دائمًا.
+    """
+    return {
+        "Item": [
+            {
+                "fieldname": "taj_sub_warehouse",
+                "fieldtype": "Select",
+                "label": _("Sub Warehouse"),
+                "options": "\nDry\nChiller\nFreezer",
+                "insert_after": "item_group",
+            },
+        ],
+        "Supplier": [
+            {
+                "fieldname": "taj_ignore_due_date_validation",
+                "fieldtype": "Check",
+                "label": _("Ignore due date validation"),
+                "description": _(
+                    "If enabled, the system will skip the validation “Due Date cannot be before Posting / Supplier Invoice Date”."
+                ),
+                "insert_after": "disabled",
+            },
+            {
+                "fieldname": "taj_blocked_by_qualification",
+                "fieldtype": "Check",
+                "label": _("Blocked By Qualification"),
+                "description": _(
+                    "Supplier requires qualification approval before purchasing"
+                ),
+                "read_only": 1,
+                "insert_after": "taj_ignore_due_date_validation",
+            },
+        ],
+        "Supplier Group": [
+            {
+                "fieldname": "taj_manufacturing_related",
+                "fieldtype": "Check",
+                "label": _("Manufacturing Related"),
+                "description": _(
+                    "Mark this group as manufacturing-related to enforce quality approval for its suppliers."
+                ),
+            },
+        ],
+    }
+
+
+def get_hrms_fields():
+    """
+    حقول تتطلب HRMS (لن تُنشأ أو تُحذف إلا إذا كان HRMS مُثبتًا).
+    """
+    return {
+        "Payroll Settings": [
+            {
+                "fieldname": "taj_salary_days_basis",
+                "fieldtype": "Select",
+                "label": _("Salary Days Calculation"),
+                "options": "Actual Month Days\nFixed 30 Days",
+                "default": "Fixed 30 Days",
+                "description": _(
+                    "Choose whether salary is calculated based on actual month days (28-31) or fixed 30 days."
+                ),
+                "insert_after": "payroll_based_on",
+            },
+        ],
+        "Employee": [
+            {
+                "fieldname": "taj_nationality",
+                "fieldtype": "Link",
+                "label": _("Nationality"),
+                "options": "Country",
+                "insert_after": "date_of_joining",
+            },
+        ],
+    }
+
+
+# -------------------------------
+# حذف الحقول (مع استثناءات)
+# -------------------------------
+
+def delete_custom_fields(custom_fields: dict, keep: dict | None = None):
+    """
+    يحذف الحقول المعرفة في custom_fields مع السماح باستثناء حقول محددة.
+
+    :param custom_fields: dict مثل {'Doctype': [{'fieldname': 'x', ...}, ...], ...}
+    :param keep: dict مثل {'Doctype': ['fieldname1', 'fieldname2', ...]}
+                 أي حقل ضمن keep لن يُحذف حتى لو كان ضمن custom_fields.
+    """
+    keep = keep or {}
+    for doctype, fields in custom_fields.items():
+        keep_set = set(keep.get(doctype, []))
+        names_to_delete = [
+            field.get("fieldname")
+            for field in fields
+            if field.get("fieldname") and field.get("fieldname") not in keep_set
+        ]
+
+        if not names_to_delete:
+            continue
+
+        frappe.db.delete(
+            "Custom Field",
+            {"fieldname": ("in", names_to_delete), "dt": doctype},
+        )
+        frappe.clear_cache(doctype=doctype)

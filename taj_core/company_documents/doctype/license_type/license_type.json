@@ -9,6 +9,7 @@
   "disabled",
   "type_english",
   "type_arabic",
+  "no_expiry",
   "renew",
   "allowed_roles"
  ],
@@ -36,6 +37,7 @@
   },
   {
    "default": "30",
+   "depends_on": "eval:doc.no_expiry == 0",
    "description": "Renew before the expiration date",
    "fieldname": "renew",
    "fieldtype": "Int",
@@ -49,12 +51,18 @@
    "fieldtype": "Link",
    "label": "Allowed Roles",
    "options": "Role"
+  },
+  {
+   "default": "0",
+   "fieldname": "no_expiry",
+   "fieldtype": "Check",
+   "label": "No Expiry"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-26 04:55:29.032490",
+ "modified": "2025-10-14 14:26:11.336690",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "License Type",

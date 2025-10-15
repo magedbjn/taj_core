@@ -1,21 +1,27 @@
-import click
+# uninstall.py
 
-from taj_core.setup import before_uninstall as remove_custom_fields
+import click
+from taj_core import setup as setup_module
 
 
 def before_uninstall():
-	try:
-		print("Removing customizations created by Tajff app...")
-		remove_custom_fields()
+    try:
+        click.secho("Removing customizations created by Taj Core...", fg="cyan")
 
-	except Exception as e:
-		BUG_REPORT_URL = "https://github.com/frappe/hrms/issues/new"
-		click.secho(
-			"Removing Customizations for Tajff failed due to an error."
-			" Please try again or"
-			f" report the issue on {BUG_REPORT_URL} if not resolved.",
-			fg="bright_red",
-		)
-		raise e
+        # يحذف الحقول مع استثناء الحقول المحمية كما هو معرّف داخل setup.before_uninstall
+        setup_module.before_uninstall()
 
-	click.secho("Tajff app customizations have been removed successfully...", fg="green")
+    except Exception as e:
+        # حدّث هذا الرابط إلى مستودعك الفعلي
+        BUG_REPORT_URL = "https://github.com/your-org/taj_core/issues/new"
+        click.secho(
+            "Removing customizations for Taj Core failed due to an error."
+            " Please try again or"
+            f" report the issue on {BUG_REPORT_URL} if not resolved.",
+            fg="bright_red",
+        )
+        raise e
+
+    click.secho(
+        "Taj Core customizations have been removed successfully...", fg="green"
+    )

@@ -26,6 +26,8 @@
   "pp_solid_liquid",
   "section_break_tksr",
   "quantity",
+  "column_break_hhwh",
+  "holding_time",
   "section_break_vwgz",
   "pp_items",
   "sensory_evaluation_tab",
@@ -111,7 +113,7 @@
   {
    "fieldname": "pp_solid_liquid",
    "fieldtype": "Table",
-   "label": "Solid Liquid",
+   "label": "Solid/Liquid",
    "options": "Product Proposal Solid Liquid"
   },
   {
@@ -207,13 +209,22 @@
    "fieldname": "is_default",
    "fieldtype": "Check",
    "label": " Is Default"
+  },
+  {
+   "fieldname": "column_break_hhwh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "holding_time",
+   "fieldtype": "Time",
+   "label": "Holding Time"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-07 15:39:36.902733",
+ "modified": "2025-10-14 16:21:36.416228",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal",

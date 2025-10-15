@@ -1,0 +1,69 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-09 10:09:11.687465",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "audit_date",
+  "audit_type",
+  "auditor",
+  "findings_summary",
+  "action_plan",
+  "attachemnt"
+ ],
+ "fields": [
+  {
+   "fieldname": "audit_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Audit Date"
+  },
+  {
+   "description": "Type of quality audit conducted",
+   "fieldname": "audit_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Audit Type",
+   "options": "On-site\nRemote\nDocument Review"
+  },
+  {
+   "fieldname": "auditor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Auditor",
+   "options": "User"
+  },
+  {
+   "fieldname": "findings_summary",
+   "fieldtype": "Small Text",
+   "label": "Findings Summary"
+  },
+  {
+   "description": "Corrective and preventive actions plan to address quality issues",
+   "fieldname": "action_plan",
+   "fieldtype": "Small Text",
+   "label": "Action Plan"
+  },
+  {
+   "fieldname": "attachemnt",
+   "fieldtype": "Attach",
+   "label": "Attachemnt"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-13 08:50:12.992776",
+ "modified_by": "Administrator",
+ "module": "QC",
+ "name": "Supplier Audit",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
