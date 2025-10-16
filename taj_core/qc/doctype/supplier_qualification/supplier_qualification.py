@@ -373,18 +373,18 @@ def update_certificate_statuses():
         # Expired
         frappe.db.sql("""
             UPDATE `tabSupplier Certificate`
-               SET status = 'Expired'
+               SET certificate_status = 'Expired'
              WHERE COALESCE(expiry_date, '1900-01-01') < %(today)s
-               AND status <> 'Expired'
+               AND certificate_status <> 'Expired'
         """, {"today": today()})
 
         # About to Expire (within next 30 days) — فقط لمن حالته Active الآن
         frappe.db.sql("""
             UPDATE `tabSupplier Certificate`
-               SET status = 'About to Expire'
+               SET certificate_status = 'About to Expire'
              WHERE COALESCE(expiry_date, '9999-12-31') >= %(today)s
                AND expiry_date < %(limit)s
-               AND status = 'Active'
+               AND certificate_status = 'Active'
         """, {"today": today(), "limit": add_days(today(), 30)})
 
         frappe.db.commit()

@@ -18,14 +18,20 @@ def is_manufacturing_group(group: str | None) -> bool:
     if not group:
         return False
     val = frappe.db.get_value("Supplier Group", group, "taj_manufacturing_related")
-    return _is_checked(val)
-
-def _clear_is_manufacturing_group_cache():
-    """Clear cache when Supplier Group is updated"""
+    try:
+        return int(val or 0) == 1
+    except Exception:
+        return False
+    
+def _clear_is_manufacturing_group_cache(doc=None, method=None):
+    """Hook-safe: clear LRU cache when Supplier Group is updated/renamed."""
     try:
         is_manufacturing_group.cache_clear()
-    except Exception:
-        pass
+        # يمكن إضافة log للتحقق من عمل الدالة
+        # frappe.logger().debug("Manufacturing group cache cleared")
+    except Exception as e:
+        frappe.log_error(f"Error clearing manufacturing group cache: {str(e)}")
+
 
 def ensure_supplier_group_required(doc, method=None):
     if not doc.supplier_group:
