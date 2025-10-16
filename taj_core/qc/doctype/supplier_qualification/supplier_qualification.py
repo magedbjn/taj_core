@@ -85,9 +85,9 @@ def validate_items_against_qualification(doc, method=None) -> None:
         return
 
     # تخطَّ اللا-تصنيعي
-    from taj_core.integrations.supplier_hooks import is_manufacturing_group
+    from taj_core.integrations.supplier_hooks import is_qualified_supplier_group
     supplier_group = frappe.db.get_value("Supplier", supplier, "supplier_group")
-    if not is_manufacturing_group(supplier_group):
+    if not is_qualified_supplier_group(supplier_group):
         return
 
     qual = get_active_qualification(supplier)
