@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_rename": 1,
  "creation": "2025-10-16 13:55:55.120291",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -9,6 +8,7 @@
  ],
  "fields": [
   {
+   "description": "Suppliers in these groups, need qualification approval.",
    "fieldname": "supplier_group",
    "fieldtype": "Table MultiSelect",
    "label": "Supplier Group",
@@ -19,7 +19,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-10-16 14:11:50.929990",
+ "modified": "2025-10-17 01:55:56.624282",
  "modified_by": "Administrator",
  "module": "QC",
  "name": "Supplier Qualification Settings",
@@ -32,6 +32,15 @@
    "print": 1,
    "read": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Quality Manager",
    "share": 1,
    "write": 1
   }

@@ -7,6 +7,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import today, add_days, nowdate
 
+
 class SupplierQualification(Document):
     """Holds supplier approval state, approved items, certificates, audits, and scopes."""
     pass
@@ -70,91 +71,143 @@ def get_partial_approved_items_set(qualification: str | None, doc_items: list | 
 
 def validate_items_against_qualification(doc, method=None) -> None:
     """
-    Purchasing guard (hook-safe signature: (doc, method=None)).
-
-    Manufacturing suppliers only:
-      - No active qualification  -> block (مع رسالة أدق لو آخر حالة Request Approval / Rejected)
-      - Approved                -> allow all items
-      - Partially Approved      -> 
-            * items with status == Approved      -> allowed
-            * items with status == Rejected      -> block برسالة "مرفوض"
-            * items missing / Request Approval   -> block برسالة "تحتاج موافقة"
+    منع الاعتماد حتى موافقة المورد - برسائل مختصرة
     """
     supplier = getattr(doc, "supplier", None)
     if not supplier:
         return
 
-    # تخطَّ اللا-تصنيعي
+    # تخطَّ الموردين غير الخاضعين للتأهيل
     from taj_core.integrations.supplier_hooks import is_qualified_supplier_group
     supplier_group = frappe.db.get_value("Supplier", supplier, "supplier_group")
     if not is_qualified_supplier_group(supplier_group):
         return
 
     qual = get_active_qualification(supplier)
+    
+    # إذا لم توجد مؤهلية نشطة، أنشئ واحدة وامنع الاعتماد
     if not qual:
-        # لا توجد مؤهلية فعّالة: افحص آخر مؤهلية لرسالة أوضح
-        last_qual = frappe.get_all(
-            "Supplier Qualification",
-            filters={"supplier": supplier},
-            fields=["name", "approval_status"],
-            order_by="modified desc",
-            limit=1,
+        create_auto_qualification(supplier)
+        frappe.throw(
+            _("❌ Supplier requires qualification. Request sent to quality team.")
         )
-        if last_qual:
-            last_status = (last_qual[0].get("approval_status") or "").strip()
-            if last_status == "Request Approval":
-                frappe.throw(_("Supplier qualification is pending review (Request Approval). Purchasing is not allowed."))
-            if last_status == "Rejected":
-                frappe.throw(_("Supplier qualification is Rejected. Purchasing is not allowed."))
-        frappe.throw(_("No active Supplier Qualification found for supplier {0}.").format(supplier))
 
+    # التحقق من حالة المؤهلية
     status = (frappe.db.get_value("Supplier Qualification", qual, "approval_status") or "").strip()
 
-    if status == "Rejected":
-        frappe.throw(_("Supplier qualification is Rejected. Purchasing is not allowed."))
+    # السماح فقط بـ Approved أو Partially Approved
+    if status not in ["Approved", "Partially Approved"]:
+        frappe.throw(
+            _("❌ Supplier status: {}. Must be Approved or Partially Approved.").format(status)
+        )
 
-    if status == "Approved":
+    # إذا كانت Partially Approved، تحقق من الأصناف
+    if status == "Partially Approved":
+        validate_partial_approval_items(doc, qual)
+
+def validate_items_against_qualification(doc, method=None) -> None:
+    """
+    نسخة دقيقة - تفرق بين الحالات المختلفة
+    """
+    supplier = getattr(doc, "supplier", None)
+    if not supplier:
         return
 
-    if status == "Partially Approved":
-        doc_items = getattr(doc, "items", []) or []
-        codes = [d.item_code for d in doc_items if getattr(d, "item_code", None)]
-        if not codes:
-            return
+    from taj_core.integrations.supplier_hooks import is_qualified_supplier_group
+    supplier_group = frappe.db.get_value("Supplier", supplier, "supplier_group")
+    if not is_qualified_supplier_group(supplier_group):
+        return
 
-        status_map = _get_items_status_map_for_qualification(qual, codes)
+    # البحث عن آخر مؤهلية بجميع حالاتها
+    last_qual = frappe.get_all(
+        "Supplier Qualification",
+        filters={"supplier": supplier},
+        fields=["name", "approval_status", "valid_to"],
+        order_by="creation DESC",
+        limit=1
+    )
+    
+    if not last_qual:
+        # لا توجد أي مؤهلية
+        create_auto_qualification(supplier)
+        frappe.throw(_("❌ Qualification required - request sent to quality"))
+        return
 
-        rejected = []
-        pending  = []  # missing or Request Approval
-        for d in doc_items:
-            code = getattr(d, "item_code", None)
-            if not code:
-                continue
-            st = (status_map.get(code) or "").strip()
-            if st == "Approved":
-                continue
-            elif st == "Rejected":
-                rejected.append(code)
-            else:
-                # إما غير موجود بالجدول أو حالته Request Approval
-                pending.append(code)
+    status = (last_qual[0]["approval_status"] or "").strip()
+    
+    # التحقق إذا كانت المؤهلية منتهية الصلاحية
+    is_expired = False
+    if last_qual[0]["valid_to"]:
+        from frappe.utils import today
+        if last_qual[0]["valid_to"] < today():
+            is_expired = True
 
-        if rejected or pending:
-            parts = []
-            if rejected:
-                parts.append(
-                    _("These items are explicitly Rejected for this supplier:")
-                    + "<br>" + "<br>".join(frappe.utils.cstr(i) for i in rejected)
-                )
-            if pending:
-                parts.append(
-                    _("These items are not approved yet (missing or Request Approval):")
-                    + "<br>" + "<br>".join(frappe.utils.cstr(i) for i in pending)
-                    + "<br><br>"
-                    + _("Add them to the Supplier Approved Item table with Item Status = 'Approved', or remove them.")
-                )
-            frappe.throw("<br><br>".join(parts))
+    # إظهار الرسالة المناسبة
+    if status == "Rejected":
+        frappe.throw(_("❌ Supplier rejected by quality team"))
+    elif status == "Request Approval":
+        frappe.throw(_("❌ Awaiting quality team approval")) 
+    elif status == "Partially Approved" and not is_expired:
+        validate_partial_approval_items(doc, last_qual[0]["name"])
+    elif status == "Approved" and not is_expired:
+        return  # السماح بالاعتماد
+    else:
+        # حالات أخرى أو منتهية الصلاحية
+        frappe.throw(_("❌ Supplier qualification issue - contact quality team"))
+      
+def validate_partial_approval_items(doc, qualification: str):
+    """التحقق من الأصناف مع أولوية Pending approval"""
+    doc_items = getattr(doc, "items", []) or []
+    codes = [d.item_code for d in doc_items if getattr(d, "item_code", None)]
+    if not codes:
+        return
 
+    status_map = _get_items_status_map_for_qualification(qualification, codes)
+
+    rejected = []
+    pending = []
+    
+    for d in doc_items:
+        code = getattr(d, "item_code", None)
+        if not code:
+            continue
+            
+        st = (status_map.get(code) or "").strip()
+        if st == "Approved":
+            continue
+        elif st == "Rejected":
+            rejected.append(code)
+        else:
+            pending.append(code)
+
+    # إعطاء الأولوية: Pending approval أولاً
+    if pending:
+        if len(pending) > 3:
+            frappe.throw(_("❌ {} items need approval (first 3: {})").format(len(pending), ", ".join(pending[:3])))
+        else:
+            frappe.throw(_("❌ Pending approval: {}").format(", ".join(pending)))
+    
+    # إذا لا توجد pending، عرض rejected
+    elif rejected:
+        if len(rejected) > 3:
+            frappe.throw(_("❌ {} items rejected (first 3: {})").format(len(rejected), ", ".join(rejected[:3])))
+        else:
+            frappe.throw(_("❌ Rejected items: {}").format(", ".join(rejected)))
+
+def create_auto_qualification(supplier: str):
+    """إنشاء مؤهلية تلقائية بدون رسائل للمستخدم"""
+    try:
+        qualification = frappe.get_doc({
+            "doctype": "Supplier Qualification",
+            "supplier": supplier,
+            "supplier_name": frappe.db.get_value("Supplier", supplier, "supplier_name"),
+            "approval_status": "Request Approval",
+            "valid_from": frappe.utils.nowdate()
+        })
+        qualification.insert(ignore_permissions=True)
+        create_approval_todo(qualification.name, supplier)
+    except Exception:
+        pass  # صامت - لا تظهر رسائل للمستخدم
 
 def dedupe_approved_items(doc, method=None):
     """Remove duplicate items in the child table (fieldname: sq_items)."""
@@ -268,11 +321,7 @@ def request_items_approval(
     note: str | None = None,
 ) -> dict:
     """
-    Create/update Supplier Qualification rows for given item codes with item_status='Request Approval'.
-    - Creates draft Supplier Qualification if none exists.
-    - Skips duplicates (doesn't re-add same item).
-    - Creates a ToDo for QA team.
-    Returns: {"added": [...], "skipped": [...]}
+    نسخة مصححة - تفرق بين الأصناف المعلقة والمعتمدة والمرفوضة
     """
     if isinstance(items, str):
         try:
@@ -281,83 +330,106 @@ def request_items_approval(
             items = []
 
     if not supplier or not items:
-        return {"added": [], "skipped": []}
+        return {"message": "No items provided", "success": False}
 
-    qual = get_active_qualification(supplier)
-    if not qual:
-        # bootstrap new (draft) qualification
-        q = frappe.new_doc("Supplier Qualification")
-        q.supplier = supplier
-        q.insert(ignore_permissions=True)
-        qual = q.name
+    if not frappe.db.exists("Supplier", supplier):
+        return {"message": "Supplier not found", "success": False}
 
-    existing = set(
-        r["item"]
-        for r in frappe.get_all(
-            "Supplier Approved Item",
-            filters={
-                "parent": qual,
-                "parenttype": "Supplier Qualification",
-                "item": ["in", items],
-            },
-            fields=["item"],
-            limit=len(items),
-        )
+    qual = frappe.get_all(
+        "Supplier Qualification",
+        filters={"supplier": supplier},
+        fields=["name"],
+        limit=1,
+        order_by="creation DESC"
     )
-
-    added, skipped = [], []
-    for code in items:
-        if code in existing:
-            skipped.append(code)
-            continue
-        row = frappe.get_doc({
-            "doctype": "Supplier Approved Item",
-            "parent": qual,
-            "parenttype": "Supplier Qualification",
-            "parentfield": "sq_items",  # ⚠️ تأكد أن اسم حقل الجدول في DocType هو sq_items
-            "item": code,
-            "item_status": "Request Approval",
-            "remarks": note or "",
-        })
-        row.insert(ignore_permissions=True)
-        added.append(code)
-
-    # ToDo for QA
-    todo_desc = _("PO Items need qualification review for supplier {0}: {1}").format(
-        supplier, ", ".join(added) if added else ", ".join(skipped)
-    )
-    if reference_doctype and reference_name:
-        todo_desc += _(" (ref: {0} {1})").format(reference_doctype, reference_name)
-
-    frappe.get_doc({
-        "doctype": "ToDo",
-        "description": todo_desc,
-        "reference_type": "Supplier Qualification",
-        "reference_name": qual,
-    }).insert(ignore_permissions=True)
-
-    return {"added": added, "skipped": skipped}
-
-def auto_set_item_status_for_po(doc, method=None):
-    """
-    Auto-set item_status on Purchase Order items (client can also trigger via button).
-    """
-    if not getattr(doc, "supplier", None) or not hasattr(doc, "items"):
-        return
-
-    codes = [d.item_code for d in (doc.items or []) if getattr(d, "item_code", None)]
-    if not codes:
-        return
-
-    status_map = get_supplier_items_status_map(doc.supplier, codes)
-    # تحويل status_map إلى dict إذا كان _dict
-    status_dict = dict(status_map) if hasattr(status_map, 'items') else status_map
     
-    for d in (doc.items or []):
-        code = getattr(d, "item_code", None)
-        if code and code in status_dict:
-            d.item_status = status_dict[code]
+    if not qual:
+        return {"message": "No qualification found", "success": False}
 
+    qual_name = qual[0]["name"]
+    
+    # تنظيف وتفريغ الأصناف
+    clean_items = list(set([item.strip() for item in items if item and item.strip()]))
+    
+    if not clean_items:
+        return {"message": "No valid items provided", "success": False}
+
+    # الحصول على الأصناف الموجودة مع حالتها
+    existing_items = frappe.get_all(
+        "Supplier Approved Item",
+        filters={
+            "parent": qual_name,
+            "item": ["in", clean_items]
+        },
+        fields=["item", "item_status"],
+        limit=len(clean_items)
+    )
+    
+    # تصنيف الأصناف حسب حالتها
+    pending_items = []   # Request Approval
+    approved_items = []  # Approved
+    rejected_items = []  # Rejected
+    new_items = []       # غير موجودة
+    
+    existing_item_map = {row["item"]: row["item_status"] for row in existing_items}
+    
+    for item_code in clean_items:
+        if item_code in existing_item_map:
+            status = existing_item_map[item_code]
+            if status == "Request Approval":
+                pending_items.append(item_code)
+            elif status == "Approved":
+                approved_items.append(item_code)
+            elif status == "Rejected":
+                rejected_items.append(item_code)
+        else:
+            new_items.append(item_code)
+
+    # إضافة الأصناف الجديدة فقط
+    added = []
+    for item_code in new_items:
+        try:
+            doc = frappe.get_doc({
+                "doctype": "Supplier Approved Item",
+                "parent": qual_name,
+                "parenttype": "Supplier Qualification",
+                "parentfield": "sq_items",
+                "item": item_code,
+                "item_status": "Request Approval",
+                "remarks": note or "",
+            })
+            doc.insert(ignore_permissions=True)
+            added.append(item_code)
+        except Exception:
+            pass
+
+    frappe.db.commit()
+
+    # بناء رسالة واضحة
+    message_parts = []
+    
+    if added:
+        message_parts.append(f"✅ Added for review: {', '.join(added)}")
+    
+    if pending_items:
+        message_parts.append(f"⏳ Already pending: {', '.join(pending_items)}")
+    
+    if approved_items:
+        message_parts.append(f"🔵 Already approved: {len(approved_items)} items")
+    
+    if rejected_items:
+        message_parts.append(f"🔴 Already rejected: {len(rejected_items)} items")
+
+    message = " • ".join(message_parts) if message_parts else "No action needed"
+
+    return {
+        "message": message,
+        "success": True,
+        "added": added,
+        "pending": pending_items,
+        "approved": approved_items,
+        "rejected": rejected_items
+    }
 
 
 @frappe.whitelist()
@@ -393,7 +465,6 @@ def update_certificate_statuses():
         frappe.log_error(frappe.get_traceback(), "update_certificate_statuses error")
 
 
-from frappe import _
 
 def _get_items_status_map_for_qualification(qualification: str, item_codes: list[str]) -> dict[str, str]:
     """Return map {item_code: item_status} for given qualification and item codes.
@@ -421,3 +492,112 @@ def _get_items_status_map_for_qualification(qualification: str, item_codes: list
     )
     out = {r["item"]: (r.get("item_status") or "").strip() for r in rows}
     return out
+
+def validate_approval_status(doc, method=None):
+    """
+    منع المستخدمين من تغيير الحالة إلى 'Request Approval' يدوياً
+    """
+    if doc.is_new():
+        return
+    
+    # احصل على الحالة السابقة من قاعدة البيانات
+    previous_status = frappe.db.get_value("Supplier Qualification", doc.name, "approval_status")
+    
+    # إذا كانت الحالة السابقة ليست 'Request Approval' والمستخدم يحاول تغييرها إلى 'Request Approval'
+    if previous_status != "Request Approval" and doc.approval_status == "Request Approval":
+        frappe.throw(
+            _('Cannot set status to "Request Approval" manually. Please select another status.')
+        )
+
+def before_save_capture_status(doc, method=None):
+    """احفظ الحالة الأصلية قبل التعديل (اختياري)"""
+    if not doc.is_new():
+        doc._previous_approval_status = frappe.db.get_value(
+            "Supplier Qualification", 
+            doc.name, 
+            "approval_status"
+        )
+
+def create_approval_todo(qualification_name: str, supplier: str):
+    """إنشاء ToDo تلقائي لموافقة المورد الجديد"""
+    try:
+        supplier_name = frappe.db.get_value("Supplier", supplier, "supplier_name")
+        
+        # الحصول على الإعدادات
+        settings = frappe.get_cached_doc("Supplier Qualification Settings")
+        assigned_role = getattr(settings, "default_todo_role", "Quality Manager")
+        
+        # البحث عن مستخدمين بالدور المحدد
+        users_with_role = frappe.get_all(
+            "Has Role",
+            filters={"role": assigned_role, "parenttype": "User"},
+            fields=["parent"],
+            distinct=True
+        )
+        
+        if not users_with_role:
+            assigned_to = frappe.session.user
+        else:
+            assigned_to = users_with_role[0]["parent"]
+        
+        # وصف المهمة
+        description = _("🆕 New supplier requires qualification: {0} ({1})").format(
+            supplier_name, supplier
+        )
+        
+        # إنشاء ToDo
+        todo = frappe.get_doc({
+            "doctype": "ToDo",
+            "description": description,
+            "reference_type": "Supplier Qualification",
+            "reference_name": qualification_name,
+            "assigned_to": assigned_to,
+            "priority": "High",
+            "date": frappe.utils.nowdate(),
+            "role": assigned_role
+        })
+        
+        todo.flags.ignore_permissions = True
+        todo.insert()
+        
+        frappe.db.commit()
+        
+    except Exception as e:
+        frappe.log_error(f"Error creating approval todo for {supplier}: {str(e)}")
+
+def auto_set_item_status_for_po(doc, method=None):
+    """
+    تعيين تلقائي لحالة الأصناف في Purchase Order مع معالجة الأخطاء
+    """
+    try:
+        if not doc or doc.is_new() or not getattr(doc, "supplier", None):
+            return
+
+        if not hasattr(doc, "items") or not doc.items:
+            return
+
+        # جمع أكواد الأصناف الفريدة
+        item_codes = []
+        seen = set()
+        
+        for item in doc.items:
+            code = getattr(item, "item_code", None)
+            if code and code not in seen:
+                item_codes.append(code)
+                seen.add(code)
+
+        if not item_codes:
+            return
+
+        # الحصول على حالات الأصناف
+        status_map = get_supplier_items_status_map(doc.supplier, item_codes)
+        
+        # تعيين الحالة لكل صنف
+        for item in doc.items:
+            code = getattr(item, "item_code", None)
+            if code and code in status_map:
+                item.item_status = status_map[code]
+                
+    except Exception as e:
+        # تسجيل الخطأ بدون إيقاف العملية
+        frappe.log_error(f"Error in auto_set_item_status_for_po: {str(e)}")

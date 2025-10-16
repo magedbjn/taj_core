@@ -5,10 +5,15 @@ frappe.ui.form.on('Purchase Order', {
 
     frm.add_custom_button(__('Request Qualification Review'), function() {
       const pending = [];
+      const seen = new Set(); // ⬅️ لمنع التكرار
+      
       (frm.doc.items || []).forEach(row => {
         const s = (row.item_status || '').trim();
         if (!s || (s !== 'Approved' && s !== 'Rejected')) {
-          if (row.item_code) pending.push(row.item_code);
+          if (row.item_code && !seen.has(row.item_code)) { // ⬅️ تحقق من التكرار
+            pending.push(row.item_code);
+            seen.add(row.item_code); // ⬅️标记 كمنظور
+          }
         }
       });
 
@@ -23,7 +28,7 @@ frappe.ui.form.on('Purchase Order', {
           supplier: frm.doc.supplier,
           items: pending,
           reference_doctype: frm.doctype,
-          reference_name: frm.doc.name,
+          reference_name: frm.docname,
           note: __('Requested via Purchase Order {0}', [frm.doc.name])
         },
         callback: function(r) {

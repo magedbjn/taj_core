@@ -43,10 +43,18 @@ doc_events = {
 
     "Supplier Qualification Settings": {
         "on_update": "taj_core.integrations.supplier_hooks._clear_qualified_groups_cache",
+        "after_insert": "taj_core.integrations.supplier_hooks._clear_qualified_groups_cache",
+        "on_trash": "taj_core.integrations.supplier_hooks._clear_qualified_groups_cache",
     },
 
     "Supplier Qualification": {
-        "before_save": "taj_core.qc.doctype.supplier_qualification.supplier_qualification.dedupe_approved_items",
+        "before_save": [
+            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.before_save_capture_status",
+            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.dedupe_approved_items"
+        ],
+        "validate": [
+            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_approval_status"
+        ],
     },
 
     "Purchase Order": {

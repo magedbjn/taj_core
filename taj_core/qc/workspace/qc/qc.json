@@ -17,7 +17,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Supplier Qualification",
-   "link_count": 2,
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -41,9 +41,19 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Supplier Qualification Settings",
+   "link_count": 0,
+   "link_to": "Supplier Qualification Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-10-13 08:27:24.062269",
+ "modified": "2025-10-16 16:41:13.381761",
  "modified_by": "Administrator",
  "module": "QC",
  "name": "QC",
