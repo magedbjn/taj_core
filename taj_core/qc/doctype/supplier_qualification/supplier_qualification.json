@@ -125,8 +125,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-14 10:53:08.582403",
- "modified_by": "Administrator",
+ "modified": "2025-10-17 19:22:38.292950",
+ "modified_by": "m.bajandooh@tajff.sa",
  "module": "QC",
  "name": "Supplier Qualification",
  "naming_rule": "By fieldname",
@@ -171,18 +171,5 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [
-  {
-   "color": "Orange",
-   "title": "Partially Approved"
-  },
-  {
-   "color": "Green",
-   "title": "Approved"
-  },
-  {
-   "color": "Red",
-   "title": "Rejected"
-  }
- ]
+ "states": []
 }

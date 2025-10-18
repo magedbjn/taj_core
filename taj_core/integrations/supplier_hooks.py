@@ -9,24 +9,68 @@ from typing import Optional
 
 @lru_cache(maxsize=256)
 def is_qualified_supplier_group(group: str | None) -> bool:
-    """Check if supplier group requires qualification"""
+    """نسخة محسنة مع Cache للعلاقات الهرمية"""
     if not group:
         return False
     
     try:
         settings = frappe.get_cached_doc("Supplier Qualification Settings")
         qualified_groups = [row.supplier_group for row in settings.get("supplier_group", [])]
-        return group in qualified_groups
+        
+        # التحقق المباشر أولاً
+        if group in qualified_groups:
+            return True
+            
+        # التحقق من الـ Hierarchy
+        return check_group_hierarchy(group, qualified_groups)
+        
     except Exception:
         return False
 
+def check_group_hierarchy(group: str, qualified_groups: list) -> bool:
+    """التحقق من التسلسل الهرمي للمجموعة"""
+    # Cache للعلاقات الهرمية
+    cache_key = f"group_hierarchy_{group}"
+    cached_result = frappe.cache().get_value(cache_key)
+    
+    if cached_result is not None:
+        return cached_result
+    
+    result = _check_group_hierarchy_recursive(group, qualified_groups, set())
+    
+    # حفظ النتيجة في Cache لمدة ساعة
+    frappe.cache().set_value(cache_key, result, expires_in_sec=3600)
+    return result
+
+def _check_group_hierarchy_recursive(group: str, qualified_groups: list, visited: set) -> bool:
+    """دالة متكررة للتحقق من الـ Hierarchy"""
+    if group in visited:
+        return False
+    visited.add(group)
+    
+    # إذا كانت المجموعة مؤهلة مباشرة
+    if group in qualified_groups:
+        return True
+    
+    # الحصول على Parent Group
+    parent = frappe.db.get_value("Supplier Group", group, "parent_supplier_group")
+    if not parent:
+        return False
+    
+    # التحقق من Parent بشكل متكرر
+    return _check_group_hierarchy_recursive(parent, qualified_groups, visited)
+
 def _clear_qualified_groups_cache(doc=None, method=None):
-    """Clear cache when Supplier Qualification Settings change"""
+    """مسح جميع أنواع الـ Cache المتعلقة بالمجموعات"""
     try:
+        # مسح LRU Cache
         is_qualified_supplier_group.cache_clear()
-        frappe.logger().debug("Supplier Qualification cache cleared")
+        
+        # مسح Frappe Cache للعلاقات الهرمية
+        frappe.cache().delete_keys("group_hierarchy_*")
+        
     except Exception as e:
-        frappe.log_error(f"Error clearing qualified groups cache: {str(e)}")
+        frappe.log_error(f"Error clearing groups cache: {str(e)}")
 
 def ensure_supplier_group_required(doc, method=None):
     """إلزامية إدخال supplier group لأي مورد جديد"""

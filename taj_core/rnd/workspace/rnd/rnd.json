@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"wEnp0wzZob\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">RND</span>\",\"col\":12}},{\"id\":\"jnATZIMT2y\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Product Proposal\",\"col\":3}},{\"id\":\"CJ2FC0ulOM\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Product Development\",\"col\":3}}]",
+ "content": "[{\"id\":\"wEnp0wzZob\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">RND</span>\",\"col\":12}},{\"id\":\"giLOrvMIrF\",\"type\":\"card\",\"data\":{\"card_name\":\"R&D\",\"col\":4}},{\"id\":\"P6An3aLIUw\",\"type\":\"card\",\"data\":{\"card_name\":\"Manufacturing\",\"col\":4}}]",
  "creation": "2025-10-02 09:09:24.552269",
  "custom_blocks": [],
  "docstatus": 0,
@@ -9,38 +9,100 @@
  "hide_custom": 0,
  "icon": "equity",
  "idx": 0,
- "indicator_color": "green",
+ "indicator_color": "",
  "is_hidden": 0,
  "label": "RND",
- "links": [],
- "modified": "2025-10-06 15:06:58.642680",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Manufacturing",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Production Plan",
+   "link_count": 0,
+   "link_to": "Production Plan",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "BOM",
+   "link_count": 0,
+   "link_to": "BOM",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Work Order",
+   "link_count": 0,
+   "link_to": "Work Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Job Card",
+   "link_count": 0,
+   "link_to": "Job Card",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "R&D",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Product Proposal",
+   "link_count": 0,
+   "link_to": "Product Proposal",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Product Development",
+   "link_count": 0,
+   "link_to": "Product Development",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-10-17 19:53:09.754049",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "RND",
  "number_cards": [],
  "owner": "Administrator",
- "parent_page": "",
+ "parent_page": "Taj",
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 42.0,
- "shortcuts": [
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Product Proposal",
-   "link_to": "Product Proposal",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Product Development",
-   "link_to": "Product Development",
-   "stats_filter": "[]",
-   "type": "DocType"
-  }
- ],
+ "sequence_id": 37.0,
+ "shortcuts": [],
  "title": "RND"
 }
