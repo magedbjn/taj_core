@@ -4,3 +4,4 @@
 [post_model_sync]
 taj_core.patches.delete_custom_fields
 taj_core.patches.delete_slnee
+taj_core.patches.fix_workspaces
