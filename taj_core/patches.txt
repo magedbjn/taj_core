@@ -6,3 +6,4 @@ taj_core.patches.delete_custom_fields
 taj_core.patches.delete_slnee
 taj_core.patches.remove_field1
 taj_core.patches.remove_field3
+taj_core.patches.remove_field4
