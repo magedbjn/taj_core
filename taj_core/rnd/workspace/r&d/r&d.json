@@ -1,22 +1,21 @@
 {
  "charts": [],
- "content": "[{\"id\":\"wEnp0wzZob\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">RND</span>\",\"col\":12}},{\"id\":\"giLOrvMIrF\",\"type\":\"card\",\"data\":{\"card_name\":\"R&D\",\"col\":4}}]",
- "creation": "2025-10-02 09:09:24.552269",
+ "content": "[{\"id\":\"9f_MRlkuk3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">R&amp;D</span>\",\"col\":12}},{\"id\":\"2-W3BBPFck\",\"type\":\"card\",\"data\":{\"card_name\":\"Product\",\"col\":4}}]",
+ "creation": "2025-10-20 13:36:40.677294",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
- "icon": "equity",
  "idx": 0,
- "indicator_color": "",
+ "indicator_color": "green",
  "is_hidden": 0,
  "label": "R&D",
  "links": [
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "R&D",
+   "label": "Product",
    "link_count": 2,
    "link_type": "DocType",
    "onboard": 0,
@@ -43,27 +42,17 @@
    "type": "Link"
   }
  ],
- "modified": "2025-10-20 13:22:12.842779",
+ "modified": "2025-10-20 13:38:48.419218",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "R&D",
  "number_cards": [],
  "owner": "Administrator",
- "parent_page": "",
+ "parent_page": "Taj",
  "public": 1,
  "quick_lists": [],
- "roles": [
-  {
-   "role": "RND Manager"
-  },
-  {
-   "role": "RND User"
-  },
-  {
-   "role": "System Manager"
-  }
- ],
- "sequence_id": 2.0,
+ "roles": [],
+ "sequence_id": 39.0,
  "shortcuts": [],
  "title": "R&D"
 }

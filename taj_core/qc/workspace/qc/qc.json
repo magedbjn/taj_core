@@ -1,24 +1,23 @@
 {
  "charts": [],
- "content": "[{\"id\":\"jacy0YEqxv\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">QC</span>\",\"col\":12}},{\"id\":\"dNncYxmWpE\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Raw Material Specification\",\"col\":5}},{\"id\":\"lTB-noUSlB\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor\",\"col\":5}},{\"id\":\"_1zg2pmPk8\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Laboratory Test\",\"col\":9}},{\"id\":\"IshDariHGw\",\"type\":\"card\",\"data\":{\"card_name\":\"Supplier Qualification\",\"col\":4}}]",
- "creation": "2025-09-30 01:29:14.440430",
+ "content": "[{\"id\":\"YNmWwiaJp-\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">QC</span>\",\"col\":12}},{\"id\":\"aw1lKW8tyx\",\"type\":\"card\",\"data\":{\"card_name\":\"Qualification\",\"col\":4}},{\"id\":\"oHVpj4a6Re\",\"type\":\"card\",\"data\":{\"card_name\":\"Specification\",\"col\":4}},{\"id\":\"XOQtwbvMgx\",\"type\":\"card\",\"data\":{\"card_name\":\"Visitor\",\"col\":4}}]",
+ "creation": "2025-10-20 13:39:39.163992",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
- "icon": "quality-3",
+ "icon": "permission",
  "idx": 0,
- "indicator_color": "",
+ "indicator_color": "green",
  "is_hidden": 0,
  "label": "QC",
  "links": [
   {
-   "description": "To automatically enforce supplier qualification requirements based on supplier groups, preventing unqualified suppliers from proceeding with purchasing activities until they receive proper quality approval.",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Supplier Qualification",
-   "link_count": 3,
+   "label": "Qualification",
+   "link_count": 2,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -36,9 +35,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Purchase Scope",
+   "label": "Supplier Qualification Settings",
    "link_count": 0,
-   "link_to": "Purchase Scope",
+   "link_to": "Supplier Qualification Settings",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -46,60 +45,63 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Supplier Qualification Settings",
+   "label": "Specification",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Raw Material Specification",
    "link_count": 0,
-   "link_to": "Supplier Qualification Settings",
+   "link_to": "Raw Material Specification",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Laboratory Test",
+   "link_count": 0,
+   "link_to": "Laboratory Test",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Visitor",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Visitor",
+   "link_count": 0,
+   "link_to": "Visitor",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2025-10-20 13:22:30.406467",
+ "modified": "2025-10-20 13:42:50.976233",
  "modified_by": "Administrator",
  "module": "QC",
  "name": "QC",
  "number_cards": [],
  "owner": "Administrator",
- "parent_page": "",
+ "parent_page": "Taj",
  "public": 1,
  "quick_lists": [],
- "roles": [
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "QC User"
-  },
-  {
-   "role": "Quality Manager"
-  }
- ],
- "sequence_id": 4.0,
- "shortcuts": [
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Laboratory Test",
-   "link_to": "Laboratory Test",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Raw Material Specification",
-   "link_to": "Raw Material Specification",
-   "stats_filter": "[[\"Raw Material Specification\",\"status\",\"=\",\"Open\",false]]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Visitor",
-   "link_to": "Visitor",
-   "stats_filter": "[]",
-   "type": "DocType"
-  }
- ],
+ "roles": [],
+ "sequence_id": 40.0,
+ "shortcuts": [],
  "title": "QC"
 }

@@ -83,13 +83,13 @@ def after_migrate():
         click.secho("✅ Taj Core custom fields verified successfully", fg="green")
 
         # ثبّت Workspaces المطلوبة
-        ensure_workspace(name="QC",          module="QC",                 label="QC")
-        ensure_workspace(name="RND",         module="RND",                label="R&D")
-        ensure_workspace(name="Engineering", module="Engineering",        label="Engineering")
-        ensure_workspace(name="Documents",   module="Company Documents",  label="Documents")
+        # ensure_workspace(name="QC",          module="QC",                 label="QC")
+        # ensure_workspace(name="RND",         module="RND",                label="R&D")
+        # ensure_workspace(name="Engineering", module="Engineering",        label="Engineering")
+        # ensure_workspace(name="Documents",   module="Company Documents",  label="Documents")
+        # frappe.db.commit()
+        # click.secho("✅ Workspaces verified/created successfully", fg="green")
 
-        frappe.db.commit()
-        click.secho("✅ Workspaces verified/created successfully", fg="green")
     except Exception as e:
         handle_migration_error(e)
 
