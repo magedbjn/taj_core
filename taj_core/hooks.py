@@ -103,3 +103,10 @@ after_migrate = "taj_core.install.after_migrate"
 #     "taj_core.patches.delete_slnee.execute",
 #     "taj_core.patches.delete_custom_fields.execute"
 # ]
+
+fixtures = [
+    {
+        "dt": "Workspace",
+        "filters": [["name", "in", ["QC", "RND", "Engineering", "Documents"]]]
+    }
+]
