@@ -35,58 +35,58 @@ doc_events = {
         "on_submit": "taj_core.custom.expenses_claim.update_expense_claim_status_on_payment",
         "on_cancel": "taj_core.custom.expenses_claim.revert_expense_claim_status_on_cancel",
     },
-    "Supplier": {
-        "before_insert": "taj_core.integrations.supplier_hooks.ensure_supplier_group_required",
-        "validate": "taj_core.integrations.supplier_hooks.validate_supplier_group",
-        "after_insert": "taj_core.integrations.supplier_hooks.create_qualification_for_new_supplier",
-    },
+    # "Supplier": {
+    #     "before_insert": "taj_core.integrations.supplier_hooks.ensure_supplier_group_required",
+    #     "validate": "taj_core.integrations.supplier_hooks.validate_supplier_group",
+    #     "after_insert": "taj_core.integrations.supplier_hooks.create_qualification_for_new_supplier",
+    # },
 
-    "Supplier Qualification Settings": {
-        "on_update": "taj_core.integrations.supplier_hooks._clear_qualified_groups_cache",
-        "after_insert": "taj_core.integrations.supplier_hooks._clear_qualified_groups_cache",
-        "on_trash": "taj_core.integrations.supplier_hooks._clear_qualified_groups_cache",
-    },
+    # "Supplier Qualification Settings": {
+    #     "on_update": "taj_core.integrations.supplier_hooks._clear_qualified_groups_cache",
+    #     "after_insert": "taj_core.integrations.supplier_hooks._clear_qualified_groups_cache",
+    #     "on_trash": "taj_core.integrations.supplier_hooks._clear_qualified_groups_cache",
+    # },
 
-    "Supplier Qualification": {
-        "before_save": [
-            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.before_save_capture_status",
-            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.dedupe_approved_items"
-        ],
-        "validate": [
-            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_approval_status"
-        ],
-    },
+    # "Supplier Qualification": {
+    #     "before_save": [
+    #         "taj_core.qc.doctype.supplier_qualification.supplier_qualification.before_save_capture_status",
+    #         "taj_core.qc.doctype.supplier_qualification.supplier_qualification.dedupe_approved_items"
+    #     ],
+    #     "validate": [
+    #         "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_approval_status"
+    #     ],
+    # },
 
-    "Purchase Order": {
-        "before_save": [
-            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.auto_set_item_status_for_po"
-        ],
-        "before_submit": [
-            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
-        ]
-    },
+    # "Purchase Order": {
+    #     "before_save": [
+    #         "taj_core.qc.doctype.supplier_qualification.supplier_qualification.auto_set_item_status_for_po"
+    #     ],
+    #     "before_submit": [
+    #         "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
+    #     ]
+    # },
 
-    "Purchase Receipt": {
-        "before_submit": [
-            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
-        ]
-    },
+    # "Purchase Receipt": {
+    #     "before_submit": [
+    #         "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
+    #     ]
+    # },
 
     "Purchase Invoice": {
         "before_validate": "taj_core.custom.purchase_invoice.before_validate",
         "before_save": "taj_core.custom.purchase_invoice.before_save",
-        "before_submit": [
-            "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
-        ]
+        # "before_submit": [
+        #     "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
+        # ]
     },
 
-    "Request for Quotation": {
-        "before_submit": "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
-    },
+    # "Request for Quotation": {
+    #     "before_submit": "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
+    # },
 
-    "Supplier Quotation": {
-        "before_submit": "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
-    },
+    # "Supplier Quotation": {
+    #     "before_submit": "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
+    # },
     "Item":{
         'before_save': "taj_core.qc.doctype.raw_material_specification.override.item.raw_material_specification"
     },
