@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"9f_MRlkuk3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">R&amp;D</span>\",\"col\":12}},{\"id\":\"2-W3BBPFck\",\"type\":\"card\",\"data\":{\"card_name\":\"Product\",\"col\":4}}]",
+ "content": "[{\"id\":\"9f_MRlkuk3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">R&amp;D</span>\",\"col\":12}},{\"id\":\"2-W3BBPFck\",\"type\":\"card\",\"data\":{\"card_name\":\"Product\",\"col\":4}},{\"id\":\"tGPPG2vrVK\",\"type\":\"card\",\"data\":{\"card_name\":\"Manufacturing\",\"col\":4}}]",
  "creation": "2025-10-20 13:36:40.677294",
  "custom_blocks": [],
  "docstatus": 0,
@@ -41,9 +41,48 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Manufacturing",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Production Plan",
+   "link_count": 0,
+   "link_to": "Production Plan",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Work Order",
+   "link_count": 0,
+   "link_to": "Work Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "BOM",
+   "link_count": 0,
+   "link_to": "BOM",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-10-20 15:16:39.520923",
+ "modified": "2025-10-20 15:50:49.117493",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "R&D",
