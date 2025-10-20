@@ -7,8 +7,9 @@
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
+ "icon": "filter",
  "idx": 0,
- "indicator_color": "green",
+ "indicator_color": "",
  "is_hidden": 0,
  "label": "R&D",
  "links": [
@@ -42,7 +43,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-10-20 14:57:08.005927",
+ "modified": "2025-10-20 15:16:39.520923",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "R&D",

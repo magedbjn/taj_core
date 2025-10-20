@@ -1,18 +1,58 @@
 {
  "charts": [],
- "content": "[{\"type\":\"header\",\"data\":{\"text\":\"Documents\"}}]",
+ "content": "[{\"id\":\"UM4lIDH4xv\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Documents</span>\",\"col\":12}},{\"id\":\"iJaQlzakI0\",\"type\":\"card\",\"data\":{\"card_name\":\"License\",\"col\":4}},{\"id\":\"jlw9-t2tKt\",\"type\":\"card\",\"data\":{\"card_name\":\"Docuemtns\",\"col\":4}}]",
  "creation": "2025-10-20 13:43:26.135729",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
+ "icon": "milestone",
  "idx": 0,
- "indicator_color": "green",
+ "indicator_color": "",
  "is_hidden": 0,
  "label": "Documents",
- "links": [],
- "modified": "2025-10-20 14:57:29.444451",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "License",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "License",
+   "link_count": 0,
+   "link_to": "License",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Docuemtns",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Company Policy",
+   "link_count": 0,
+   "link_to": "Company Policy",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-10-20 15:37:54.244833",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "Documents",

@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"IWeVFAnYy7\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Taj</span>\",\"col\":12}},{\"id\":\"IlediOM59m\",\"type\":\"card\",\"data\":{\"card_name\":\"HR\",\"col\":4}},{\"id\":\"v-WJdkz3zS\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase\",\"col\":4}}]",
+ "content": "[{\"id\":\"IWeVFAnYy7\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Taj</span>\",\"col\":12}},{\"id\":\"IlediOM59m\",\"type\":\"card\",\"data\":{\"card_name\":\"HR\",\"col\":4}},{\"id\":\"v-WJdkz3zS\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase\",\"col\":4}},{\"id\":\"nG7C_9MDOE\",\"type\":\"card\",\"data\":{\"card_name\":\"Project\",\"col\":4}}]",
  "creation": "2025-10-20 13:34:57.227256",
  "custom_blocks": [],
  "docstatus": 0,
@@ -70,9 +70,28 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Project",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Project",
+   "link_count": 0,
+   "link_to": "Project",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-10-20 14:57:00.932138",
+ "modified": "2025-10-20 15:47:48.525557",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "Taj",
