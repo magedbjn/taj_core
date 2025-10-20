@@ -81,6 +81,8 @@
   {
    "fieldname": "type",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Type",
    "options": "BOM\nProduct Proposal"
   },
@@ -111,7 +113,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-20 09:15:59.858815",
+ "modified": "2025-10-20 09:23:19.147841",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Development",
