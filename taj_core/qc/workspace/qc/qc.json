@@ -54,16 +54,26 @@
    "type": "Link"
   }
  ],
- "modified": "2025-10-17 19:41:45.568406",
+ "modified": "2025-10-20 13:22:30.406467",
  "modified_by": "Administrator",
  "module": "QC",
  "name": "QC",
  "number_cards": [],
  "owner": "Administrator",
- "parent_page": "Taj",
+ "parent_page": "",
  "public": 1,
  "quick_lists": [],
- "roles": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "QC User"
+  },
+  {
+   "role": "Quality Manager"
+  }
+ ],
  "sequence_id": 4.0,
  "shortcuts": [
   {

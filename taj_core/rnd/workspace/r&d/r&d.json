@@ -1,0 +1,69 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"wEnp0wzZob\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">RND</span>\",\"col\":12}},{\"id\":\"giLOrvMIrF\",\"type\":\"card\",\"data\":{\"card_name\":\"R&D\",\"col\":4}}]",
+ "creation": "2025-10-02 09:09:24.552269",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "equity",
+ "idx": 0,
+ "indicator_color": "",
+ "is_hidden": 0,
+ "label": "R&D",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "R&D",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Product Proposal",
+   "link_count": 0,
+   "link_to": "Product Proposal",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Product Development",
+   "link_count": 0,
+   "link_to": "Product Development",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-10-20 13:22:12.842779",
+ "modified_by": "Administrator",
+ "module": "RND",
+ "name": "R&D",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "RND Manager"
+  },
+  {
+   "role": "RND User"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "sequence_id": 2.0,
+ "shortcuts": [],
+ "title": "R&D"
+}

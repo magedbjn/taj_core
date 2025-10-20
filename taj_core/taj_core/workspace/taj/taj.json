@@ -92,7 +92,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-10-19 00:22:42.923902",
+ "modified": "2025-10-20 13:23:18.042112",
  "modified_by": "Administrator",
  "module": "Taj Core",
  "name": "Taj",
@@ -101,7 +101,14 @@
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
- "roles": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "All"
+  }
+ ],
  "sequence_id": 2.0,
  "shortcuts": [],
  "title": "Taj"

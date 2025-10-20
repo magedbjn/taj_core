@@ -33,17 +33,27 @@
    "type": "Link"
   }
  ],
- "modified": "2025-10-17 19:41:45.439640",
+ "modified": "2025-10-20 13:21:29.134241",
  "modified_by": "Administrator",
  "module": "Engineering",
  "name": "Engineering",
  "number_cards": [],
  "owner": "Administrator",
- "parent_page": "Taj",
+ "parent_page": "",
  "public": 1,
  "quick_lists": [],
- "roles": [],
- "sequence_id": 36.0,
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Maintenance Manager"
+  },
+  {
+   "role": "Maintenance User"
+  }
+ ],
+ "sequence_id": 3.0,
  "shortcuts": [
   {
    "color": "Grey",
