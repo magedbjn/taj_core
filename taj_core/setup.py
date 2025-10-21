@@ -96,26 +96,6 @@ def get_core_fields():
                 ),
                 "insert_after": "disabled",
             },
-            {
-                "fieldname": "taj_blocked_by_qualification",
-                "fieldtype": "Check",
-                "label": _("Blocked By Qualification"),
-                "description": _(
-                    "Supplier requires qualification approval before purchasing"
-                ),
-                "read_only": 1,
-                "insert_after": "taj_ignore_due_date_validation",
-            },
-        ],
-        "Supplier Group": [
-            {
-                "fieldname": "taj_manufacturing_related",
-                "fieldtype": "Check",
-                "label": _("Manufacturing Related"),
-                "description": _(
-                    "Mark this group as manufacturing-related to enforce quality approval for its suppliers."
-                ),
-            },
         ],
     }
 

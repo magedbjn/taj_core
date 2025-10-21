@@ -50,6 +50,7 @@ class License(Document):
             self.expiry_date = None
             self.status = "Active"
 
+
     def before_save(self):
         """Update license status before saving"""
         # Skip status calculation for no-expiry licenses
@@ -60,11 +61,8 @@ class License(Document):
         self.update_license_status()
 
     def update_license_status(self):
-        """Update the status based on expiry date"""
         if not self.expiry_date:
             return
-            
-        # Validate date format
         try:
             expiry_date = getdate(self.expiry_date)
             if expiry_date < getdate('1900-01-01'):
@@ -74,10 +72,7 @@ class License(Document):
 
         try:
             today_date = getdate(today())
-            expiry_date = getdate(self.expiry_date)
             days_difference = date_diff(expiry_date, today_date)
-
-            # Get renew days from cache or attribute
             renew_days = getattr(self, "_renew_days", None)
             if renew_days is None:
                 renew_days = frappe.get_cached_value('License Type', self.license_english, 'renew') or 0
@@ -97,31 +92,25 @@ class License(Document):
 
 
 def scheduled_status_update():
-    """Scheduled bulk status update and renewal notifications"""
-    updated_rows = update_status_bulk('License', filters={'status': ['!=', 'Expired']})
+    """Scheduled bulk status update and notifications (Renew/Expired only on change)."""
+    updated_rows = update_status_bulk(
+        'License',
+        filters={'status': ['!=', 'Expired'], 'no_expiry': 0}  # نعمل فقط على التراخيص ذات الانتهاء
+    )
     for row in updated_rows:
-        if row.get('status') == 'Renew':
-            send_license_notification(row)
+        new_status = row.get('status')
+        if new_status in ('Renew', 'Expired'):
+            send_license_notification(row, new_status)
+
 
 
 def update_status_bulk(doctype, filters=None, batch_size=500):
-    """
-    Bulk update license statuses with batch processing
-    
-    Args:
-        doctype (str): Document type to update
-        filters (dict): Filters for query
-        batch_size (int): Number of records per batch
-    
-    Returns:
-        list: Updated rows with status information
-    """
     filters = filters or {}
     filters.setdefault('status', ['!=', 'Expired'])
+    filters.setdefault('no_expiry', 0)  
 
     today_date = getdate(today())
 
-    # Cache all license types
     license_types = {
         lt["name"]: {
             "no_expiry": lt.get("no_expiry") or 0,
@@ -130,10 +119,8 @@ def update_status_bulk(doctype, filters=None, batch_size=500):
         for lt in frappe.get_all("License Type", fields=["name", "no_expiry", "renew"])
     }
 
-    updated_rows = []
-    start = 0
-    
-    # Process in batches for better performance
+    updated_rows, start = [], 0
+
     while True:
         docs = frappe.get_all(
             doctype,
@@ -142,39 +129,25 @@ def update_status_bulk(doctype, filters=None, batch_size=500):
             limit_start=start,
             limit_page_length=batch_size
         )
-        
         if not docs:
             break
-            
+
         cases, names, params = [], [], []
 
         for doc in docs:
             lt_info = license_types.get(doc.get('license_english')) or {"no_expiry": 0, "renew": 0}
 
-            # Handle no-expiry licenses
-            if lt_info["no_expiry"]:
-                if doc.get('status') != 'Active':
-                    cases.append("WHEN %s THEN %s")
-                    params.extend([doc['name'], 'Active'])
-                    names.append(doc['name'])
-                    updated_rows.append({
-                        "name": doc['name'],
-                        "license_english": doc['license_english'],
-                        "status": 'Active'
-                    })
-                continue
-
-            # Skip if no expiry date
             if not doc.get('expiry_date'):
                 continue
 
             try:
                 expiry_date = getdate(doc['expiry_date'])
                 days_difference = date_diff(expiry_date, today_date)
+                renew_days = 0
                 try:
                     renew_days = max(0, int(lt_info["renew"] or 0))
                 except (ValueError, TypeError):
-                    renew_days = 0
+                    pass
 
                 new_status = get_license_status(days_difference, renew_days)
 
@@ -193,12 +166,10 @@ def update_status_bulk(doctype, filters=None, batch_size=500):
                     "Bulk License Status Update Error"
                 )
 
-        # Execute batch update
         if cases:
             case_sql = " ".join(cases)
             placeholders = ", ".join(["%s"] * len(names))
             params.extend(names)
-
             sql = f"""
                 UPDATE `tab{doctype}`
                 SET `status` = CASE `name`
@@ -207,7 +178,7 @@ def update_status_bulk(doctype, filters=None, batch_size=500):
                 WHERE `name` IN ({placeholders})
             """
             frappe.db.sql(sql, params)
-            
+
         start += batch_size
 
     if updated_rows:
@@ -216,47 +187,64 @@ def update_status_bulk(doctype, filters=None, batch_size=500):
 
     return updated_rows
 
-
-def send_license_notification(row: dict):
+def send_license_notification(row_or_doc, new_status: str = None):
     """
-    Send notification for license renewal
-    
-    Args:
-        row (dict): License data containing name, license_english, and status
+    يرسل تنبيه عند تغيّر حالة الترخيص إلى Renew أو Expired.
+    - يعمل مع dict (من update_status_bulk) أو Document.
+    - لا يُستدعى إلا من المجدولة (لا on_update).
     """
-    license_type = frappe.get_cached_doc("License Type", row['license_english'])
-    allowed_role = license_type.allowed_roles
-    if not allowed_role:
-        return
+    try:
+        # تطبيع المُدخل
+        if isinstance(row_or_doc, dict):
+            lic_name = row_or_doc.get("name")
+            lic_type = row_or_doc.get("license_english")
+            status   = new_status or row_or_doc.get("status")
+        else:
+            lic_name = row_or_doc.name
+            lic_type = row_or_doc.license_english
+            status   = new_status or getattr(row_or_doc, "status", None)
 
-    # Get users with the allowed role
-    has_roles = frappe.get_all(
-        "Has Role",
-        filters={"role": allowed_role},
-        fields=["parent as user"],
-        distinct=True
-    )
-    if not has_roles:
-        return
+        if not lic_name or not lic_type or status not in ("Renew", "Expired"):
+            return
 
-    # Get all emails in one query - بدون استخدام pluck
-    users = [hr["user"] for hr in has_roles]
-    user_docs = frappe.get_all("User", 
-        filters={"name": ["in", users]}, 
-        fields=["email"]
-    )
-    emails = [u["email"] for u in user_docs if u.get("email")]
+        # اجلب الدور من License Type (كاش)
+        lt = frappe.get_cached_doc("License Type", lic_type)
+        allowed_role = getattr(lt, "allowed_roles", None)
+        if not allowed_role:
+            return
 
-    if emails:
-        subject = _("License {0} Renewal Reminder").format(row['name'])
-        message = _(
-            "The license {0} has reached the 'Renew' status. "
-            "Please take the necessary action."
-        ).format(row['name'])
-        
-        frappe.sendmail(
-            recipients=emails, 
-            subject=subject, 
-            message=message
+        # المستخدمون الذين لديهم الدور
+        has_roles = frappe.get_all(
+            "Has Role",
+            filters={"role": allowed_role, "parenttype": "User"},
+            fields=["parent as user"],
+            distinct=True,
         )
-        frappe.logger().info(f"Renewal notification sent for license {row['name']} to {len(emails)} users")
+        if not has_roles:
+            return
+
+        users = [hr["user"] for hr in has_roles]
+        user_docs = frappe.get_all(
+            "User",
+            filters={"name": ["in", users], "enabled": 1},
+            fields=["email"],
+        )
+        emails = [u["email"] for u in user_docs if u.get("email")]
+        if not emails:
+            return
+
+        # نصوص خاصة بكل حالة
+        if status == "Renew":
+            subject = _("License {0} | Renewal Reminder").format(lic_name)
+            message = _("The license {0} has entered the 'Renew' window. Please take the necessary action.").format(lic_name)
+        else:  # Expired
+            subject = _("License {0} | Expired").format(lic_name)
+            message = _("The license {0} has expired. Immediate action may be required.").format(lic_name)
+
+        frappe.sendmail(recipients=emails, subject=subject, message=message)
+        frappe.logger().info(
+            f"[License Notify] '{lic_name}' changed to '{status}'. Notified {len(emails)} users (role='{allowed_role}')."
+        )
+
+    except Exception as e:
+        frappe.log_error(f"send_license_notification failed: {str(e)}", "License Notification Error")
