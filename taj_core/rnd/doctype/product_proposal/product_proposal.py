@@ -59,3 +59,43 @@ class ProductProposal(Document):
 
         indexes = [cint(p[-1]) for p in valid]
         return max(indexes) + 1
+
+    @frappe.whitelist()
+    def create_item(self):
+        # لا تنشئ Item إذا كان موجود
+        if getattr(self, "item_code", None):
+            frappe.throw(_("Item already exists for this Product Proposal: {0}").format(self.item_code))
+
+        default_company = frappe.defaults.get_user_default("Company")
+
+        item_values = {
+            "doctype": "Item",
+            "naming_series": "FG.####.P",
+            "item_name": self.product_name,
+            "item_group": "Finished Goods",
+            "stock_uom": "Pouch",
+            "is_stock_item": 1,
+            "brand": "Taj",
+            "shelf_life_in_days": 720,
+            "default_material_request_type": "Manufacture",
+            "has_batch_no": 1,
+            "has_expiry_date": 1,
+            "is_purchase_item": 0,
+            "item_defaults": [{
+                "company": default_company,
+                "default_warehouse": "Finished Goods - Taj"
+            }],
+        }
+
+        # ✅ التصحيح هنا: فحص وجود الحقل عبر get_meta().has_field(...)
+        item_meta = frappe.get_meta("Item")
+        if item_meta.has_field("item_name_arabic") and getattr(self, "product_name_arabic", None):
+            item_values["item_name_arabic"] = self.product_name_arabic
+
+        item = frappe.get_doc(item_values)
+        item.insert()
+
+        # اربط الكود على وثيقة الـ Product Proposal
+        self.db_set("item_code", item.name)
+
+        return {"item_code": item.name}

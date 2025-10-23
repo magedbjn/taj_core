@@ -7,6 +7,7 @@
   "product_info_tab",
   "section_break_aslf",
   "date",
+  "item_code",
   "product_name",
   "product_name_arabic",
   "cuisine",
@@ -226,13 +227,21 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Product Name Arabic"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item Code",
+   "options": "Item",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-20 08:47:40.441414",
+ "modified": "2025-10-22 09:12:30.809415",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal",
