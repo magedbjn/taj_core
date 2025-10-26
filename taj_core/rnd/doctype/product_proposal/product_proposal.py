@@ -42,6 +42,34 @@ class ProductProposal(Document):
 
         self.name = name
 
+    def before_insert(self):
+        self._ensure_previous_version_is_submitted()
+
+    def _ensure_previous_version_is_submitted(self):
+        """Block creating a new version if the latest version (same product_name) is not submitted."""
+        product = (self.product_name or "").strip()
+        if not product:
+            return
+
+        existing = frappe.get_all(
+            self.doctype,
+            filters={"name": ["like", f"{product}-%"]},
+            fields=["name", "docstatus"],
+        )
+        if not existing:
+            return
+
+        def parse_suffix(n: str) -> int:
+            m = re.search(r"(?:-|/)(\d+)$", n)
+            return int(m.group(1)) if m else 0
+
+        latest = max(existing, key=lambda d: parse_suffix(d["name"]))
+        if latest["docstatus"] != 1:
+            # رسالة واضحة للمستخدم
+            frappe.throw(
+                _("Please submit the current version ({0}) before creating a new one.").format(latest["name"])
+            )
+
     @staticmethod
     def get_next_version_index(existing_names: list[str]) -> int:
         """

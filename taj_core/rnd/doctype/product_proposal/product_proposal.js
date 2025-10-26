@@ -1,7 +1,12 @@
 frappe.ui.form.on('Product Proposal', {
     refresh(frm) {
-        if (frm.doc.docstatus === 1) {
+        if (frm.doc.docstatus !== 1) {
+            const label = __('Duplicate');
+            frm.page.menu.find(`[data-label="${encodeURIComponent(label)}"]`).parent().addClass('hidden');
+        }
 
+        if (frm.doc.docstatus === 1) {
+               
             // New Version
             frm.add_custom_button(__("New Version"), function () {
                 let new_pp = frappe.model.copy_doc(frm.doc);
