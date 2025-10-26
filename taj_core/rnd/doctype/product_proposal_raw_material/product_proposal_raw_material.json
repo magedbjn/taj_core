@@ -10,6 +10,7 @@
   "item_name",
   "qty",
   "uom",
+  "pre_bom",
   "column_break_mcyp",
   "operation",
   "procees_type",
@@ -91,13 +92,19 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Quantity"
+  },
+  {
+   "fieldname": "pre_bom",
+   "fieldtype": "Link",
+   "label": "Preparation BOM",
+   "options": "BOM"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-21 11:55:55.994670",
+ "modified": "2025-10-26 21:58:15.338135",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal Raw Material",

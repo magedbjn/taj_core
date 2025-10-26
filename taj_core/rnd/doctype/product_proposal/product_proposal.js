@@ -1,5 +1,13 @@
 frappe.ui.form.on('Product Proposal', {
     refresh(frm) {
+        frm.fields_dict['pp_items'].grid.get_field('pre_bom').get_query = function(doc, cdt, cdn) {
+            return {
+                filters: [
+                    ['BOM', 'name', 'like', 'BOM-PRE-%']
+                ]
+            };
+        };
+
         if (frm.doc.docstatus !== 1) {
             const label = __('Duplicate');
             frm.page.menu.find(`[data-label="${encodeURIComponent(label)}"]`).parent().addClass('hidden');
