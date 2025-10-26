@@ -11,7 +11,7 @@
  "is_standard": "Yes",
  "letter_head": "TajLeft",
  "letterhead": null,
- "modified": "2025-10-08 12:58:37.764975",
+ "modified": "2025-10-26 14:24:10.461046",
  "modified_by": "Administrator",
  "module": "Engineering",
  "name": "Monthly Consumption Comparison",
@@ -21,6 +21,9 @@
  "report_name": "Monthly Consumption Comparison",
  "report_type": "Script Report",
  "roles": [
+  {
+   "role": "System Manager"
+  },
   {
    "role": "Accounts Manager"
   },
