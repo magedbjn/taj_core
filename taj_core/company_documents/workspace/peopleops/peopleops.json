@@ -1,0 +1,97 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"3-NQaAT7Rm\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">PeopleOps</span>\",\"col\":12}},{\"id\":\"N4_ug6wbAc\",\"type\":\"card\",\"data\":{\"card_name\":\"Detials\",\"col\":4}},{\"id\":\"8fXjCAAGOx\",\"type\":\"card\",\"data\":{\"card_name\":\"Letters\",\"col\":4}},{\"id\":\"iP4qyToCiA\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}}]",
+ "creation": "2025-10-27 11:39:57.303985",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "share-people",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "PeopleOps",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Detials",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "PeopleOps Detials",
+   "link_count": 0,
+   "link_to": "PeopleOps Details",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Letters",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Letter Request",
+   "link_count": 0,
+   "link_to": "Employee Letter Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Letter Template",
+   "link_count": 0,
+   "link_to": "Employee Letter Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Report",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "First Last Checkins",
+   "link_count": 0,
+   "link_to": "Employee First Last Checkins",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-10-27 19:58:58.160645",
+ "modified_by": "Administrator",
+ "module": "Company Documents",
+ "name": "PeopleOps",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Taj",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 43.0,
+ "shortcuts": [],
+ "title": "PeopleOps"
+}

@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Maged Bajandooh and contributors
 // For license information, please see license.txt
 
-// frappe.ui.form.on("PeopleOps Detials", {
+// frappe.ui.form.on("PeopleOps Details", {
 // 	refresh(frm) {
 
 // 	},

@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class PeopleOpsDetials(Document):
+class EmployeeLetterTemplate(Document):
 	pass
