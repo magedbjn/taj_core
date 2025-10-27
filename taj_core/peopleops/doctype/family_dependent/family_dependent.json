@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-27 11:23:16.842779",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "is_insured",
+  "full_name_arabic",
+  "relationship",
+  "date_of_birth",
+  "column_break_bgqm",
+  "id_number",
+  "id_expiry"
+ ],
+ "fields": [
+  {
+   "fieldname": "full_name_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Full Name Arabic"
+  },
+  {
+   "fieldname": "relationship",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Relationship",
+   "options": "Spouse\nSon\nDaughter\nFather\nMother"
+  },
+  {
+   "fieldname": "id_number",
+   "fieldtype": "Data",
+   "label": "Id Number"
+  },
+  {
+   "fieldname": "id_expiry",
+   "fieldtype": "Date",
+   "label": "Id Expiry"
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date Of Birth"
+  },
+  {
+   "fieldname": "column_break_bgqm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_insured",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Insured"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-27 12:02:33.361004",
+ "modified_by": "Administrator",
+ "module": "PeopleOps",
+ "name": "Family Dependent",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

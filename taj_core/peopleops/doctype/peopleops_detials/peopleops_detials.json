@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:employee",
+ "creation": "2025-10-27 11:42:00.865940",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "dependent_section",
+  "employee",
+  "employee_name",
+  "dependent_tab",
+  "family_dependent"
+ ],
+ "fields": [
+  {
+   "fieldname": "dependent_section",
+   "fieldtype": "Section Break",
+   "label": "Dependent"
+  },
+  {
+   "fieldname": "family_dependent",
+   "fieldtype": "Table",
+   "label": "Family Dependent",
+   "options": "Family Dependent"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dependent_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dependent"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-27 11:50:47.375665",
+ "modified_by": "Administrator",
+ "module": "PeopleOps",
+ "name": "PeopleOps Detials",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
