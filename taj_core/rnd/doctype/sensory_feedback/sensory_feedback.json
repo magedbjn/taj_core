@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-28 10:58:45.391264",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "appearance",
+  "texture",
+  "taste",
+  "spicy"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Product Proposal",
+   "reqd": 1
+  },
+  {
+   "fieldname": "appearance",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Appearance",
+   "options": "Good\nFair\nPoor",
+   "reqd": 1
+  },
+  {
+   "fieldname": "texture",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Texture",
+   "options": "Chewy\nDry\nFirm\nGrainy\nHard\nLumpy\nSoggy\nThin\nViscous\nWatery",
+   "reqd": 1
+  },
+  {
+   "fieldname": "taste",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Taste",
+   "options": "Bitter\nBland\nFragrant\nGood flavour\nOff flavour\nPeppery\nPungent\nRancid\nSalty\nSweet",
+   "reqd": 1
+  },
+  {
+   "fieldname": "spicy",
+   "fieldtype": "Select",
+   "label": "Spicy",
+   "options": "Mild\nMedium\nHot\nExtra Hot",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-28 11:14:16.290306",
+ "modified_by": "Administrator",
+ "module": "RND",
+ "name": "Sensory Feedback",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
