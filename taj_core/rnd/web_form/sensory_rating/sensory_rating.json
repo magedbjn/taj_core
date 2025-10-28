@@ -8,6 +8,7 @@
  "anonymous": 1,
  "apply_document_permissions": 0,
  "button_label": "Send",
+ "client_script": "// Runs on load\r\nfrappe.web_form.on('load', () => {\r\n  try {\r\n    // 1) \u0627\u062d\u0635\u0644/\u0623\u0646\u0634\u0626 \u0645\u0639\u0631\u0641 \u062c\u0647\u0627\u0632 \u062b\u0627\u0628\u062a \u0641\u064a \u0627\u0644\u0645\u062a\u0635\u0641\u062d\r\n    let did = localStorage.getItem('sensory_device_id');\r\n    if (!did) {\r\n      // \u0627\u0633\u062a\u062e\u062f\u0645 crypto.randomUUID \u0625\u0646 \u062a\u0648\u0641\u0631\u060c \u0648\u0625\u0644\u0627 \u0647\u0627\u0634 \u0639\u0634\u0648\u0627\u0626\u064a\r\n      did = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() \r\n           : 'did-' + Math.random().toString(36).slice(2) + Date.now();\r\n      localStorage.setItem('sensory_device_id', did);\r\n    }\r\n\r\n    frappe.web_form.set_value('device_id', did);\r\n\r\n    // (\u0627\u062e\u062a\u064a\u0627\u0631\u064a) \u062e\u0632\u0651\u0650\u0646 \u0627\u0644\u0640 user agent \u0623\u064a\u0636\u064b\u0627 \u0644\u0648 \u0639\u0646\u062f\u0643 \u062d\u0642\u0644 \u0644\u0647\r\n    if (frappe.web_form.doc && 'user_agent' in frappe.web_form.doc) {\r\n      frappe.web_form.set_value('user_agent', navigator.userAgent || '');\r\n    }\r\n  } catch (e) {\r\n    // fallback \u0628\u0633\u064a\u0637 \u0625\u0630\u0627 \u0645\u0646\u0639 \u0627\u0644\u0645\u062a\u0635\u0641\u062d localStorage\r\n    const did = 'did-fallback-' + Date.now();\r\n    frappe.web_form.set_value('device_id', did);\r\n  }\r\n});\r\n",
  "condition_json": "[]",
  "creation": "2025-10-28 11:04:20.865314",
  "doc_type": "Sensory Feedback",
@@ -18,7 +19,7 @@
  "list_columns": [],
  "login_required": 0,
  "max_attachment_size": 0,
- "modified": "2025-10-28 11:16:01.470059",
+ "modified": "2025-10-28 14:49:05.050874",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "sensory-rating",
@@ -32,6 +33,21 @@
  "web_form_fields": [
   {
    "allow_read_on_all_link_options": 0,
+   "default": "Today",
+   "fieldname": "evaluation_date",
+   "fieldtype": "Date",
+   "hidden": 0,
+   "label": "Evaluation Date",
+   "max_length": 0,
+   "max_value": 0,
+   "options": "",
+   "precision": "",
+   "read_only": 1,
+   "reqd": 0,
+   "show_in_filter": 0
+  },
+  {
+   "allow_read_on_all_link_options": 0,
    "fieldname": "item",
    "fieldtype": "Link",
    "hidden": 0,
@@ -41,7 +57,7 @@
    "options": "Product Proposal",
    "precision": "",
    "read_only": 0,
-   "reqd": 0,
+   "reqd": 1,
    "show_in_filter": 0
   },
   {
@@ -55,7 +71,7 @@
    "options": "Good\nFair\nPoor",
    "precision": "",
    "read_only": 0,
-   "reqd": 0,
+   "reqd": 1,
    "show_in_filter": 0
   },
   {
@@ -69,7 +85,7 @@
    "options": "Chewy\nDry\nFirm\nGrainy\nHard\nLumpy\nSoggy\nThin\nViscous\nWatery",
    "precision": "",
    "read_only": 0,
-   "reqd": 0,
+   "reqd": 1,
    "show_in_filter": 0
   },
   {
@@ -83,7 +99,7 @@
    "options": "Bitter\nBland\nFragrant\nGood flavour\nOff flavour\nPeppery\nPungent\nRancid\nSalty\nSweet",
    "precision": "",
    "read_only": 0,
-   "reqd": 0,
+   "reqd": 1,
    "show_in_filter": 0
   },
   {
@@ -97,7 +113,7 @@
    "options": "Mild\nMedium\nHot\nExtra Hot",
    "precision": "",
    "read_only": 0,
-   "reqd": 0,
+   "reqd": 1,
    "show_in_filter": 0
   }
  ]

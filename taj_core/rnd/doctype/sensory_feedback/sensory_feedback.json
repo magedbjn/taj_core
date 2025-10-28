@@ -5,6 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "evaluation_date",
   "item",
   "appearance",
   "texture",
@@ -50,12 +51,19 @@
    "label": "Spicy",
    "options": "Mild\nMedium\nHot\nExtra Hot",
    "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "evaluation_date",
+   "fieldtype": "Date",
+   "label": "Evaluation Date",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-28 11:14:16.290306",
+ "modified": "2025-10-28 14:49:22.087176",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Sensory Feedback",

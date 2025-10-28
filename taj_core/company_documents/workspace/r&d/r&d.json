@@ -56,7 +56,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Product",
-   "link_count": 3,
+   "link_count": 2,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -80,19 +80,9 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Sensory Feedback",
-   "link_count": 0,
-   "link_to": "Sensory Feedback",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
   }
  ],
- "modified": "2025-10-28 11:44:16.202519",
+ "modified": "2025-10-28 15:28:56.100608",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "R&D",

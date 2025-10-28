@@ -27,6 +27,9 @@ override_doctype_class = {
 }
 
 doc_events = {
+    "Sensory Feedback": {
+        "after_insert": "taj_core.rnd.doctype.sensory_feedback.sensory_feedback.sync_to_product_proposal"
+    },
     "Payment Entry": {
         "on_submit": "taj_core.custom.expenses_claim.update_expense_claim_status_on_payment",
         "on_cancel": "taj_core.custom.expenses_claim.revert_expense_claim_status_on_cancel"
