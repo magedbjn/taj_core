@@ -9,6 +9,11 @@
   "dependent_section",
   "employee",
   "employee_name",
+  "gender",
+  "nationality",
+  "mobile",
+  "date_of_brith",
+  "marital_status",
   "dependent_tab",
   "family_dependent"
  ],
@@ -47,12 +52,48 @@
    "fieldname": "dependent_tab",
    "fieldtype": "Tab Break",
    "label": "Dependent"
+  },
+  {
+   "fetch_from": "employee.gender",
+   "fieldname": "gender",
+   "fieldtype": "Data",
+   "label": "Gender",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.taj_nationality",
+   "fieldname": "nationality",
+   "fieldtype": "Data",
+   "label": "Nationality",
+   "options": "Country",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.cell_number",
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.date_of_birth",
+   "fieldname": "date_of_brith",
+   "fieldtype": "Date",
+   "label": "Date of Brith",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.marital_status",
+   "fieldname": "marital_status",
+   "fieldtype": "Data",
+   "label": "Marital Status",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-27 13:36:06.684731",
+ "modified": "2025-10-30 08:37:10.124707",
  "modified_by": "Administrator",
  "module": "PeopleOps",
  "name": "PeopleOps Details",

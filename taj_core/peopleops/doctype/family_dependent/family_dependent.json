@@ -6,13 +6,16 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "is_insured",
   "full_name_arabic",
   "relationship",
   "date_of_birth",
+  "gender",
   "column_break_bgqm",
   "id_number",
-  "id_expiry"
+  "id_expiry",
+  "nationality",
+  "mobile",
+  "marital_status"
  ],
  "fields": [
   {
@@ -48,18 +51,34 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1",
-   "fieldname": "is_insured",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Is Insured"
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
+  },
+  {
+   "fieldname": "nationality",
+   "fieldtype": "Link",
+   "label": "Nationality",
+   "options": "Country"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile"
+  },
+  {
+   "fieldname": "marital_status",
+   "fieldtype": "Select",
+   "label": "Marital Status",
+   "options": "\nSingle\nMarried\nDivorced\nWidowed"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-27 13:38:30.469559",
+ "modified": "2025-10-30 08:38:00.666603",
  "modified_by": "Administrator",
  "module": "PeopleOps",
  "name": "Family Dependent",
