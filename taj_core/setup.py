@@ -110,12 +110,6 @@ def get_hrms_fields():
                 "options": "Country",
                 "insert_after": "date_of_joining",
             },
-            {
-                "fieldname": "taj_id_number",
-                "fieldtype": "Date",
-                "label": _("Id NUmber"),
-                "insert_after": "salutation",
-            },
         ],
     }
 
