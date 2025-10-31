@@ -102,15 +102,15 @@ def get_core_fields():
 
 def get_hrms_fields():
     return {
-        "Employee": [
-            {
-                "fieldname": "taj_nationality",
-                "fieldtype": "Link",
-                "label": _("Nationality"),
-                "options": "Country",
-                "insert_after": "date_of_joining",
-            },
-        ],
+        # "Employee": [
+        #     {
+        #         "fieldname": "taj_nationality",
+        #         "fieldtype": "Link",
+        #         "label": _("Nationality"),
+        #         "options": "Country",
+        #         "insert_after": "date_of_joining",
+        #     },
+        # ],
     }
 
 

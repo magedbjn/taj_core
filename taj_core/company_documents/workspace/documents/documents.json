@@ -16,8 +16,27 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "License",
+   "label": "Docuemtns",
    "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Company Policy",
+   "link_count": 0,
+   "link_to": "Company Policy",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "License",
+   "link_count": 2,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -35,24 +54,15 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Docuemtns",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Company Policy",
+   "label": "License Type",
    "link_count": 0,
-   "link_to": "Company Policy",
+   "link_to": "License Type",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2025-10-20 15:37:54.244833",
+ "modified": "2025-11-01 01:16:33.633144",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "Documents",
