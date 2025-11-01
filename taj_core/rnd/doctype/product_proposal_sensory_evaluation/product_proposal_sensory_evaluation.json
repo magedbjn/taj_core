@@ -20,32 +20,24 @@
    "default": "Today",
    "fieldname": "evaluation_date",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Evaluation Date",
    "read_only": 1
   },
   {
-   "columns": 2,
    "fieldname": "appearance",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Appearance",
-   "options": "1\n2\n3\n4\n5"
+   "fieldtype": "Rating",
+   "label": "Appearance"
   },
   {
-   "columns": 2,
    "fieldname": "texture",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Texture",
-   "options": "1\n2\n3\n4\n5"
+   "fieldtype": "Rating",
+   "label": "Texture"
   },
   {
-   "columns": 2,
    "fieldname": "taste",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Taste",
-   "options": "1\n2\n3\n4\n5"
+   "fieldtype": "Rating",
+   "label": "Taste"
   },
   {
    "columns": 2,
@@ -58,6 +50,7 @@
   {
    "fieldname": "your_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Your Name"
   },
   {
@@ -68,6 +61,7 @@
   {
    "fieldname": "final_staus",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Final Staus",
    "options": "Accept\nNeed Improvemen"
   }
@@ -76,7 +70,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-01 12:48:52.416709",
+ "modified": "2025-11-01 15:08:53.297081",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal Sensory Evaluation",
