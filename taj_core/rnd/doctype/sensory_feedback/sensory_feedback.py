@@ -31,10 +31,13 @@ def sync_to_product_proposal(doc: "SensoryFeedback", method=None):
 
     row_values = {
         "evaluation_date": eval_date_str,
+        "your_name": doc.your_name,
         "appearance": doc.appearance,
         "texture": doc.texture,
         "taste": doc.taste,
         "spicy": doc.spicy,
+        "comment": doc.comment,
+        "final_status": doc.final_status,
     }
 
     # 3) أضِف الصف إلى جدول الطفل واحفظ

@@ -69,6 +69,9 @@ class ProductProposal(Document):
             frappe.throw(
                 _("Please submit the current version ({0}) before creating a new one.").format(latest["name"])
             )
+    def before_submit(self):
+        if self.sensory_decision == "Open":
+            frappe.throw(_("Cannot submit while Sensory Decision is 'Open'."))
 
     @staticmethod
     def get_next_version_index(existing_names: list[str]) -> int:
