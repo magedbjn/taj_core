@@ -86,6 +86,14 @@ def get_core_fields():
                 "insert_after": "item_group",
             },
         ],
+        "Item Group": [
+            {
+                "fieldname": "taj_has_batch_no",
+                "fieldtype": "Check",
+                "label": _("Has Batch No"),
+                "insert_after": "column_break_5",
+            },
+        ],
         "Supplier": [
             {
                 "fieldname": "taj_ignore_due_date_validation",

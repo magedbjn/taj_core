@@ -43,17 +43,6 @@ frappe.ui.form.on('Product Proposal', {
                         });
                 }, group);
             }
-
-            // frm.add_custom_button(__('BOM'), () => {
-            //     if (!frm.doc.item_code) {
-            //         frappe.msgprint(__('Please create the Item first.'));
-            //         return;
-            //     }
-            //     frappe.new_doc('BOM', {
-            //         item: frm.doc.item_code,
-            //         quantity: 1
-            //     });
-            // }, group);
         }
     }
 });

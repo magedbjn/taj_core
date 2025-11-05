@@ -9,6 +9,7 @@ doctype_js = {
     "Production Plan": "public/production_plan/production_plan.js",
     "Material Request": "public/js/material_request.js",
     "Purchase Order": "public/js/purchase_order.js",
+    "BOM": "public/js/bom.js",
 }
 
 
@@ -91,6 +92,7 @@ doc_events = {
         "before_submit": "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
     },
     "Item":{
+        'before_insert': "taj_core.custom.item.update_item_batch_no",
         'before_save': "taj_core.qc.doctype.raw_material_specification.override.item.raw_material_specification"
     },
 }
@@ -99,7 +101,7 @@ doc_events = {
 
 after_install = "taj_core.install.after_install"
 before_uninstall = "taj_core.uninstall.before_uninstall"
-# after_migrate = "taj_core.install.after_migrate"
+after_migrate = "taj_core.install.after_migrate"
 
 # Migrations
 # after_migrate = [
@@ -112,4 +114,22 @@ before_uninstall = "taj_core.uninstall.before_uninstall"
 #         "dt": "Workspace",
 #         "filters": [["name", "in", ["QC", "RND", "Engineering", "Documents"]]]
 #     }
+# ]
+
+# fixtures = [
+#     # جميع الحقول في BOM Item بدون فلتر
+#     {
+#         "dt": "Custom Field", 
+#         "filters": [
+#             ["dt", "=", "BOM Item"]
+#         ]
+#     },
+#     # جميع الحقول في Employee التي تبدأ بـ taj_
+#     # {
+#     #     "dt": "Custom Field", 
+#     #     "filters": [
+#     #         ["dt", "=", "Employee"],
+#     #         ["fieldname", "like", "taj_%"]
+#     #     ]
+#     # }
 # ]
