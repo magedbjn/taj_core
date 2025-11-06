@@ -108,3 +108,60 @@ Needs Improvement,يحتاج تحسين
 Replace Required,يحتاج استبدال
 Solid,صلب
 Liquid,سائل
+Product Info,معلومات المنتج
+Product Proposal,مقترح المنتج
+Product Name,اسم المنتج
+Product Name Arabic,اسم المنتج بالعربية
+Cuisine,المطبخ
+Source of Proposal,مصدر المقترح
+Target Segment,الفئة المستهدفة
+Expected Market Size,حجم السوق المتوقع
+Expected Quantity,الكمية المتوقعة
+Compatibility with Current Production Capabilities,التوافق مع قدرات الإنتاج الحالية
+Selling Price,سعر البيع
+Aligns with Company Vision & Goals,يتماشى مع رؤية وأهداف الشركة
+Special Requirements,متطلبات خاصة
+Pouches that can be produced from the Raw Materials,الأكياس التي يمكن إنتاجها من المواد الخام
+Holding Time,مدة الحفظ
+Component Name,اسم المكوّن
+Temperature,درجة الحرارة
+Duration (minutes),المدة (بالدقائق)
+Preparation BOM,BOM
+Process Type,نوع العملية
+Cooking Type,نوع الطهي
+Mild,خفيف
+Hot,حار
+Extra Hot,حار جدًا
+Accept,مقبول
+Need Improvement,يحتاج تحسين
+Sensory Evaluation,التقييم الحسي
+Sensory Evaluation Decision,قرار التقييم الحسي
+Spicy,متبل / حار
+Final Status,الحالة النهائية
+Asian,آسيوي
+Chinese,صيني
+Fusion,مزيج
+Indian,هندي
+Italian,إيطالي
+Japanese,ياباني
+Korean,كوري
+Local,محلي
+Mediterranean,متوسطي
+Mexican,مكسيكي
+Middle Eastern,شرق أوسطي
+Thai,تايلاندي
+Traditional,تقليدي
+Turkish,تركي
+Western,غربي
+Low,منخفض
+Medium,متوسط
+High,مرتفع
+Compatible,متوافق
+Minor Adjustments,تعديلات بسيطة
+Major Changes,تغييرات جوهرية
+Not Compatible,غير متوافق
+Sales,المبيعات
+Customer,العميل
+Competitor,المنافس
+Management,الإدارة
+Product Development,تطوير المنتجات

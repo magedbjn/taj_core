@@ -95,7 +95,7 @@
   "name": "BOM Item-taj_process_type",
   "no_copy": 0,
   "non_negative": 0,
-  "options": "\nBlended\nCubes\nMarinade\nPaste\nSlices\nSoak12H\nWash\nWeight",
+  "options": "\nBlended\nChop\nClip Fingers\nDiced Cubes\nGrated\nMarinade\nPaste\nSlices\nSoak\nWash\nWeight",
   "permlevel": 0,
   "placeholder": null,
   "precision": "",

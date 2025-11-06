@@ -8,7 +8,6 @@ class ProductProposal(Document):
     def validate(self):
         """Ensure only one document per product_name is set as default."""
         if self.is_default:
-            # Unset is_default for all other docs with same product_name
             frappe.db.sql(
                 """
                 UPDATE `tabProduct Proposal`
@@ -24,7 +23,6 @@ class ProductProposal(Document):
         if not product:
             frappe.throw(_("Please fill Product Name before saving."))
 
-        # Find existing versions for the same product_name
         search_key = f"{product}-%"
         existing = frappe.get_all(
             self.doctype,
@@ -35,15 +33,20 @@ class ProductProposal(Document):
         index = self.get_next_version_index(existing)
         name = f"{product}-{index:02d}"
 
-        # Safety loop in case of a race
         while frappe.db.exists(self.doctype, name):
             index += 1
             name = f"{product}-{index:02d}"
 
         self.name = name
-
+    
     def before_insert(self):
         self._ensure_previous_version_is_submitted()
+
+    def on_update(self):
+        if self.sensory_decision != 'Approve':
+            self.is_default = 0
+        else:
+            self.is_default = 1
 
     def _ensure_previous_version_is_submitted(self):
         """Block creating a new version if the latest version (same product_name) is not submitted."""
@@ -65,7 +68,6 @@ class ProductProposal(Document):
 
         latest = max(existing, key=lambda d: parse_suffix(d["name"]))
         if latest["docstatus"] != 1:
-            # رسالة واضحة للمستخدم
             frappe.throw(
                 _("Please submit the current version ({0}) before creating a new one.").format(latest["name"])
             )
@@ -93,7 +95,6 @@ class ProductProposal(Document):
 
     @frappe.whitelist()
     def create_item(self):
-        # لا تنشئ Item إذا كان موجود
         if getattr(self, "item_code", None):
             frappe.throw(_("Item already exists for this Product Proposal: {0}").format(self.item_code))
 
@@ -118,7 +119,6 @@ class ProductProposal(Document):
             }],
         }
 
-        # ✅ التصحيح هنا: فحص وجود الحقل عبر get_meta().has_field(...)
         item_meta = frappe.get_meta("Item")
         if item_meta.has_field("item_name_arabic") and getattr(self, "product_name_arabic", None):
             item_values["item_name_arabic"] = self.product_name_arabic
@@ -126,7 +126,7 @@ class ProductProposal(Document):
         item = frappe.get_doc(item_values)
         item.insert()
 
-        # اربط الكود على وثيقة الـ Product Proposal
+    
         self.db_set("item_code", item.name)
 
         return {"item_code": item.name}

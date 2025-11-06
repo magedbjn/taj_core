@@ -37,6 +37,8 @@ def product_name_distinct_query(doctype, txt, searchfield, start, page_len, filt
                     ) AS rn
                 FROM `tabProduct Proposal`
                 WHERE docstatus != 2
+                  AND is_default = 1
+                  AND sensory_decision != 'Reject'
                   AND IFNULL(product_name, '') != ''
                   AND (product_name LIKE %(txt)s OR name LIKE %(txt)s)
             )
