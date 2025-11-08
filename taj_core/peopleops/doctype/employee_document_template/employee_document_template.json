@@ -9,6 +9,7 @@
  "field_order": [
   "is_active",
   "requires_approval",
+  "template_type",
   "template_name",
   "template_name_arabic",
   "template_text_english",
@@ -54,15 +55,22 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Is Active"
+  },
+  {
+   "fieldname": "template_type",
+   "fieldtype": "Select",
+   "label": "Template Type",
+   "options": "Employment Contract\nEmployee Letter\nExperience Certificate\nTermination Letter\nSalary Certificate\nWarning Letter",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-27 19:37:55.791272",
+ "modified": "2025-11-07 02:39:28.038321",
  "modified_by": "Administrator",
  "module": "PeopleOps",
- "name": "Employee Letter Template",
+ "name": "Employee Document Template",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
