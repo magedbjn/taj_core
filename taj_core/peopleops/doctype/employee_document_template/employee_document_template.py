@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class EmployeeLetterTemplate(Document):
+class EmployeeDocumentTemplate(Document):
 	pass

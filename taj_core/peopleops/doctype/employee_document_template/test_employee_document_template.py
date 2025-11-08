@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestEmployeeLetterTemplate(FrappeTestCase):
+class TestEmployeeDocumentTemplate(FrappeTestCase):
 	pass

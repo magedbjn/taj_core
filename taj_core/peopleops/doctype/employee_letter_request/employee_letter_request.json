@@ -45,7 +45,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Letter Template",
-   "options": "Employee Letter Template",
+   "options": "Employee Document Template",
    "reqd": 1
   },
   {
@@ -79,7 +79,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-27 20:15:39.057555",
+ "modified": "2025-11-07 02:36:30.119208",
  "modified_by": "Administrator",
  "module": "PeopleOps",
  "name": "Employee Letter Request",
