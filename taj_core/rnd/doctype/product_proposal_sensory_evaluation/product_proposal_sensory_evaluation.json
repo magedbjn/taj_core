@@ -13,7 +13,7 @@
   "taste",
   "spicy",
   "comment",
-  "final_staus"
+  "final_status"
  ],
  "fields": [
   {
@@ -59,10 +59,10 @@
    "label": "Comment"
   },
   {
-   "fieldname": "final_staus",
+   "fieldname": "final_status",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Final Staus",
+   "label": "Final Status",
    "options": "Accept\nNeed Improvemen"
   }
  ],
@@ -70,7 +70,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-01 15:08:53.297081",
+ "modified": "2025-11-09 12:01:03.049927",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal Sensory Evaluation",

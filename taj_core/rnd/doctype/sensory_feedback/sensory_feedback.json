@@ -6,11 +6,14 @@
  "engine": "InnoDB",
  "field_order": [
   "evaluation_date",
+  "your_name",
   "item",
   "appearance",
   "texture",
   "taste",
-  "spicy"
+  "spicy",
+  "comment",
+  "final_status"
  ],
  "fields": [
   {
@@ -23,26 +26,23 @@
   },
   {
    "fieldname": "appearance",
-   "fieldtype": "Select",
+   "fieldtype": "Rating",
    "in_list_view": 1,
    "label": "Appearance",
-   "options": "Good\nFair\nPoor",
    "reqd": 1
   },
   {
    "fieldname": "texture",
-   "fieldtype": "Select",
+   "fieldtype": "Rating",
    "in_list_view": 1,
    "label": "Texture",
-   "options": "Chewy\nDry\nFirm\nGrainy\nHard\nLumpy\nSoggy\nThin\nViscous\nWatery",
    "reqd": 1
   },
   {
    "fieldname": "taste",
-   "fieldtype": "Select",
+   "fieldtype": "Rating",
    "in_list_view": 1,
    "label": "Taste",
-   "options": "Bitter\nBland\nFragrant\nGood flavour\nOff flavour\nPeppery\nPungent\nRancid\nSalty\nSweet",
    "reqd": 1
   },
   {
@@ -58,12 +58,29 @@
    "fieldtype": "Date",
    "label": "Evaluation Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "your_name",
+   "fieldtype": "Data",
+   "label": "Your Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Data",
+   "label": "Comment"
+  },
+  {
+   "fieldname": "final_status",
+   "fieldtype": "Select",
+   "label": "Final Status",
+   "options": "Accept\nNeed Improvemen"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-28 14:49:22.087176",
+ "modified": "2025-11-09 12:05:56.265581",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Sensory Feedback",
