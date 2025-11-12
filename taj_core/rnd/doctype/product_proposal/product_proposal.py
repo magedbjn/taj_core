@@ -5,9 +5,9 @@ from frappe.utils import cint
 from frappe import _
 
 class ProductProposal(Document):
-    def validate(self):
-        if self.is_default and self.sensory_decision != 'Approve':
-            frappe.throw(_("Only approved proposals can be set as default"))
+    # def validate(self):
+        # if self.is_default and self.sensory_decision != 'Approve':
+        #     frappe.throw(_("Only approved proposals can be set as default"))
 
         # """Ensure only one document per product_name is set as default."""
         # if self.is_default:
