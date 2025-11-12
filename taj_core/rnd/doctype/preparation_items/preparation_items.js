@@ -24,9 +24,9 @@ frappe.ui.form.on('Preparation Items', {
       return {
         filters: {
           item: pre,
-          is_active: 1,   // اختياري لكنه مفيد
-          docstatus: 1    // BOM معتمد (Submitted)
-          // يمكن إضافة is_default: 1 إن أردت الاقتصار على الـBOM الافتراضي
+          is_active: 1,   
+          docstatus: 1,
+          is_default: 1,   
         }
       };
     });
