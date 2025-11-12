@@ -20,6 +20,35 @@ class ProductProposal(Document):
         #         (self.product_name, self.name),
         #     )
 
+    def on_submit(self):
+        """Auto fill pre_bom from Preparation Items when submitting the document."""
+        child_table_field = "pp_items"  # غيّرها حسب اسم الجدول الفرعي الفعلي
+
+        # اجمع الأكواد التي تحتاج تعبئة
+        items = [row.item_code for row in (self.get(child_table_field) or []) if row.item_code and not row.pre_bom]
+        if not items:
+            return
+
+        # اجلب الخرائط من Preparation Items
+        prep_items = frappe.get_all(
+            "Preparation Items",
+            filters={"item_code": ["in", items]},
+            fields=["item_code", "bom_no"],
+            as_list=True
+        )
+        prep_map = {i[0]: i[1] for i in prep_items if i[1]}
+
+        # عبّي pre_bom مباشرة
+        for row in self.get(child_table_field) or []:
+            if row.item_code and not row.pre_bom:
+                row.pre_bom = prep_map.get(row.item_code)
+
+        # حفظ التغييرات في قاعدة البيانات
+        self.save(ignore_permissions=True)
+
+
+
+
     def autoname(self):
         """Name format: {product_name}-{NN} e.g., My Product-01"""
         product = (self.product_name or "").strip()

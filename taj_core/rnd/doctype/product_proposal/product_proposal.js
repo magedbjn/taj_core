@@ -76,3 +76,35 @@ frappe.ui.form.on('Product Proposal', {
         }
     }
 });
+
+// Product Proposal → Client Script
+frappe.ui.form.on('Product Proposal Raw Material', {
+  item_code(frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+
+    // لا تعمل شيء إذا ما فيه item_code أو لو pre_bom ممتلئ مسبقًا
+    if (!row.item_code || row.pre_bom) return;
+
+    // اسحب أحدث bom_no من Preparation Items المطابق لـ item_code
+    frappe.call({
+      method: 'frappe.client.get_list',
+      args: {
+        doctype: 'Preparation Items',
+        fields: ['bom_no'],
+        filters: { item_code: row.item_code },
+        limit_page_length: 1,
+        order_by: 'modified desc'
+      },
+      callback: (r) => {
+        const rec = (r.message && r.message[0]) || null;
+        if (rec && rec.bom_no) {
+          // إن كان اسم الحقل في الجدول هو pre_bom
+          frappe.model.set_value(cdt, cdn, 'pre_bom', rec.bom_no);
+
+          // لو اسم الحقل عندك هو bom_no بدل pre_bom، استخدم السطر التالي:
+          // frappe.model.set_value(cdt, cdn, 'bom_no', rec.bom_no);
+        }
+      }
+    });
+  }
+});
