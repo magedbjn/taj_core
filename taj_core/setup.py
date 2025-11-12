@@ -105,6 +105,38 @@ def get_core_fields():
                 "insert_after": "disabled",
             },
         ],
+        "Production Plan": [
+            {
+                "fieldname": "taj_consolidate",
+                "fieldtype": "Button",
+                "label": _("Run Consolidation"),
+                "description": _("Execute consolidation by days and batch."),
+                "insert_after": "get_sub_assembly_items",
+            },
+            {
+                "fieldname": "taj_days_consolidate",
+                "fieldtype": "Select",
+                "label": _("Days Consolidate"),
+                "options": "\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+                "description": _("Combine identical sub-assembly items within the selected number of days."),
+                "insert_after": "skip_available_sub_assembly_item",
+            },
+        ],
+        "Production Plan Sub Assembly Item": [
+            {
+                "fieldname": "column_break_taj",
+                "fieldtype": "Column Break",
+                "insert_after": "projected_qty",
+            },
+            {
+                "fieldname": "taj_batch_consolidate",
+                "fieldtype": "Select",
+                "label": _("Batch Consolidate"),
+                "options": "\nA\nB\nC",
+                "description": _("Tag to group identical items separately (e.g. A, B batches)."),
+                "insert_after": "column_break_taj",
+            },
+        ],
     }
 
 
