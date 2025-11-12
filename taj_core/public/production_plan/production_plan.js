@@ -41,6 +41,63 @@ function taj_apply_consolidation_lock(frm) {
 // ---------------- TAJ Consolidation (Sequential, by schedule_date) ----------------
 // ---------------- TAJ Consolidation (Days window OR Batch-only) ----------------
 frappe.ui.form.on('Production Plan', {
+   refresh(frm) {
+    // ابقِ منطق القفل مفعّلًا عند كل تحديث
+    taj_apply_consolidation_lock(frm);
+
+    // وصف الحقل (اختياري)
+    const f = frm.get_field('taj_days_consolidate');
+    if (f) {
+      f.df.description = __('Combine identical sub-assembly items within the selected number of days.');
+      f.refresh();
+    }
+
+    // لا تُظهر الأزرار قبل حفظ المستند
+    if (frm.is_new()) return;
+
+    // Show Label
+    frm.add_custom_button(
+      __('Show Label'),
+      function () {
+        frappe.call({
+          method: "taj_core.public.production_plan.generate_stickers.open_production_stickers",
+          args: { plan_name: frm.doc.name },
+          callback(res) {
+            if (res.message) {
+              const link = document.createElement('a');
+              link.href = res.message;
+              link.download = res.message.split('/').pop();
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }
+          }
+        });
+      },
+      __('Taj') // مجموعة الأزرار
+    );
+
+    // Delete Label
+    frm.add_custom_button(
+      __('Delete Label'),
+      function () {
+        frappe.confirm(
+          __('Are you sure you want to delete all labels for this Production Plan?'),
+          function () {
+            frappe.call({
+              method: "taj_core.public.production_plan.generate_stickers.delete_production_stickers",
+              args: { plan_name: frm.doc.name },
+              callback() {
+                frappe.msgprint(__('Labels deleted successfully.'));
+              }
+            });
+          }
+        );
+      },
+      __('Taj') // نفس المجموعة
+    );
+  },
+  
   taj_consolidate(frm) {
     const days_window = cint(frm.doc.taj_days_consolidate) || 0;
     const rows = (frm.doc.sub_assembly_items || []).slice();

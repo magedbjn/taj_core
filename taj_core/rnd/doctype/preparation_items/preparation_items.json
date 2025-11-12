@@ -1,7 +1,9 @@
 {
  "actions": [],
+ "allow_import": 1,
  "autoname": "field:item_code",
  "creation": "2025-11-12 08:38:32.883943",
+ "description": "Is used to link each Raw Material with its corresponding Preparation Item, along with the BOM number related to the preparation process.\n\nThis document serves as the main reference used later in the Product Proposal document to automatically fill the BOM number when a raw material is selected.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -78,7 +80,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-12 09:32:20.092704",
+ "modified": "2025-11-12 12:19:24.723727",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Preparation Items",
@@ -94,6 +96,30 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RND Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RND User",
    "share": 1,
    "write": 1
   }
