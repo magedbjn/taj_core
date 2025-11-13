@@ -1,5 +1,12 @@
 frappe.ui.form.on('Product Proposal', {
-    refresh(frm) {
+    refresh: function(frm) {
+        frm.set_df_property('product_name', 'read_only', frm.doc.item_code ? 1 : 0);
+        // if (frm.doc.item_code) {
+        //     frm.set_df_property('product_name', 'read_only', 1);
+        // } else {
+        //     frm.set_df_property('product_name', 'read_only', 0);
+        // }
+
         frm.fields_dict['pp_items'].grid.get_field('pre_bom').get_query = function(doc, cdt, cdn) {
             return {
                 filters: [
@@ -7,7 +14,7 @@ frappe.ui.form.on('Product Proposal', {
                 ]
             };
         };
-
+        
         if (frm.doc.docstatus !== 1) {
             const label = __('Duplicate');
             frm.page.menu.find(`[data-label="${encodeURIComponent(label)}"]`).parent().addClass('hidden');

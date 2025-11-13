@@ -5,27 +5,18 @@ from frappe.utils import cint
 from frappe import _
 
 class ProductProposal(Document):
-    # def validate(self):
-        # if self.is_default and self.sensory_decision != 'Approve':
-        #     frappe.throw(_("Only approved proposals can be set as default"))
+    def before_submit(self):
+        # أولاً: منع السبمت لو القرار Open
+        if self.sensory_decision == "Open":
+            frappe.throw(_("Cannot submit while Sensory Decision is 'Open'."))
 
-        # """Ensure only one document per product_name is set as default."""
-        # if self.is_default:
-        #     frappe.db.sql(
-        #         """
-        #         UPDATE `tabProduct Proposal`
-        #         SET is_default = 0
-        #         WHERE product_name = %s AND name != %s
-        #         """,
-        #         (self.product_name, self.name),
-        #     )
+        # ثانياً: تعبئة pre_bom قبل الـ Submit
+        child_table_field = "pp_items"
 
-    def on_submit(self):
-        """Auto fill pre_bom from Preparation Items when submitting the document."""
-        child_table_field = "pp_items"  # غيّرها حسب اسم الجدول الفرعي الفعلي
+        rows = self.get(child_table_field) or []
 
         # اجمع الأكواد التي تحتاج تعبئة
-        items = [row.item_code for row in (self.get(child_table_field) or []) if row.item_code and not row.pre_bom]
+        items = [row.item_code for row in rows if row.item_code and not row.pre_bom]
         if not items:
             return
 
@@ -38,16 +29,10 @@ class ProductProposal(Document):
         )
         prep_map = {i[0]: i[1] for i in prep_items if i[1]}
 
-        # عبّي pre_bom مباشرة
-        for row in self.get(child_table_field) or []:
+        # عبّي pre_bom مباشرة (بدون self.save())
+        for row in rows:
             if row.item_code and not row.pre_bom:
                 row.pre_bom = prep_map.get(row.item_code)
-
-        # حفظ التغييرات في قاعدة البيانات
-        self.save(ignore_permissions=True)
-
-
-
 
     def autoname(self):
         """Name format: {product_name}-{NN} e.g., My Product-01"""
@@ -70,7 +55,7 @@ class ProductProposal(Document):
             name = f"{product}-{index:02d}"
 
         self.name = name
-    
+
     def before_insert(self):
         self._ensure_previous_version_is_submitted()
 
@@ -103,17 +88,9 @@ class ProductProposal(Document):
             frappe.throw(
                 _("Please submit the current version ({0}) before creating a new one.").format(latest["name"])
             )
-    def before_submit(self):
-        if self.sensory_decision == "Open":
-            frappe.throw(_("Cannot submit while Sensory Decision is 'Open'."))
 
     @staticmethod
     def get_next_version_index(existing_names: list[str]) -> int:
-        """
-        Extract last segment as version (supports product names with '-' or '/').
-        Examples considered valid:
-          My Product-01, My-Complex/Product-12
-        """
         if not existing_names:
             return 1
 
@@ -127,21 +104,15 @@ class ProductProposal(Document):
 
     @frappe.whitelist()
     def link_existing_item(self, item_code: str):
-        """Persist the selected existing Item code on this Product Proposal."""
         if not item_code:
             frappe.throw(_("Missing Item Code."))
 
-        # Allow linking even if doc is submitted
         self.db_set("item_code", item_code)
 
         return {"ok": True, "item_code": item_code}
 
     @frappe.whitelist()
     def create_item(self):
-        # التحقق من الصلاحيات
-        # if not frappe.has_permission(self.doctype, 'write'):
-        #     frappe.throw(_('You do not have permission to create items'))
-
         if getattr(self, "item_code", None):
             frappe.throw(_("Item already exists for this Product Proposal: {0}").format(self.item_code))
 
@@ -149,14 +120,12 @@ class ProductProposal(Document):
         if not product:
             frappe.throw(_("Please fill Product Name before saving."))
 
-        # لو في Item بنفس الاسم: لا تنشئ جديد
         existing = frappe.get_all(
             "Item", filters={"item_name": product}, fields=["item_code", "item_name"], limit=10
         )
         if existing:
             return {"exists": True, "item_code": existing[0]["item_code"], "item_name": existing[0]["item_name"]}
 
-        # اجلب الشركة الافتراضية من أكثر من مصدر
         default_company = (
             frappe.defaults.get_user_default("Company")
             or frappe.db.get_single_value("Global Defaults", "default_company")
@@ -164,16 +133,13 @@ class ProductProposal(Document):
         if not default_company:
             frappe.throw(_("No default Company is set for your user or Global Defaults."))
 
-        # تأكد من وجود Item Group مناسب
         item_group = "Finished Goods"
         if not frappe.db.exists("Item Group", item_group):
-            # خُذ أي مجموعة نهائية (ليست مجموعة) بدلًا منها
             fallback_group = frappe.db.get_value("Item Group", {"is_group": 0}, "name")
             if not fallback_group:
                 frappe.throw(_("No leaf Item Group found to assign to the Item."))
             item_group = fallback_group
 
-        # اختر Warehouse مناسب إن وُجد (لا ترمي خطأ لو مش موجود)
         default_warehouse = (
             frappe.db.get_value("Warehouse", {"company": default_company, "is_group": 0, "warehouse_name": ["like", "%Finished Goods%"]}, "name")
             or frappe.db.get_value("Warehouse", {"company": default_company, "is_group": 0}, "name")
@@ -194,7 +160,6 @@ class ProductProposal(Document):
             "is_purchase_item": 0,
             "item_defaults": [{
                 "company": default_company,
-                # لا تضع warehouse إن ما وُجد — تجنب Link Validation Error/Not Found
                 **({"default_warehouse": default_warehouse} if default_warehouse else {})
             }],
         }
@@ -207,10 +172,8 @@ class ProductProposal(Document):
             item = frappe.get_doc(item_values)
             item.insert()
         except frappe.LinkValidationError as e:
-            # رسالة أوضح بدل "Not Found []"
             frappe.throw(_("Link validation failed while creating Item: {0}").format(e))
         except Exception as e:
-            # أعد رسالة مفهومة للواجهة
             frappe.throw(_("Failed to create Item: {0}").format(frappe.as_unicode(e)))
 
         self.db_set("item_code", item.name)
