@@ -407,21 +407,32 @@ function processItemWithConversion(frm, pp_item, ratio, index, pp_quantity) {
 function addBOMItemWithConversion(frm, pp_item, item_code, uom, final_qty, original_uom, conversion_rate, target_uom, index, did_convert) {
     // إضافة صف جديد إلى الجدول
     const row = frm.add_child('items');
-    
-    // تعيين البيانات الأساسية
-    row.item_code = item_code;
-    row.qty = flt(final_qty);
-    row.uom = uom;
-    row.stock_uom = uom; // لتقليل اللبس في العرض
-    row.description = pp_item.item_name || row.description;
 
-    // حفظ البيانات المرجعية للجلسة (غير محفوظة في قاعدة البيانات)
-    row.__pp_qty = flt(pp_item.qty || 0);     // الكمية الأصلية للـ PP
-    row.__pp_uom = original_uom || uom;       // UOM الأصلية للـ PP
-    row.__pp_index = index + 1;               // الفهرس الأصلي
-    row.__converted_to = target_uom;          // الوحدة المحول إليها
-    row.__conversion_rate = conversion_rate;  // معدل التحويل
-    row.__did_convert = !!did_convert;        // هل تم التحويل
+    // مهم: استخدم set_value عشان يشغّل سكربتات ERPNext الافتراضية لحقل item_code
+    frappe.model.set_value(row.doctype, row.name, 'item_code', item_code).then(() => {
+        // بعد ما يخلّص جلب بيانات الصنف نضبط باقي الحقول
+        frappe.model.set_value(row.doctype, row.name, 'qty', flt(final_qty));
+        frappe.model.set_value(row.doctype, row.name, 'uom', uom);
+        frappe.model.set_value(row.doctype, row.name, 'stock_uom', uom);
+        frappe.model.set_value(row.doctype, row.name, 'description', pp_item.item_name || row.description);
+
+        // لو بعد كل شي الـ rate ما تعبّى (وهو mandatory)، حطّ 0 كقيمة افتراضية
+        const current_rate = row.rate;
+        if (!current_rate && current_rate !== 0) {
+            frappe.model.set_value(row.doctype, row.name, 'rate', 0);
+        }
+
+        // حفظ البيانات المرجعية للجلسة (تبقى مثل ما هي)
+        row.__pp_qty = flt(pp_item.qty || 0);     // الكمية الأصلية للـ PP
+        row.__pp_uom = original_uom || uom;       // UOM الأصلية للـ PP
+        row.__pp_index = index + 1;               // الفهرس الأصلي
+        row.__converted_to = target_uom;          // الوحدة المحول إليها
+        row.__conversion_rate = conversion_rate;  // معدل التحويل
+        row.__did_convert = !!did_convert;        // هل تم التحويل
+
+        // تحديث الجدول في الواجهة (اختياري هنا أو تخليه في آخر الدالة الكبيرة)
+        frm.refresh_field('items');
+    });
 }
 
 /**
