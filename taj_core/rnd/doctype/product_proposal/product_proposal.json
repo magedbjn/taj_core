@@ -1,6 +1,8 @@
 {
  "actions": [],
+ "allow_import": 1,
  "creation": "2025-10-01 15:15:59.362810",
+ "description": "An official form used for proposing a new product and conducting sensory evaluation to enhance quality and specifications.\nUpon approval, the proposal is converted into a finalized product for Item creation and BOM setup.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -243,10 +245,11 @@
   }
  ],
  "grid_page_length": 50,
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-09 12:12:52.768619",
+ "modified": "2025-11-13 12:30:08.863160",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal",
