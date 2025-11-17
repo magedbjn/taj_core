@@ -410,11 +410,27 @@ function addBOMItemWithConversion(frm, pp_item, item_code, uom, final_qty, origi
 
     // مهم: استخدم set_value عشان يشغّل سكربتات ERPNext الافتراضية لحقل item_code
     frappe.model.set_value(row.doctype, row.name, 'item_code', item_code).then(() => {
-        // بعد ما يخلّص جلب بيانات الصنف نضبط باقي الحقول
+        // بعد ما يخلّص جلب بيانات الصنف نضبط باقي الحقول الأساسية
         frappe.model.set_value(row.doctype, row.name, 'qty', flt(final_qty));
         frappe.model.set_value(row.doctype, row.name, 'uom', uom);
         frappe.model.set_value(row.doctype, row.name, 'stock_uom', uom);
         frappe.model.set_value(row.doctype, row.name, 'description', pp_item.item_name || row.description);
+
+        // ✅ نسخ الحقول المخصصة من PP Item إلى BOM Item
+        // BOM Item taj.procees_type = PP Item procees_type
+        frappe.model.set_value(row.doctype, row.name, 'taj_procees_type', pp_item.procees_type || null);
+
+        // BOM Item taj.cooking_type = PP Item cooking_type
+        frappe.model.set_value(row.doctype, row.name, 'taj_cooking_type', pp_item.cooking_type || null);
+
+        // BOM Item taj.temperature = PP Item temperature
+        frappe.model.set_value(row.doctype, row.name, 'taj_temperature', pp_item.temperature || null);
+
+        // BOM Item taj.duration = PP Item duration
+        frappe.model.set_value(row.doctype, row.name, 'taj_duration', pp_item.duration || null);
+
+        // BOM Item taj.notes = PP Item notes
+        frappe.model.set_value(row.doctype, row.name, 'taj_notes', pp_item.notes || null);
 
         // لو بعد كل شي الـ rate ما تعبّى (وهو mandatory)، حطّ 0 كقيمة افتراضية
         const current_rate = row.rate;
@@ -430,10 +446,11 @@ function addBOMItemWithConversion(frm, pp_item, item_code, uom, final_qty, origi
         row.__conversion_rate = conversion_rate;  // معدل التحويل
         row.__did_convert = !!did_convert;        // هل تم التحويل
 
-        // تحديث الجدول في الواجهة (اختياري هنا أو تخليه في آخر الدالة الكبيرة)
+        // تحديث الجدول في الواجهة
         frm.refresh_field('items');
     });
 }
+
 
 /**
  * حساب معدل التحويل بين الوحدات
