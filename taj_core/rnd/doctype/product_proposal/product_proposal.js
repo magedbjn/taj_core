@@ -81,6 +81,56 @@ frappe.ui.form.on('Product Proposal', {
             }, group);
             }
         }
+
+        // زر Sync Preparation BOM يظهر إذا السند محفوظ (مش جديد) وفيه صفوف pp_items
+        if (!frm.is_new() && (frm.doc.pp_items || []).length) {
+            const prep_group = __('Preparation');
+
+            frm.add_custom_button(__('Sync Preparation BOM'), async () => {
+                try {
+                    const r = await frm.call({
+                        doc: frm.doc,
+                        method: 'sync_preparation_bom',
+                    });
+
+                    if (!r || !r.message) {
+                        frappe.show_alert({ message: __('No changes were made.'), indicator: 'yellow' });
+                        return;
+                    }
+
+                    const { updated, total, missing_items } = r.message;
+
+                    if (updated) {
+                        frappe.show_alert({
+                            message: __('Updated Preparation BOM for {0} row(s).', [updated]),
+                            indicator: 'green',
+                        });
+                    } else {
+                        frappe.show_alert({
+                            message: __('No rows required update.'), 
+                            indicator: 'yellow',
+                        });
+                    }
+
+                    if (missing_items && missing_items.length) {
+                        frappe.msgprint({
+                            title: __('Missing Preparation Items'),
+                            message: __(
+                                'No Preparation Items were found for the following Item Codes: {0}',
+                                [missing_items.join(', ')]
+                            ),
+                            indicator: 'orange',
+                        });
+                    }
+
+                    // حدّث الفورم عشان تشوف pre_bom بعد التحديث
+                    await frm.reload_doc();
+                } catch (err) {
+                    frappe.msgprint(__('Failed to sync Preparation BOM. See console for details.'));
+                    // console.error(err);
+                }
+            }, prep_group);
+        }
     }
 });
 

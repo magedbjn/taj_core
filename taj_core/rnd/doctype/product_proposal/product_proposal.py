@@ -1,26 +1,38 @@
 import re
 import frappe
 from frappe.model.document import Document
-from frappe.utils import cint
+from frappe.utils import cint, cstr
 from frappe import _
 
 class ProductProposal(Document):
     def before_submit(self):
-        # أولاً: منع السبمت لو القرار Open
+        # 1) منع السبمت لو القرار Open
         if self.sensory_decision == "Open":
             frappe.throw(_("Cannot submit while Sensory Decision is 'Open'."))
 
-        # ثانياً: تعبئة pre_bom قبل الـ Submit
-        child_table_field = "pp_items"
+        # 2) إذا القرار Approve، تأكد أن كل pp_items لها item_code
+        if self.sensory_decision == "Approve":
+            missing = []
+            for row in (self.get("pp_items") or []):
+                if not row.item_code:
+                    missing.append(cstr(row.idx))
 
+            if missing:
+                frappe.throw(
+                    _(
+                        "Cannot submit with Sensory Decision 'Approve'. "
+                        "Please set Item Code for all rows in Raw Materials table. Missing in rows: {0}"
+                    ).format(", ".join(missing))
+                )
+
+        # 3) تعبئة pre_bom قبل الـ Submit (كما هو عندك)
+        child_table_field = "pp_items"
         rows = self.get(child_table_field) or []
 
-        # اجمع الأكواد التي تحتاج تعبئة
         items = [row.item_code for row in rows if row.item_code and not row.pre_bom]
         if not items:
             return
 
-        # اجلب الخرائط من Preparation Items
         prep_items = frappe.get_all(
             "Preparation Items",
             filters={"item_code": ["in", items]},
@@ -29,7 +41,6 @@ class ProductProposal(Document):
         )
         prep_map = {i[0]: i[1] for i in prep_items if i[1]}
 
-        # عبّي pre_bom مباشرة (بدون self.save())
         for row in rows:
             if row.item_code and not row.pre_bom:
                 row.pre_bom = prep_map.get(row.item_code)
@@ -178,3 +189,57 @@ class ProductProposal(Document):
 
         self.db_set("item_code", item.name)
         return {"exists": False, "item_code": item.name}
+
+    @frappe.whitelist()
+    def sync_preparation_bom(self):
+        """Sync Preparation BOM on pp_items from Preparation Items after submit (or any time)."""
+        child_table_field = "pp_items"
+        rows = self.get(child_table_field) or []
+
+        if not rows:
+            return {"updated": 0, "total": 0, "missing_items": []}
+
+        # اجمع كل item_code الموجودة
+        item_codes = list({row.item_code for row in rows if getattr(row, "item_code", None)})
+        if not item_codes:
+            return {"updated": 0, "total": len(rows), "missing_items": []}
+
+        # اجلب أحدث bom_no لكل item_code من Preparation Items (حسب آخر تعديل)
+        prep_items = frappe.get_all(
+            "Preparation Items",
+            filters={"item_code": ["in", item_codes]},
+            fields=["item_code", "bom_no"],
+            order_by="modified desc",
+            as_list=True,
+        )
+
+        # خريطة item_code -> latest bom_no
+        prep_map = {}
+        for item_code, bom_no in prep_items:
+            if item_code not in prep_map and bom_no:
+                prep_map[item_code] = bom_no
+
+        updated_rows = []
+        missing_items = set()
+
+        # حدّث pre_bom في جدول Product Proposal Raw Material مباشرة
+        for row in rows:
+            if not row.item_code:
+                continue
+
+            new_bom = prep_map.get(row.item_code)
+            if not new_bom:
+                # لا يوجد Preparation Items لهذا الصنف
+                missing_items.add(row.item_code)
+                continue
+
+            # حدّث فقط إذا تغيّر أو كان فاضي
+            if row.pre_bom != new_bom:
+                frappe.db.set_value("Product Proposal Raw Material", row.name, "pre_bom", new_bom)
+                updated_rows.append(row.name)
+
+        return {
+            "updated": len(updated_rows),
+            "total": len(rows),
+            "missing_items": list(missing_items),
+        }
