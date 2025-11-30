@@ -103,33 +103,12 @@ after_install = "taj_core.install.after_install"
 before_uninstall = "taj_core.uninstall.before_uninstall"
 after_migrate = "taj_core.install.after_migrate"
 
-# Migrations
-# after_migrate = [
-#     "taj_core.patches.delete_slnee.execute",
-#     "taj_core.patches.delete_custom_fields.execute"
-# ]
-
-# fixtures = [
-#     {
-#         "dt": "Workspace",
-#         "filters": [["name", "in", ["QC", "RND", "Engineering", "Documents"]]]
-#     }
-# ]
-
-# fixtures = [
-#     # جميع الحقول في BOM Item بدون فلتر
-#     {
-#         "dt": "Custom Field", 
-#         "filters": [
-#             ["dt", "=", "BOM Item"]
-#         ]
-#     },
-#     # جميع الحقول في Employee التي تبدأ بـ taj_
-#     # {
-#     #     "dt": "Custom Field", 
-#     #     "filters": [
-#     #         ["dt", "=", "Employee"],
-#     #         ["fieldname", "like", "taj_%"]
-#     #     ]
-#     # }
-# ]
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["dt", "in", ["Employee"]],
+            ["fieldname", "like", "custom_%"]
+        ]
+    }
+]

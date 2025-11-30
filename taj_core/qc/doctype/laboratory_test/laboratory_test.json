@@ -29,14 +29,14 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Type",
-   "options": "Raw Material\nFinished Product\nSwab Test",
+   "options": "Cook Liquid\nFinished Product\nRaw Material\nSwab Test\nWater Test",
    "reqd": 1
   },
   {
    "fieldname": "batch_no",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Batch No",
+   "label": "Batch No/Look No",
    "reqd": 1
   },
   {
@@ -97,7 +97,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Test For",
-   "options": "RND\nProduction"
+   "options": "RND\nProduction\nExternal Lab"
   },
   {
    "fieldname": "tab_break_ayit",
@@ -124,8 +124,8 @@
   }
  ],
  "links": [],
- "modified": "2025-01-31 19:56:11.879037",
- "modified_by": "Administrator",
+ "modified": "2025-11-30 13:06:30.940558",
+ "modified_by": "m.bajandooh@tajff.sa",
  "module": "QC",
  "name": "Laboratory Test",
  "naming_rule": "Expression (old style)",
@@ -168,6 +168,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
