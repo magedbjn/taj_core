@@ -27,6 +27,24 @@ frappe.ui.form.on('BOM', {
         }, 350);
     },
 
+    // عند أي تغيير في الحقول
+    taj_liquid_weight(frm) { calculate_totals(frm); },
+    taj_solid_weight_1(frm) { calculate_totals(frm); },
+    taj_solid_weight_2(frm) { calculate_totals(frm); },
+
+    taj_liquid_under_weight(frm) { calculate_totals(frm); },
+    taj_solid_under_weight_1(frm) { calculate_totals(frm); },
+    taj_solid_under_weight_2(frm) { calculate_totals(frm); },
+
+    taj_liquid_over_weight(frm) { calculate_totals(frm); },
+    taj_solid_over_weight_1(frm) { calculate_totals(frm); },
+    taj_solid_over_weight_2(frm) { calculate_totals(frm); },
+
+    // عند الحفظ قبل إرسال البيانات للـ backend
+    validate(frm) {
+        calculate_totals(frm);
+    },
+
     // حدث تغيير الكمية: إعادة الجلب التلقائي عند تعديل الكمية
     // quantity: function(frm) {
     //     // استخدام الدالة المهدأة لمنع الطلبات المتكررة
@@ -39,6 +57,28 @@ frappe.ui.form.on('BOM', {
     //     // لا تفتح prompt تلقائياً - دع المستخدم يضغط الزر يدوياً للمرة الأولى
     // }
 });
+
+function calculate_totals(frm) {
+
+    let total_weight =
+        (frm.doc.taj_liquid_weight || 0) +
+        (frm.doc.taj_solid_weight_1 || 0) +
+        (frm.doc.taj_solid_weight_2 || 0);
+
+    let total_under =
+        (frm.doc.taj_liquid_under_weight || 0) +
+        (frm.doc.taj_solid_under_weight_1 || 0) +
+        (frm.doc.taj_solid_under_weight_2 || 0);
+
+    let total_over =
+        (frm.doc.taj_liquid_over_weight || 0) +
+        (frm.doc.taj_solid_over_weight_1 || 0) +
+        (frm.doc.taj_solid_over_weight_2 || 0);
+
+    frm.set_value("taj_total_weight", total_weight);
+    frm.set_value("taj_total_under_weight_", total_under);
+    frm.set_value("taj_total_over_weight", total_over);
+}
 
 // ===== الدوال الرئيسية =====
 // --- helper: debounce ---
