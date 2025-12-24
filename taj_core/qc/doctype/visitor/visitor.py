@@ -42,7 +42,7 @@ class Visitor(Document):
 
         # Prepare email content based on status
         subject = _("Access to Production Area - TajFF")
-        message = _("Dear {name},<br><br>We hope this message finds you well.<br><br>").format(name=self.name1)
+        message = _("Dear {name},<br><br>We hope this message finds you well.<br><br>").format(name=self.full_name)
 
         if self.status == 'Approved':
             message += _(
