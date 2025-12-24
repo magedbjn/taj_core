@@ -14,16 +14,16 @@ class Visitor(Document):
         except frappe.ValidationError:
             frappe.throw(_("Invalid email address."))
 
-        # Check for duplicate visitor entries (same email + status Open)
-        existing_email = frappe.get_all('Visitor', 
-            filters={
-                'email': self.email, 
-                'status': 'Open'
-            },
-            limit=1
-        )
-        if existing_email:
-            frappe.throw(_("This visitor already exists."))
+        # Check duplicate ONLY when creating a NEW document
+        if self.is_new():
+            existing = frappe.get_all(
+                "Visitor",
+                filters={"email": self.email, "status": "Open"},
+                limit=1
+            )
+            if existing:
+                frappe.throw(_("This visitor already exists."))
+
             
     def on_submit(self):
         # Ensure only approved/rejected statuses can be submitted
@@ -88,7 +88,8 @@ def create_new_visitor_notification():
             "name": "New Visitor",
             "document_type": "Visitor",
             "subject": _("New Visitor Registered"),
-            "message": _("A new visitor has been registered: {{ doc.full_name }}. Please review."),
+            "message": "A new visitor has been registered: {{ doc.full_name }} ({{ doc.name }}).<br>"
+           "<a href='{{ frappe.utils.get_url() }}/app/visitor/{{ doc.name }}'>Open Visitor</a>",
             "enabled": 1,
             "event": "New",  
             "recipients": []
