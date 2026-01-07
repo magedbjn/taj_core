@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"YNmWwiaJp-\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">QC</span>\",\"col\":12}},{\"id\":\"aw1lKW8tyx\",\"type\":\"card\",\"data\":{\"card_name\":\"Qualification\",\"col\":4}},{\"id\":\"oHVpj4a6Re\",\"type\":\"card\",\"data\":{\"card_name\":\"Specification\",\"col\":4}},{\"id\":\"XOQtwbvMgx\",\"type\":\"card\",\"data\":{\"card_name\":\"Visitor\",\"col\":4}}]",
+ "content": "[{\"id\":\"YNmWwiaJp-\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">QC</span>\",\"col\":12}},{\"id\":\"aw1lKW8tyx\",\"type\":\"card\",\"data\":{\"card_name\":\"Qualification\",\"col\":4}},{\"id\":\"oHVpj4a6Re\",\"type\":\"card\",\"data\":{\"card_name\":\"Specification\",\"col\":4}},{\"id\":\"XOQtwbvMgx\",\"type\":\"card\",\"data\":{\"card_name\":\"Visitor\",\"col\":4}},{\"id\":\"mvKLjQP3Lu\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}}]",
  "creation": "2025-10-20 13:39:39.163992",
  "custom_blocks": [],
  "docstatus": 0,
@@ -89,9 +89,28 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Report",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Batch Traceability",
+   "link_count": 0,
+   "link_to": "Batch Traceability",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-10-20 14:57:20.932229",
+ "modified": "2026-01-07 09:22:24.260903",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "QC",
