@@ -949,6 +949,7 @@ def get_consumed_batches_from_work_order(work_order: str):
         se = frappe.get_doc("Stock Entry", se_name)
 
         for row in se.items:
+            # consumed only
             if not row.s_warehouse:
                 continue
 
@@ -970,6 +971,7 @@ def get_consumed_batches_from_work_order(work_order: str):
                     })
                 continue
 
+            # ✅ NEW: if item has a batch, keep it
             if row.batch_no:
                 mp.setdefault(item_code, []).append({
                     "batch_no": row.batch_no,
@@ -977,12 +979,30 @@ def get_consumed_batches_from_work_order(work_order: str):
                     "stock_entry": se_name,
                     "work_order": work_order
                 })
+            else:
+                # ✅ NEW: items WITHOUT batch (like Packaging) — use actual qty from Stock Entry
+                mp.setdefault(item_code, []).append({
+                    "batch_no": "",  # important: keep empty to show blank batch
+                    "qty": abs(float(row.qty or 0)),
+                    "stock_entry": se_name,
+                    "work_order": work_order
+                })
 
-    for k in mp.keys():
-        mp[k] = sorted(mp[k], key=lambda x: (x.get("batch_no") or "", x.get("stock_entry") or ""))
+    # ✅ Merge duplicates (same item + same batch_no), to avoid multiple blank-batch lines
+    for item_code in list(mp.keys()):
+        merged = {}
+        for r in mp[item_code]:
+            key = (r.get("batch_no") or "")
+            if key not in merged:
+                merged[key] = dict(r)
+            else:
+                merged[key]["qty"] = float(merged[key].get("qty") or 0) + float(r.get("qty") or 0)
+                # keep latest stock entry reference
+                merged[key]["stock_entry"] = r.get("stock_entry") or merged[key].get("stock_entry")
+
+        mp[item_code] = sorted(merged.values(), key=lambda x: (x.get("batch_no") or "", x.get("stock_entry") or ""))
 
     return mp
-
 
 def get_batch_source(batch_no: str):
     if not batch_no:
