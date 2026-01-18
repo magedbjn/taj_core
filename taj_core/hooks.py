@@ -12,7 +12,6 @@ doctype_js = {
     "BOM": "public/js/bom.js",
 }
 
-
 scheduler_events = {
 	"daily": [
 		"taj_core.company_documents.doctype.license.license.scheduled_status_update",
@@ -25,6 +24,12 @@ scheduler_events = {
 
 override_doctype_class = {                
     "Party Specific Item": "taj_core.overrides.party_specific_item.TajPartySpecificItem",
+    "Leave Application": "taj_core.overrides.leave_application.LeaveApplication"
+}
+
+override_whitelisted_methods = {
+    "hrms.hr.doctype.leave_application.leave_application.get_number_of_leave_days":
+        "taj_core.overrides.leave_application.get_number_of_leave_days",
 }
 
 doc_events = {
@@ -94,6 +99,9 @@ doc_events = {
     "Item":{
         'before_insert': "taj_core.custom.item.update_item_batch_no",
         'before_save': "taj_core.qc.doctype.raw_material_specification.override.item.raw_material_specification"
+    },
+    "Leave Application": {
+        "before_save": "taj_core.overrides.leave_application.before_save_set_total_leave_days",
     },
 }
 

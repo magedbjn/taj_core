@@ -142,15 +142,17 @@ def get_core_fields():
 
 def get_hrms_fields():
     return {
-        # "Employee": [
-        #     {
-        #         "fieldname": "taj_nationality",
-        #         "fieldtype": "Link",
-        #         "label": _("Nationality"),
-        #         "options": "Country",
-        #         "insert_after": "date_of_joining",
-        #     },
-        # ],
+        "Leave Type": [
+            {
+                "fieldname": "taj_exclude_public_holidays",
+                "fieldtype": "Check",
+                "label": _("Exclude Public Holidays"),
+                "insert_after": "include_holiday",
+                "depends_on": "eval:doc.include_holiday==1",
+                "default": "0",
+                "description": _("Excludes official holidays (Weekly Off unchecked)."),
+            },
+        ],
     }
 
 
