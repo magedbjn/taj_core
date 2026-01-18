@@ -1,3 +1,4 @@
+#ERPNext: v15.94.1
 import frappe
 from frappe import _
 from erpnext.selling.doctype.party_specific_item.party_specific_item import PartySpecificItem
