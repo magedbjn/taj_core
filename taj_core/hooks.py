@@ -115,7 +115,7 @@ fixtures = [
     {
         "dt": "Custom Field",
         "filters": [
-            ["dt", "in", ["BOM"]],
+            ["dt", "in", ["Quality Inspection"]],
             ["fieldname", "like", "custom_%"]
         ]
     }

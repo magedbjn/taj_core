@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "creation": "2026-02-03 13:18:36.293512",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "overtime_date",
+  "from_time",
+  "to_time",
+  "requested_hours",
+  "reason",
+  "line_status",
+  "approved_hours"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "overtime_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Overtime Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "from_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "From time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "To time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_hours",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Requested Hours",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "line_status",
+   "fieldtype": "Select",
+   "label": "Line Status"
+  },
+  {
+   "fieldname": "approved_hours",
+   "fieldtype": "Float",
+   "label": "Approved Hours",
+   "permlevel": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-03 15:11:56.200490",
+ "modified_by": "Administrator",
+ "module": "PeopleOps",
+ "name": "Department Overtime Request Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
