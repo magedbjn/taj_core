@@ -8,3 +8,4 @@ taj_core.patches.2025_10_21_cleanup_workspaces_and_fields
 taj_core.patches.2025_10_26_workspace_rnd_delete
 taj_core.patches.2025_10_28_delete_field
 taj_core.patches.cleanup_intern_sales_order
+taj_core.patches.slnee_cleanup
