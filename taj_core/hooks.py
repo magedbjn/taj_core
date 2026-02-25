@@ -103,6 +103,14 @@ doc_events = {
     "Leave Application": {
         "before_save": "taj_core.overrides.leave_application.before_save_set_total_leave_days",
     },
+    # ============================================================
+    # Job Card Board Realtime hooks
+    # - Publish realtime updates on Job Card changes
+    # ============================================================
+    "Job Card": {
+        "on_update": "taj_core.taj_core.page.job_card_board.job_card_board.job_card_changed",
+        "on_trash": "taj_core.taj_core.page.job_card_board.job_card_board.job_card_changed"
+    },
 }
 
 
@@ -115,8 +123,8 @@ fixtures = [
     {
         "dt": "Custom Field",
         "filters": [
-            ["dt", "in", ["Quality Inspection"]],
-            ["fieldname", "like", "custom_%"]
+            ["dt", "in", ["Job Card"]],
+            ["fieldname", "like", "taj_%"]
         ]
     }
 ]
