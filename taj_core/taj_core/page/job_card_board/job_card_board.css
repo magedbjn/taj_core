@@ -1,0 +1,132 @@
+.jc-board { padding: 12px 0; }
+
+.jc-grid{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 1280px) { .jc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px)  { .jc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px)  { .jc-grid { grid-template-columns: 1fr; } }
+
+/* 10-inch landscape: 3 cards + compact UI */
+@media (max-width: 1024px) and (orientation: landscape){
+  .jc-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+  .jc-card { padding: 10px; border-radius: 10px; min-height: 145px; }
+  .jc-title { font-size: 14px; }
+  .jc-meta { font-size: 11px; }
+  .jc-kpi { padding: 6px 8px; border-radius: 9px; }
+  .jc-kpi .val { font-size: 13px; }
+  .jc-actions .btn { padding: 4px 8px; font-size: 12px; }
+}
+
+.jc-card{
+  border: 1px solid var(--border-color, #e6e6e6);
+  border-radius: 12px;
+  background: var(--card-bg, #fff);
+  padding: 14px;
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+
+.jc-card.state-running{ border-left: 6px solid var(--blue-500, #3b82f6); }
+.jc-card.state-paused { border-left: 6px solid var(--orange-500, #f59e0b); }
+.jc-card.state-idle   { border-left: 6px solid var(--gray-300, #d1d5db); }
+
+.jc-card.idle-completed { border-left-color: #22c55e; }
+.jc-card.idle-open { border-left-color: #94a3b8; }
+.jc-card.idle-material-transferred { border-left-color: #06b6d4; }
+.jc-card.idle-submitted { border-left-color: #16a34a; }
+
+.jc-head{ display:flex; justify-content:space-between; gap:10px; align-items:start; }
+.jc-title{ font-size:16px; font-weight:800; line-height:1.2; }
+.jc-meta{ margin-top:4px; font-size:12px; color: var(--text-muted, #6b7280); }
+.jc-right{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.jc-top-right{ display:flex; gap:8px; align-items:center; }
+
+.jc-kpis{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:10px;
+  margin-top:10px;
+}
+.jc-kpi{
+  background: var(--control-bg, #f7f7f7);
+  border: 1px solid var(--border-color, #e6e6e6);
+  border-radius:10px;
+  padding:8px 10px;
+  font-size:13px;
+}
+.jc-kpi .lbl{ color: var(--text-muted, #6b7280); font-size:12px; }
+.jc-kpi .val{ font-weight:800; font-size:14px; margin-top:2px; }
+
+.jc-progress{ margin-top:10px; }
+.jc-progress .pct{
+  font-size:12px;
+  color: var(--text-muted, #6b7280);
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:6px;
+}
+.jc-progress .bar{
+  height:8px;
+  border-radius:999px;
+  overflow:hidden;
+  background: var(--control-bg, #eef2f7);
+}
+.jc-progress .fill{ height:100%; border-radius:999px; background:#3b82f6; }
+
+.jc-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.jc-actions .btn{ border-radius:10px; }
+
+.jc-timer{
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #111827;
+}
+
+/* Cooking mode */
+.jc-card.mode-cooking .jc-kpis,
+.jc-card.mode-cooking .jc-progress { display:none; }
+
+.jc-cooking-center{
+  margin-top: 14px;
+  margin-bottom: 8px;
+  text-align:center;
+}
+.jc-cooking-ws{ font-size: 22px; font-weight: 900; }
+.jc-cooking-op{ margin-top: 6px; font-size: 16px; font-weight: 700; color: #6b7280; }
+
+/* WIP blink (only when remaining > 0) */
+@keyframes jcPulse {
+  0% { box-shadow: 0 0 0 rgba(59,130,246,0); }
+  50% { box-shadow: 0 0 0 4px rgba(59,130,246,0.18); }
+  100% { box-shadow: 0 0 0 rgba(59,130,246,0); }
+}
+.jc-card.state-wip{ animation: jcPulse 1.2s infinite; }
+
+/* Overdue red + blink */
+@keyframes jcAlert {
+  0% { background:#fff; }
+  50% { background:#fff1f2; }
+  100% { background:#fff; }
+}
+.jc-card.is-overdue{
+  border-color:#fecaca;
+}
+.jc-card.alerting{
+  animation: jcAlert 1.0s infinite;
+  border-left-color:#ef4444 !important;
+}
+
+.jc-card.is-muted { opacity: 0.88; }
+
+/* Wallboard mode */
+body.jc-wall .jc-board { padding: 18px 0; }
+body.jc-wall .jc-title { font-size: 18px; }
+body.jc-wall .jc-timer { font-size: 18px; }
+body.jc-wall .jc-card { min-height: 190px; }
+body.jc-wall .jc-actions { display:none; }
