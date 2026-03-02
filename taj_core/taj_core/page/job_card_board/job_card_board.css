@@ -1,25 +1,38 @@
+/* =========================================================
+   Job Card Board
+   ========================================================= */
+
 .jc-board { padding: 12px 0; }
 
+/* Grid */
 .jc-grid{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
+
+/* Responsive columns */
 @media (max-width: 1280px) { .jc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px)  { .jc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 680px)  { .jc-grid { grid-template-columns: 1fr; } }
 
-/* 10-inch landscape: 3 cards + compact UI */
-@media (max-width: 1024px) and (orientation: landscape){
-  .jc-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
-  .jc-card { padding: 10px; border-radius: 10px; min-height: 145px; }
-  .jc-title { font-size: 14px; }
-  .jc-meta { font-size: 11px; }
-  .jc-kpi { padding: 6px 8px; border-radius: 9px; }
-  .jc-kpi .val { font-size: 13px; }
-  .jc-actions .btn { padding: 4px 8px; font-size: 12px; }
+/* =========================================================
+   10.1-inch tablets (Landscape) - Force 3 columns
+   - يحاول يستهدف التابلت (touch) عشان ما يأثر على اللابتوبات
+   - إذا جهازك مو touch، احذف (hover/pointer) من الشرط
+   ========================================================= */
+@media (orientation: landscape)
+  and (min-width: 1025px)
+  and (max-width: 1366px)
+  and (max-height: 900px)
+  and (hover: none)
+  and (pointer: coarse){
+  .jc-grid { grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
 }
 
+/* =========================================================
+   Card base
+   ========================================================= */
 .jc-card{
   border: 1px solid var(--border-color, #e6e6e6);
   border-radius: 12px;
@@ -32,21 +45,26 @@
   box-shadow: 0 1px 0 rgba(0,0,0,0.03);
 }
 
+/* Left border by state */
 .jc-card.state-running{ border-left: 6px solid var(--blue-500, #3b82f6); }
 .jc-card.state-paused { border-left: 6px solid var(--orange-500, #f59e0b); }
 .jc-card.state-idle   { border-left: 6px solid var(--gray-300, #d1d5db); }
 
-.jc-card.idle-completed { border-left-color: #22c55e; }
-.jc-card.idle-open { border-left-color: #94a3b8; }
-.jc-card.idle-material-transferred { border-left-color: #06b6d4; }
-.jc-card.idle-submitted { border-left-color: #16a34a; }
+/* Idle sub-states */
+.jc-card.idle-completed           { border-left-color: #22c55e; }
+.jc-card.idle-open                { border-left-color: #94a3b8; }
+.jc-card.idle-material-transferred{ border-left-color: #06b6d4; }
+.jc-card.idle-submitted           { border-left-color: #16a34a; }
 
+/* Header */
 .jc-head{ display:flex; justify-content:space-between; gap:10px; align-items:start; }
 .jc-title{ font-size:16px; font-weight:800; line-height:1.2; }
 .jc-meta{ margin-top:4px; font-size:12px; color: var(--text-muted, #6b7280); }
+
 .jc-right{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
 .jc-top-right{ display:flex; gap:8px; align-items:center; }
 
+/* KPIs */
 .jc-kpis{
   display:grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -63,6 +81,7 @@
 .jc-kpi .lbl{ color: var(--text-muted, #6b7280); font-size:12px; }
 .jc-kpi .val{ font-weight:800; font-size:14px; margin-top:2px; }
 
+/* Progress */
 .jc-progress{ margin-top:10px; }
 .jc-progress .pct{
   font-size:12px;
@@ -79,16 +98,20 @@
 }
 .jc-progress .fill{ height:100%; border-radius:999px; background:#3b82f6; }
 
+/* Actions */
 .jc-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
 .jc-actions .btn{ border-radius:10px; }
 
+/* Timer */
 .jc-timer{
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: #111827;
 }
 
-/* Cooking mode */
+/* =========================================================
+   Cooking mode
+   ========================================================= */
 .jc-card.mode-cooking .jc-kpis,
 .jc-card.mode-cooking .jc-progress { display:none; }
 
@@ -100,23 +123,23 @@
 .jc-cooking-ws{ font-size: 22px; font-weight: 900; }
 .jc-cooking-op{ margin-top: 6px; font-size: 16px; font-weight: 700; color: #6b7280; }
 
-/* WIP blink (only when remaining > 0) */
+/* =========================================================
+   WIP blink (only when remaining > 0)
+   ========================================================= */
 @keyframes jcPulse {
-  0% { box-shadow: 0 0 0 rgba(59,130,246,0); }
-  50% { box-shadow: 0 0 0 4px rgba(59,130,246,0.18); }
+  0%   { box-shadow: 0 0 0 rgba(59,130,246,0); }
+  50%  { box-shadow: 0 0 0 4px rgba(59,130,246,0.18); }
   100% { box-shadow: 0 0 0 rgba(59,130,246,0); }
 }
 .jc-card.state-wip{ animation: jcPulse 1.2s infinite; }
 
 /* Overdue red + blink */
 @keyframes jcAlert {
-  0% { background:#fff; }
-  50% { background:#fff1f2; }
+  0%   { background:#fff; }
+  50%  { background:#fff1f2; }
   100% { background:#fff; }
 }
-.jc-card.is-overdue{
-  border-color:#fecaca;
-}
+.jc-card.is-overdue{ border-color:#fecaca; }
 .jc-card.alerting{
   animation: jcAlert 1.0s infinite;
   border-left-color:#ef4444 !important;
@@ -124,9 +147,52 @@
 
 .jc-card.is-muted { opacity: 0.88; }
 
-/* Wallboard mode */
+/* =========================================================
+   10-inch landscape: 3 cards + compact UI (تقليل ارتفاع الكرت)
+   ========================================================= */
+@media (max-width: 1024px) and (orientation: landscape){
+
+  .jc-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px !important; }
+
+  /* الكرت أقصر + مسافات أقل */
+  .jc-card{
+    padding: 8px !important;
+    border-radius: 10px !important;
+    /* min-height: 110px !important; */
+    min-height: 0 !important;
+  }
+
+  /* Header */
+  .jc-head{ gap: 6px !important; }
+  .jc-title{ font-size: 10px !important; line-height: 1.1 !important; }
+  .jc-right{ font-size: 10px !important; line-height: 1.1 !important; }
+  .jc-meta{ margin-top: 2px !important; font-size: 9px !important; }
+
+  /* KPIs */
+  .jc-kpis{ gap: 4px !important; margin-top: 4px !important; }
+  .jc-kpi{ padding: 4px 6px !important; border-radius: 9px !important; }
+  .jc-kpi .lbl{ font-size:10px !important; color: var(--text-muted, #6b7280); }
+  .jc-kpi .val{ font-weight:600 !important; font-size:12px !important; margin-top:1px !important; }
+
+  /* Progress */
+  .jc-progress{ margin-top: 6px !important; }
+  .jc-progress .pct{ font-size: 8px !important; margin-bottom: 4px !important; }
+  .jc-progress .bar{ height: 6px !important; }
+
+  /* Actions */
+  .jc-actions{ margin-top: 6px !important; gap: 6px !important; }
+  .jc-actions .btn{ padding: 4px 8px; font-size: 10px !important; }
+
+  /* Cooking labels */
+  .jc-cooking-ws{ font-size: 16px !important; font-weight: 700 !important; }
+  .jc-cooking-op{ margin-top: 3px !important; font-size: 13px !important; font-weight: 500 !important; color: #6b7280; }
+}
+
+/* =========================================================
+   Wallboard mode
+   ========================================================= */
 body.jc-wall .jc-board { padding: 18px 0; }
 body.jc-wall .jc-title { font-size: 18px; }
 body.jc-wall .jc-timer { font-size: 18px; }
-body.jc-wall .jc-card { min-height: 190px; }
+body.jc-wall .jc-card  { min-height: 190px; }
 body.jc-wall .jc-actions { display:none; }

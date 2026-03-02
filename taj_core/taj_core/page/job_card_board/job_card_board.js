@@ -4,6 +4,10 @@
    - Bulk polling (single request) + no overlapping polls
    - Cleanup on page hide (no timers/poll leaks)
    - Wallboard mode: ?mode=wall  (read-only)
+   - ✅ Poll default OFF. Only ON if ?poll=on
+   - ✅ Realtime robustness: subscribe to doctype rooms with/without space
+   - ✅ When Search is exact Job Card name => subscribe to doc room (fastest)
+   - ✅ For On Hold / Completed => instant timer from total_time_in_mins (no API)
    ============================================================ */
 
 frappe.pages["job-card-board"].on_page_load = function (wrapper) {
@@ -12,6 +16,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   const RT_EVENT = "job_card_board_update";
 
   const urlParams = new URLSearchParams(window.location.search || "");
+
   const IS_WALL =
     (urlParams.get("mode") || "").toLowerCase() === "wall" ||
     urlParams.get("wall") === "1";
@@ -29,6 +34,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   const root = $(`<div class="jc-board"></div>`).appendTo(page.body);
   const grid = $(`<div class="jc-grid"></div>`).appendTo(root);
 
+  
   // -------------------------
   // Helpers
   // -------------------------
@@ -54,6 +60,44 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const ss = s - hh * 3600 - mm * 60;
     const pad = (n) => (n < 10 ? "0" + n : "" + n);
     return `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
+  }
+
+  // Detect decimal separator from current locale/number_format safely
+  // Detect decimal separator safely (no args passed)
+  const DEC_SEP = (() => {
+    try {
+      const s = String(format_number(1.1)); // e.g. "1.1" / "1,1" / "١٫١"
+      const onlySep = s.replace(/[0-9\u0660-\u0669\u06F0-\u06F9]/g, "").trim();
+      return onlySep ? onlySep[0] : ".";
+    } catch (e) {
+      return ".";
+    }
+  })();
+
+  function format_qty(val, max_dp = 6) {
+    const n = flt(val || 0);
+    if (!isFinite(n)) return "-";
+
+    let s = "";
+    try {
+      // ✅ precision is 3rd arg, 2nd arg must be string/format (use null)
+      s = String(format_number(n, null, max_dp));
+    } catch (e) {
+      // fallback
+      s = String(n);
+    }
+
+    const ds = DEC_SEP;
+    const esc = ds.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    // 7.010000 -> 7.01  |  7.011000 -> 7.011
+    s = s.replace(new RegExp(`(${esc}\\d*?[1-9])0+$`), "$1");
+    // 7.000000 -> 7
+    s = s.replace(new RegExp(`${esc}0+$`), "");
+    // safety
+    s = s.replace(new RegExp(`${esc}$`), "");
+
+    return s;
   }
 
   // -------------------------
@@ -333,7 +377,10 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     fieldtype: "Data",
     label: __("Search"),
     fieldname: "search",
-    change: frappe.utils.debounce(() => refresh_board(), 350),
+    change: frappe.utils.debounce(() => {
+      setup_realtime_subscription(); // ✅ important for doc-room subscription
+      refresh_board();
+    }, 350),
   });
 
   if (!IS_WALL) {
@@ -502,47 +549,59 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   // -------------------------
   let doctypeSubscribed = false;
   let currentPfRoom = null;
+  let currentDocRoom = null;
+
+  function looks_like_job_card_name(s) {
+    const v = (s || "").trim();
+    if (!v) return false;
+    if (v.includes(" ")) return false;
+    // heuristic: at least 5 chars (avoid subscribing to tiny fragments)
+    if (v.length < 5) return false;
+    return true;
+  }
 
   function ensure_doctype_subscribe() {
     if (!frappe.realtime || doctypeSubscribed) return;
 
-    if (frappe.realtime.doctype_subscribe) {
-      frappe.realtime.doctype_subscribe("Job Card");
-      doctypeSubscribed = true;
-      return;
-    }
+    // ✅ robust: subscribe to both variants
+    try { frappe.realtime.subscribe("doctype: Job Card"); } catch (e) {}
+    try { frappe.realtime.subscribe("doctype:Job Card"); } catch (e) {}
 
-    if (frappe.realtime.subscribe) {
-      frappe.realtime.subscribe("doctype: Job Card");
-      doctypeSubscribed = true;
-    }
+    doctypeSubscribed = true;
   }
 
   function setup_realtime_subscription() {
     ensure_doctype_subscribe();
-
     if (!frappe.realtime || !frappe.realtime.subscribe) return;
 
     const pf = (f_plant_floor.get_value() || "").trim();
     const nextPfRoom = pf ? `jc_board:pf:${roomify(pf)}` : null;
 
-    if (
-      currentPfRoom &&
-      frappe.realtime.unsubscribe &&
-      currentPfRoom !== nextPfRoom
-    ) {
-      try {
-        frappe.realtime.unsubscribe(currentPfRoom);
-      } catch (e) {}
+    const s = (f_search.get_value() || "").trim();
+    const nextDocRoom = looks_like_job_card_name(s) ? `doc:Job Card/${s}` : null;
+
+    // unsubscribe PF room if changed
+    if (currentPfRoom && frappe.realtime.unsubscribe && currentPfRoom !== nextPfRoom) {
+      try { frappe.realtime.unsubscribe(currentPfRoom); } catch (e) {}
     }
 
+    // unsubscribe DOC room if changed
+    if (currentDocRoom && frappe.realtime.unsubscribe && currentDocRoom !== nextDocRoom) {
+      try { frappe.realtime.unsubscribe(currentDocRoom); } catch (e) {}
+    }
+
+    // subscribe PF room
     if (nextPfRoom && nextPfRoom !== currentPfRoom) {
-      try {
-        frappe.realtime.subscribe(nextPfRoom);
-      } catch (e) {}
+      try { frappe.realtime.subscribe(nextPfRoom); } catch (e) {}
+    }
+
+    // subscribe DOC room
+    if (nextDocRoom && nextDocRoom !== currentDocRoom) {
+      try { frappe.realtime.subscribe(nextDocRoom); } catch (e) {}
     }
 
     currentPfRoom = nextPfRoom;
+    currentDocRoom = nextDocRoom;
   }
 
   // Listen to realtime event
@@ -560,8 +619,28 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
         return;
       }
 
-      // ✅ Lite event => batch fetch once
+      // ✅ Lite event
       if (data.__lite) {
+        const st = (data.status || "").trim();
+        const isCompleted = cint(data.docstatus) === 1 || st === "Completed";
+        const isPaused = cint(data.is_paused) === 1 || st === "On Hold";
+
+        // ✅ Fast path: On Hold / Completed / Submitted
+        // update instantly from total_time_in_mins WITHOUT API call
+        if (isCompleted || isPaused) {
+          const mins = flt(data.total_time_in_mins || 0);
+          data.timer_seconds = Math.round(mins * 60);
+
+          data.expected_seconds = 0;
+          data.is_overdue = 0;
+          data.is_completed = isCompleted ? 1 : 0;
+          data.running = 0;
+
+          update_single_card(data);
+          return;
+        }
+
+        // otherwise, fetch full payload in batch
         markDirty(data.name);
         return;
       }
@@ -573,6 +652,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
   // -------------------------
   // Fallback poll: bulk sync visible cards (no overlaps)
+  // (✅ Default OFF. Only ON if ?poll=on)
   // -------------------------
   let pollTimer = null;
   let pollInFlight = false;
@@ -611,7 +691,11 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     pollInFlight = false;
   }
 
-  start_poll();
+  // ✅ Poll is OFF by default; only ON if poll=on
+  const pollRaw = (urlParams.get("poll") || "").trim().toLowerCase();
+  const pollOnValues = new Set(["on", "1", "true", "yes"]);
+  const pollEnabled = pollOnValues.has(pollRaw);
+  if (pollEnabled) start_poll();
 
   // -------------------------
   // Rendering
@@ -735,11 +819,12 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
               <div class="jc-title">
                 <a href="/app/job-card/${d.name}" target="_blank">${d.name}</a>
               </div>
-
+              
               <div class="jc-meta">
                 <div>${__("WS")}: ${d.workstation || "-"}</div>
                 <div>${__("Op")}: ${d.operation || "-"}</div>
               </div>
+              
             </div>
 
             <div class="jc-right">
@@ -776,13 +861,13 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
             <div class="jc-kpis">
               <div class="jc-kpi"><div class="lbl">${__(
                 "Planned"
-              )}</div><div class="val">${format_number(planned)}</div></div>
+              )}</div><div class="val">${format_qty(planned)}</div></div>
               <div class="jc-kpi"><div class="lbl">${__(
                 "Done"
-              )}</div><div class="val">${format_number(done)}</div></div>
+              )}</div><div class="val">${format_qty(done)}</div></div>
               <div class="jc-kpi"><div class="lbl">${__(
                 "Remaining"
-              )}</div><div class="val">${format_number(remaining)}</div></div>
+              )}</div><div class="val">${format_qty(remaining)}</div></div>
             </div>
 
             <div class="jc-progress">
@@ -919,26 +1004,82 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
     const completed = flt(cur.total_completed_qty || cur.done || 0);
     const planned_now = flt(cur.for_quantity || cur.planned || 0);
+    const pf = String(cur.plant_floor || "").trim();
 
     if (cint(cur.docstatus) === 1) return;
 
-    if (planned_now <= completed) {
-      const r = await call_api("board_submit_job", { job_card: name });
-      if (r.message?.card) update_single_card(r.message.card);
-      else markDirty(name);
-      return;
+    // ✅ NEW: decide whether to hide qty fields
+    const fq_default = (planned_now && planned_now > 0) ? planned_now : completed;
+    const hide_qty_fields = Math.abs(fq_default - completed) < 0.000001;
+
+    const fields = [];
+
+    fields.push({
+      fieldtype: "Int",
+      fieldname: "manpower",
+      label: __("Manpower"),
+      reqd: 1,
+      default: 1,
+    });
+
+    if (pf === "Cooking Area") {
+      fields.push({
+        fieldtype: "Float",
+        fieldname: "taj_total_weight",
+        label: __("Total Weight"),
+        reqd: 1,
+        default: flt(cur.taj_total_weight || 0),
+      });
     }
 
-    let dialog = null;
+    if (pf === "Preparation Area") {
+      fields.push({
+        fieldtype: "Float",
+        fieldname: "taj_rm_used_qty",
+        label: __("RM Used Qty"),
+        reqd: 1,
+        default: flt(cur.taj_rm_used_qty || 0),
+      });
+    }
 
-    dialog = frappe.prompt(
-      [
+    // ✅ CHANGED: qty fields shown only when needed
+    if (hide_qty_fields) {
+      // keep them in payload but NOT visible
+      fields.push(
         {
           fieldtype: "Float",
           fieldname: "for_quantity",
           label: __("Qty to Manufacture"),
           reqd: 1,
-          default: planned_now,
+          hidden: 1,
+          default: fq_default,
+        },
+        {
+          fieldtype: "Float",
+          fieldname: "completed_qty",
+          label: __("Completed Qty"),
+          reqd: 1,
+          hidden: 1,
+          default: completed,
+        },
+        {
+          fieldtype: "Float",
+          fieldname: "process_loss_qty",
+          label: __("Process Loss Qty"),
+          read_only: 1,
+          hidden: 1,
+          default: 0,
+        }
+      );
+    } else {
+      // your existing UX (visible)
+      fields.push(
+        {
+          fieldtype: "Float",
+          fieldname: "for_quantity",
+          label: __("Qty to Manufacture"),
+          reqd: 1,
+          default: planned_now || completed,
           change() {
             let fq = flt(dialog.get_value("for_quantity") || 0);
             if (fq < completed) {
@@ -957,7 +1098,8 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
           fieldtype: "Float",
           fieldname: "completed_qty",
           label: __("Completed Qty"),
-          read_only: 1,
+          read_only: 0,
+          reqd: 1,
           default: completed,
         },
         {
@@ -965,34 +1107,60 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
           fieldname: "process_loss_qty",
           label: __("Process Loss Qty"),
           read_only: 1,
-          default: Math.max(planned_now - completed, 0),
-        },
-      ],
+          default: Math.max((planned_now || 0) - completed, 0),
+        }
+      );
+    }
+
+    let dialog = null;
+
+    dialog = frappe.prompt(
+      fields,
       async (v) => {
         const fq = flt(v.for_quantity || 0);
+        if (fq < completed) {
+          frappe.msgprint({
+            message: __("Qty to Manufacture cannot be less than Completed Qty"),
+            indicator: "red",
+          });
+          return;
+        }
+
         const loss = Math.max(fq - completed, 0);
 
-        frappe.confirm(
-          __(
-            "Qty to Manufacture = {0}<br>Completed = {1}<br>Process Loss = {2}<br><br>The difference will be treated as process loss. Continue?",
-            [format_number(fq), format_number(completed), format_number(loss)]
-          ),
-          async () => {
-            const r = await call_api("board_submit_job", {
-              job_card: name,
-              for_quantity: fq,
-              confirm_loss: 1,
-            });
-            if (r.message?.card) update_single_card(r.message.card);
-            else markDirty(name);
-          }
-        );
+        const args = {
+          job_card: name,
+          for_quantity: fq,
+          confirm_loss: loss > 0 ? 1 : 0,
+          manpower: cint(v.manpower || 0),
+          taj_total_weight: v.taj_total_weight,
+          taj_rm_used_qty: v.taj_rm_used_qty,
+        };
+
+        const do_submit = async () => {
+          const r = await call_api("board_submit_job", args);
+          if (r.message?.card) update_single_card(r.message.card);
+          else markDirty(name);
+        };
+
+        if (loss > 0) {
+          frappe.confirm(
+            __(
+              "Qty to Manufacture = {0}<br>Completed = {1}<br>Process Loss = {2}<br><br>The difference will be treated as process loss. Continue?",
+              [format_number(fq), format_number(completed), format_number(loss)]
+            ),
+            async () => do_submit()
+          );
+        } else {
+          await do_submit();
+        }
       },
       __("Submit Job Card"),
-      __("Continue")
+      __("Submit")
     );
 
-    dialog.trigger("for_quantity");
+    // only trigger when visible fields exist (optional safety)
+    if (!hide_qty_fields) dialog.trigger("for_quantity");
   }
 
   // -------------------------
@@ -1097,6 +1265,14 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       } catch (e) {}
     }
     currentPfRoom = null;
+
+    // unsubscribe DOC room
+    if (currentDocRoom && frappe.realtime?.unsubscribe) {
+      try {
+        frappe.realtime.unsubscribe(currentDocRoom);
+      } catch (e) {}
+    }
+    currentDocRoom = null;
 
     // remove handlers
     try {

@@ -10,7 +10,10 @@ from frappe.utils import flt, get_datetime, today
 OVERDUE_TOLERANCE_SEC = 120  # 2 minutes
 
 EVENT_NAME = "job_card_board_update"
-DOCTYPE_ROOM = "doctype: Job Card"
+
+# publish to both variants to avoid room-name mismatch
+DOCTYPE_ROOM_A = "doctype: Job Card"
+DOCTYPE_ROOM_B = "doctype:Job Card"
 
 
 # -------------------------
@@ -27,7 +30,10 @@ def _has_col(doctype: str, fieldname: str) -> bool:
 
 
 def _safe_fields() -> List[str]:
-    # Only DB columns here (get_list / SQL safe)
+    """
+    Only DB columns here (get_list / SQL safe)
+    These fields are returned to the board and also used by bulk payload API.
+    """
     fields = ["name", "modified", "docstatus", "creation"]
     for f in [
         "company",
@@ -43,6 +49,12 @@ def _safe_fields() -> List[str]:
         "operation_id",
         "operation_row_id",
         "taj_plant_floor",
+        # timer stable source:
+        "total_time_in_mins",
+        # submit dialog extra fields:
+        "taj_manpower_used",
+        "taj_total_weight",
+        "taj_rm_used_qty",
     ]:
         if _has_col("Job Card", f):
             fields.append(f)
@@ -214,8 +226,8 @@ def _is_cooking_mode(jc_pf: str, ws_stage: str) -> bool:
 def _jobcards_by_time_logs(start_dt, end_dt) -> List[str]:
     """
     Any overlap with time logs in range.
-    IMPORTANT FIX:
-      - Open logs (to_time NULL/invalid) must be treated as ending NOW(), not from_time.
+    IMPORTANT:
+      - Open logs (to_time NULL/invalid) treated as ending NOW().
     """
     rows = frappe.db.sql(
         """
@@ -285,7 +297,10 @@ def _get_running_parents(job_card_names: List[str]) -> Set[str]:
 
 
 def _compute_timer_seconds(job_card_names: List[str]) -> Dict[str, int]:
-    """Timer = sum of closed logs + open logs (now-from). Works even if multiple open rows exist."""
+    """
+    Timer = sum of closed logs + open logs (now-from).
+    Works even if multiple open rows exist.
+    """
     if not job_card_names:
         return {}
 
@@ -457,7 +472,6 @@ def _assert_user_can_access_job_card_pf(job_card_name: str):
 
     jc = frappe.db.get_value("Job Card", job_card_name, fields, as_dict=True)
     if not jc:
-        # if deleted, allow (remove events)
         return
 
     ws = (jc.get("workstation") or "").strip()
@@ -474,40 +488,100 @@ def _assert_user_can_access_job_card_pf(job_card_name: str):
 # Payload builders
 # -------------------------
 def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
+    """
+    PERF:
+      - running_set only computed for candidate cards
+      - timer_seconds computed from logs ONLY for running cards
+      - paused/completed timer read from total_time_in_mins (stable)
+    """
     if not job_cards:
         return []
 
     names = [d["name"] for d in job_cards]
-    running_set = _get_running_parents(names)
-    timer_map = _compute_timer_seconds(names)
-    expected_map = _get_expected_seconds_map(job_cards)
+    has_total_time = _has_col("Job Card", "total_time_in_mins")
 
-    ws_names = [d.get("workstation") for d in job_cards if d.get("workstation")]
-    ws_stage_map = _workstation_to_production_stage(ws_names)
-    ws_pf_map = _get_ws_pf_map(ws_names)
+    # Pre-calc base states so we compute logs only for cards that can be running
+    base: Dict[str, Dict[str, Any]] = {}
+    active_names: List[str] = []
+    active_cards: List[dict] = []
 
-    items = []
     for d in job_cards:
+        name = d["name"]
         docstatus = int(d.get("docstatus") or 0)
         status = (d.get("status") or "").strip()
 
         planned = flt(d.get("for_quantity")) or 0.0
         done = flt(d.get("total_completed_qty")) or 0.0
-        remaining = max(planned - done, 0.0)
 
         is_paused = _get_is_paused(d)
         is_finished = _is_finished_qty(planned, done)
         is_completed = _is_completed(docstatus, status, planned, done)
 
+        base[name] = {
+            "docstatus": docstatus,
+            "status": status,
+            "planned": planned,
+            "done": done,
+            "is_paused": is_paused,
+            "is_finished": is_finished,
+            "is_completed": is_completed,
+        }
+
+        # Candidates that can be live-running
+        if docstatus == 0 and not is_completed and is_paused == 0:
+            active_names.append(name)
+            active_cards.append(d)
+
+    # Only check running among candidates
+    running_set = _get_running_parents(active_names)
+
+    # Timer: compute only for actually running cards
+    timer_map_running = _compute_timer_seconds(list(running_set)) if running_set else {}
+
+    # Expected: only for candidates (used for overdue)
+    expected_map_all: Dict[str, int] = {n: 0 for n in names}
+    if active_cards:
+        expected_map_all.update(_get_expected_seconds_map(active_cards))
+
+    ws_names = [d.get("workstation") for d in job_cards if d.get("workstation")]
+    ws_stage_map = _workstation_to_production_stage(ws_names)
+    ws_pf_map = _get_ws_pf_map(ws_names)
+
+    # If total_time_in_mins missing, fallback to full computation
+    timer_map_fallback = _compute_timer_seconds(names) if not has_total_time else {}
+
+    items = []
+    for d in job_cards:
+        name = d["name"]
+        docstatus = base[name]["docstatus"]
+        status = base[name]["status"]
+
+        planned = base[name]["planned"]
+        done = base[name]["done"]
+        remaining = max(planned - done, 0.0)
+
+        is_paused = int(base[name]["is_paused"])
+        is_finished = bool(base[name]["is_finished"])
+        is_completed = bool(base[name]["is_completed"])
+
         running = (
             docstatus == 0
-            and (d["name"] in running_set)
+            and (name in running_set)
             and (not is_completed)
             and (is_paused == 0)
         )
 
-        timer_seconds = int(timer_map.get(d["name"], 0) or 0)
-        expected_seconds = int(expected_map.get(d["name"], 0) or 0)
+        expected_seconds = int(expected_map_all.get(name, 0) or 0)
+
+        # Timer source:
+        if has_total_time and not running:
+            # paused OR completed OR idle => stable
+            timer_seconds = int(flt(d.get("total_time_in_mins") or 0) * 60)
+        elif running:
+            # live
+            timer_seconds = int(timer_map_running.get(name, 0) or 0)
+        else:
+            timer_seconds = int(timer_map_fallback.get(name, 0) or 0)
 
         is_overdue = bool(
             (not is_completed)
@@ -521,7 +595,6 @@ def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
         ws = (d.get("workstation") or "").strip()
         ws_stage = (ws_stage_map.get(ws) or "").strip()
         jc_pf = (d.get("taj_plant_floor") or "").strip() if _has_col("Job Card", "taj_plant_floor") else ""
-
         eff_pf = _effective_plant_floor_from_values(jc_pf, ws, ws_pf_map)
 
         items.append(
@@ -534,8 +607,8 @@ def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
                 "running": int(bool(running)),
                 "is_completed": int(bool(is_completed)),
                 "is_finished_qty": int(is_finished),
-                "timer_seconds": timer_seconds,
-                "expected_seconds": expected_seconds,
+                "timer_seconds": int(timer_seconds),
+                "expected_seconds": int(expected_seconds),
                 "is_overdue": int(bool(is_overdue)),
                 "plant_floor": eff_pf,
                 "taj_production_stage": ws_stage,
@@ -570,7 +643,7 @@ def get_card_payload_api(name: str):
 @frappe.whitelist()
 def get_cards_payload_bulk_api(names):
     """
-    Bulk payload for polling / refresh:
+    Bulk payload for polling / refresh / dirty flush:
       - names: JSON list OR comma-separated string
       - returns: {items: [...]}  (only allowed plant floors)
     """
@@ -582,8 +655,7 @@ def get_cards_payload_bulk_api(names):
     else:
         arr = []
 
-    # cap to protect server
-    arr = arr[:120]
+    arr = arr[:120]  # cap to protect server
     if not arr:
         return {"items": []}
 
@@ -900,8 +972,41 @@ def board_complete_job(job_card: str, qty: float):
     return {"ok": True, "card": get_card_payload(job_card)}
 
 
+def _effective_pf_for_doc(doc) -> str:
+    """
+    Compute effective plant floor for validations (submit dialog fields).
+    """
+    jc_pf = (doc.get("taj_plant_floor") or "").strip() if _has_col("Job Card", "taj_plant_floor") else ""
+    if jc_pf:
+        return jc_pf
+
+    ws = (doc.get("workstation") or "").strip()
+    if not ws:
+        return ""
+
+    if _has_col("Workstation", "plant_floor"):
+        return (frappe.db.get_value("Workstation", ws, "plant_floor") or "").strip()
+
+    return ""
+
+
+def _set_field_if_exists(doc, fieldname: str, value):
+    if value is None:
+        return
+    if not doc.meta.has_field(fieldname):
+        return
+    doc.set(fieldname, value)
+
+
 @frappe.whitelist()
-def board_submit_job(job_card: str, for_quantity=None, confirm_loss=0):
+def board_submit_job(
+    job_card: str,
+    for_quantity=None,
+    confirm_loss=0,
+    taj_manpower_used=None,
+    taj_total_weight=None,
+    taj_rm_used_qty=None,
+):
     _assert_user_can_access_job_card_pf(job_card)
 
     doc = frappe.get_doc("Job Card", job_card)
@@ -913,12 +1018,36 @@ def board_submit_job(job_card: str, for_quantity=None, confirm_loss=0):
     if _is_running_now(job_card):
         frappe.throw("Please Pause/Complete the running timer before submitting.")
 
+    # ---- validations for required submit dialog fields ----
+    pf = _effective_pf_for_doc(doc)
+
+    # manpower required always (if field exists)
+    if doc.meta.has_field("taj_manpower_used"):
+        mp = int(taj_manpower_used or 0)
+        if mp <= 0:
+            frappe.throw("Manpower is required.")
+        doc.set("taj_manpower_used", mp)
+
+    # conditional required:
+    if pf == "Cooking Area" and doc.meta.has_field("taj_total_weight"):
+        tw = flt(taj_total_weight)
+        if tw <= 0:
+            frappe.throw("Total Weight is required for Cooking Area.")
+        doc.set("taj_total_weight", tw)
+
+    if pf == "Preparation Area" and doc.meta.has_field("taj_rm_used_qty"):
+        rq = flt(taj_rm_used_qty)
+        if rq <= 0:
+            frappe.throw("RM Used Qty is required for Preparation Area.")
+        doc.set("taj_rm_used_qty", rq)
+
     done = flt(doc.get("total_completed_qty") or 0)
     current_fq = flt(doc.get("for_quantity") or 0)
 
     if for_quantity is None:
         if current_fq > done:
             frappe.throw("Qty to Manufacture is greater than Completed Qty. Use the Submit dialog to confirm Process Loss.")
+        doc.save()
         doc.submit()
         return {"ok": True, "card": get_card_payload(job_card)}
 
@@ -945,7 +1074,7 @@ def board_submit_job(job_card: str, for_quantity=None, confirm_loss=0):
 
 
 # ==========================
-# Realtime triggers (hooks.py)
+# Realtime triggers
 # ==========================
 def _scrub(txt: str) -> str:
     if not txt:
@@ -956,120 +1085,137 @@ def _scrub(txt: str) -> str:
     return s
 
 
-def _get_ws_plant_floor(workstation: str | None) -> str:
-    if not workstation:
+_WS_PF_CACHE: Dict[str, str] = {}
+
+
+def _get_ws_plant_floor_cached(workstation: str | None) -> str:
+    ws = (workstation or "").strip()
+    if not ws:
         return ""
     if not _has_col("Workstation", "plant_floor"):
         return ""
-    return (frappe.db.get_value("Workstation", workstation, "plant_floor") or "").strip()
+    if ws in _WS_PF_CACHE:
+        return _WS_PF_CACHE[ws]
+    pf = (frappe.db.get_value("Workstation", ws, "plant_floor") or "").strip()
+    _WS_PF_CACHE[ws] = pf
+    return pf
 
 
-def _effective_pf_from_doc(doc) -> str:
-    jc_pf = (doc.get("taj_plant_floor") or "").strip() if _has_col("Job Card", "taj_plant_floor") else ""
-    if jc_pf:
-        return jc_pf
-    return _get_ws_plant_floor(doc.get("workstation"))
+def _effective_pf_lite_from_doc(doc) -> str:
+    # 1) from Job Card.taj_plant_floor if present
+    if _has_col("Job Card", "taj_plant_floor"):
+        pf = (getattr(doc, "taj_plant_floor", "") or "").strip()
+        if pf:
+            return pf
+    # 2) fallback from Workstation.plant_floor with cache
+    return _get_ws_plant_floor_cached(getattr(doc, "workstation", None))
 
-# كان يوجد تأخير من 3 إلى 7 ثواني فأستبدلت الكود
-# def job_card_changed(doc, method=None):
-#     try:
-#         # Delete/Trash should explicitly remove
-#         is_delete = str(method or "").lower() in ("on_trash", "after_delete", "on_delete", "after_trash")
 
-#         if is_delete:
-#             payload = {"name": doc.name, "__action": "remove"}
-#         else:
-#             payload = get_card_payload(doc.name) or {"name": doc.name}
+def _publish_job_card_lite_by_name(job_card_name: str, is_delete: bool = False):
+    """
+    Used to publish realtime when changes happen via Job Card Time Log (standard/ERPNext),
+    where Job Card doc_events might NOT fire.
+    """
+    if not job_card_name:
+        return
 
-#         payload["__event"] = EVENT_NAME
+    fields = ["name", "modified", "docstatus", "status", "work_order", "workstation", "operation"]
 
-#         # publish to doc room
-#         doc_room = f"doc:Job Card/{doc.name}"
-#         frappe.publish_realtime(EVENT_NAME, payload, room=doc_room, after_commit=True)
+    for f in [
+        "is_paused",
+        "for_quantity",
+        "total_completed_qty",
+        "total_time_in_mins",
+        "taj_plant_floor",
+        "taj_manpower_used",
+        "taj_total_weight",
+        "taj_rm_used_qty",
+    ]:
+        if frappe.db.has_column("Job Card", f):
+            fields.append(f)
 
-#         # publish to doctype room (discovery / general)
-#         frappe.publish_realtime(EVENT_NAME, payload, room=DOCTYPE_ROOM, after_commit=True)
+    jc = frappe.db.get_value("Job Card", job_card_name, fields, as_dict=True)
+    if not jc:
+        return
 
-#         # publish to Plant Floor room (current)
-#         pf = _effective_pf_from_doc(doc)
-#         pf_room = f"jc_board:pf:{_scrub(pf)}" if pf else None
-#         if pf_room:
-#             frappe.publish_realtime(EVENT_NAME, payload, room=pf_room, after_commit=True)
+    pf = (jc.get("taj_plant_floor") or "").strip() if frappe.db.has_column("Job Card", "taj_plant_floor") else ""
+    if not pf:
+        pf = _get_ws_plant_floor_cached(jc.get("workstation"))
 
-#         # if Plant Floor changed, tell old room to remove this card
-#         before = doc.get_doc_before_save() if hasattr(doc, "get_doc_before_save") else None
-#         if before and not is_delete:
-#             old_pf = _effective_pf_from_doc(before)
-#             old_room = f"jc_board:pf:{_scrub(old_pf)}" if old_pf else None
-#             if old_room and old_room != pf_room:
-#                 frappe.publish_realtime(
-#                     EVENT_NAME,
-#                     {"name": doc.name, "__action": "remove"},
-#                     room=old_room,
-#                     after_commit=True,
-#                 )
+    payload = {
+        "__lite": 1,
+        "name": jc.get("name"),
+        "modified": str(jc.get("modified") or ""),
+        "docstatus": int(jc.get("docstatus") or 0),
+        "status": (jc.get("status") or "").strip(),
+        "work_order": jc.get("work_order"),
+        "workstation": jc.get("workstation"),
+        "operation": jc.get("operation"),
+        "is_paused": int(jc.get("is_paused") or 0),
+        "for_quantity": float(jc.get("for_quantity") or 0),
+        "total_completed_qty": float(jc.get("total_completed_qty") or 0),
+        "total_time_in_mins": float(jc.get("total_time_in_mins") or 0),
+        "taj_manpower_used": int(jc.get("taj_manpower_used") or 0),
+        "taj_total_weight": float(jc.get("taj_total_weight") or 0),
+        "taj_rm_used_qty": float(jc.get("taj_rm_used_qty") or 0),
+        "plant_floor": pf,
+        "__event": EVENT_NAME,
+    }
 
-#         # on delete: also remove from old pf (if any)
-#         if before and is_delete:
-#             old_pf = _effective_pf_from_doc(before)
-#             old_room = f"jc_board:pf:{_scrub(old_pf)}" if old_pf else None
-#             if old_room:
-#                 frappe.publish_realtime(
-#                     EVENT_NAME,
-#                     {"name": doc.name, "__action": "remove"},
-#                     room=old_room,
-#                     after_commit=True,
-#                 )
+    if is_delete:
+        payload["__action"] = "remove"
 
-#     except Exception:
-#         frappe.log_error("Job Card Board realtime publish failed", frappe.get_traceback())
+    # doc room
+    doc_room = f"doc:Job Card/{job_card_name}"
+    frappe.publish_realtime(EVENT_NAME, payload, room=doc_room, after_commit=True)
+
+    # doctype rooms (both)
+    for room in (DOCTYPE_ROOM_A, DOCTYPE_ROOM_B):
+        frappe.publish_realtime(EVENT_NAME, payload, room=room, after_commit=True)
+
+    # plant floor room
+    if pf:
+        pf_room = f"jc_board:pf:{_scrub(pf)}"
+        frappe.publish_realtime(EVENT_NAME, payload, room=pf_room, after_commit=True)
+
 
 def job_card_changed(doc, method=None):
+    """
+    Fast realtime publish for Job Card doc events.
+    """
     try:
         is_delete = str(method or "").lower() in ("on_trash", "after_delete", "on_delete", "after_trash")
-
-        if is_delete:
-            payload = {"name": doc.name, "__action": "remove", "__lite": 1}
-        else:
-            # ✅ Lite payload from doc itself (no heavy queries)
-            payload = {
-                "__lite": 1,
-                "name": doc.name,
-                "modified": str(doc.modified) if getattr(doc, "modified", None) else None,
-                "docstatus": int(getattr(doc, "docstatus", 0) or 0),
-                "status": (getattr(doc, "status", "") or "").strip(),
-                "work_order": getattr(doc, "work_order", None),
-                "workstation": getattr(doc, "workstation", None),
-                "operation": getattr(doc, "operation", None),
-                "is_paused": int(getattr(doc, "is_paused", 0) or 0),
-                "for_quantity": float(getattr(doc, "for_quantity", 0) or 0),
-                "total_completed_qty": float(getattr(doc, "total_completed_qty", 0) or 0),
-                # أفضل لو taj_plant_floor موجود عندكم (حتى نتجنب query على Workstation)
-                "plant_floor": (getattr(doc, "taj_plant_floor", "") or "").strip() if frappe.db.has_column("Job Card", "taj_plant_floor") else "",
-            }
-
-        payload["__event"] = EVENT_NAME
-
-        doc_room = f"doc:Job Card/{doc.name}"
-        frappe.publish_realtime(EVENT_NAME, payload, room=doc_room, after_commit=True)
-        frappe.publish_realtime(EVENT_NAME, payload, room=DOCTYPE_ROOM, after_commit=True)
-
-        # Plant Floor room (only if we have pf in payload)
-        pf = (payload.get("plant_floor") or "").strip()
-        if pf:
-            pf_room = f"jc_board:pf:{_scrub(pf)}"
-            frappe.publish_realtime(EVENT_NAME, payload, room=pf_room, after_commit=True)
+        _publish_job_card_lite_by_name(doc.name, is_delete=is_delete)
 
         # remove from old plant floor if changed
         before = doc.get_doc_before_save() if hasattr(doc, "get_doc_before_save") else None
         if before and not is_delete:
-            old_pf = ((before.get("taj_plant_floor") or "").strip()
-                      if frappe.db.has_column("Job Card", "taj_plant_floor") else "")
-            old_room = f"jc_board:pf:{_scrub(old_pf)}" if old_pf else None
-            new_room = f"jc_board:pf:{_scrub(pf)}" if pf else None
-            if old_room and old_room != new_room:
-                frappe.publish_realtime(EVENT_NAME, {"name": doc.name, "__action": "remove", "__lite": 1},
-                                        room=old_room, after_commit=True)
+            old_pf = _effective_pf_lite_from_doc(before)
+            new_pf = _effective_pf_lite_from_doc(doc)
+            if old_pf and old_pf != new_pf:
+                old_room = f"jc_board:pf:{_scrub(old_pf)}"
+                frappe.publish_realtime(
+                    EVENT_NAME,
+                    {"name": doc.name, "__action": "remove", "__lite": 1, "plant_floor": old_pf, "__event": EVENT_NAME},
+                    room=old_room,
+                    after_commit=True,
+                )
 
     except Exception:
         frappe.log_error("Job Card Board realtime publish failed", frappe.get_traceback())
+
+
+def job_card_time_log_changed(doc, method=None):
+    """
+    ✅ Critical for poll=off:
+    Standard Job Card screen often changes Job Card Time Log.
+    This hook publishes realtime for the parent Job Card.
+    """
+    try:
+        parent = (getattr(doc, "parent", None) or "").strip()
+        if not parent:
+            return
+        is_delete = str(method or "").lower() in ("on_trash", "after_delete", "on_delete", "after_trash")
+        _publish_job_card_lite_by_name(parent, is_delete=is_delete)
+    except Exception:
+        frappe.log_error("Job Card Board realtime publish (time log) failed", frappe.get_traceback())
