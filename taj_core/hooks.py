@@ -30,6 +30,8 @@ override_doctype_class = {
 override_whitelisted_methods = {
     "hrms.hr.doctype.leave_application.leave_application.get_number_of_leave_days":
         "taj_core.overrides.leave_application.get_number_of_leave_days",
+    "erpnext.manufacturing.doctype.work_order.work_order.create_pick_list":
+		"taj_core.overrides.work_order.create_pick_list",
 }
 
 doc_events = {
