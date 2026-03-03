@@ -29,7 +29,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Incubation Degree",
-   "options": "35c\n55c\n55c & 35c"
+   "options": "35c\n37c\n55c\n55c & 35c"
   },
   {
    "columns": 2,

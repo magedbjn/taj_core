@@ -1,17 +1,3 @@
-"""
-Purpose
--------
-Override ERPNext's Work Order -> "Create Pick List" so that the generated Pick List
-automatically EXCLUDES any Work Order Items whose Item has a BOM.
-
-What this does
---------------
-- Reads the Work Order's `required_items`.
-- Finds which of those items have a BOM (by default: only "Default" + "Submitted" BOMs).
-- While mapping Work Order Items -> Pick List Items, it skips items found in that BOM set.
-- Then it runs `set_item_locations()` to populate picking locations as usual.
-"""
-
 import json
 import frappe
 from frappe.model.mapper import get_mapped_doc
@@ -30,7 +16,6 @@ def create_pick_list(source_name: str, target_doc=None, for_qty: float | None = 
 	item_codes = [d.item_code for d in (wo.required_items or []) if d.item_code]
 
 	# Build a set of items that have a BOM (Default + Submitted).
-	# If you want ANY submitted BOM (not just default), remove "is_default": 1
 	bom_items = set(
 		frappe.get_all(
 			"BOM",
@@ -46,7 +31,6 @@ def create_pick_list(source_name: str, target_doc=None, for_qty: float | None = 
 	max_finished_goods_qty = flt(wo.qty) or 1
 
 	def update_item_quantity(source, target, source_parent):
-		# Same logic as ERPNext: calculate how much to pick for the requested "for_qty"
 		pending_to_issue = flt(source.required_qty) - flt(source.transferred_qty)
 		desired_to_transfer = (flt(source.required_qty) / max_finished_goods_qty) * flt(
 			for_qty or max_finished_goods_qty
@@ -75,9 +59,6 @@ def create_pick_list(source_name: str, target_doc=None, for_qty: float | None = 
 			"Work Order Item": {
 				"doctype": "Pick List Item",
 				"postprocess": update_item_quantity,
-				# Core rule:
-				# - keep original ERPNext condition (required_qty not fully transferred)
-				# - AND skip items that have BOM
 				"condition": lambda d: abs(flt(d.transferred_qty)) < abs(flt(d.required_qty))
 				and d.item_code not in bom_items,
 			},
@@ -88,6 +69,13 @@ def create_pick_list(source_name: str, target_doc=None, for_qty: float | None = 
 	doc.purpose = "Material Transfer for Manufacture"
 	doc.for_qty = for_qty or max_finished_goods_qty
 
-	# Populate Item Locations (warehouses/bins) as standard Pick List behavior
+	# ✅ Force parent_warehouse
+	parent_wh = "Raw Materials - Taj"
+	if not frappe.db.exists("Warehouse", parent_wh):
+		frappe.throw(f"Warehouse not found: {parent_wh}")
+
+	doc.parent_warehouse = parent_wh
+
+	# Populate Item Locations as standard Pick List behavior (now constrained to parent_warehouse)
 	doc.set_item_locations()
 	return doc
