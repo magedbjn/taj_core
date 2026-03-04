@@ -1016,7 +1016,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
     fields.push({
       fieldtype: "Int",
-      fieldname: "manpower",
+      fieldname: "taj_manpower_used",
       label: __("Manpower"),
       reqd: 1,
       default: 1,
@@ -1132,7 +1132,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
           job_card: name,
           for_quantity: fq,
           confirm_loss: loss > 0 ? 1 : 0,
-          manpower: cint(v.manpower || 0),
+          taj_manpower_used: cint(v.taj_manpower_used || 0),
           taj_total_weight: v.taj_total_weight,
           taj_rm_used_qty: v.taj_rm_used_qty,
         };
