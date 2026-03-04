@@ -1158,11 +1158,79 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       __("Submit Job Card"),
       __("Submit")
     );
+    
+  setTimeout(() => {
+    const $w = dialog.$wrapper;
 
+    function normalizeNumber(v) {
+      // (اختياري) يدعم الأرقام العربية + الفاصلة
+      if (v == null) return v;
+      v = String(v);
+
+      const map = { "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9",
+                    "۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9" };
+      v = v.replace(/[٠-٩۰-۹]/g, (d) => map[d] || d);
+
+      // comma -> dot
+      v = v.replace(/,/g, ".");
+      // Arabic decimal separator -> dot
+      v = v.replace(/\u066B/g, ".");
+      return v;
+    }
+
+    function commitValue($inp) {
+      const $ctrl = $inp.closest(".frappe-control");
+      const fieldname = $ctrl.attr("data-fieldname");
+      if (!fieldname) return;
+
+      let raw = $inp.val();
+      raw = normalizeNumber(raw);
+
+      // ✅ أهم جزء: نحفظ القيمة داخل dialog قبل validation
+      dialog.set_value(fieldname, raw);
+
+      // وثبّت على مستوى الـ UI
+      $inp.trigger("input");
+      $inp.trigger("change");
+      $inp.blur();
+    }
+
+    $w.on("keydown.jc_enter_fix", "input, textarea, select", function (e) {
+      const isEnter = (e.key === "Enter") || (e.keyCode === 13) || (e.which === 13);
+      if (!isEnter) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const $inp = $(this);
+      commitValue($inp);
+
+      // تنقل للحقل التالي، وإذا هذا آخر حقل → Submit تلقائي
+      const $focusables = $w.find("input, textarea, select")
+        .filter(":visible:enabled:not([readonly])");
+
+      const idx = $focusables.index(this);
+      const hasNext = idx >= 0 && idx < $focusables.length - 1;
+
+      if (hasNext) {
+        setTimeout(() => $focusables.eq(idx + 1).focus(), 0);
+      } else {
+        setTimeout(() => dialog.get_primary_btn().trigger("click"), 0);
+      }
+
+      return false;
+    });
+
+    // تنظيف الهاندلر عند إغلاق الديالوج
+    dialog.onhide = () => {
+      try { $w.off("keydown.jc_enter_fix"); } catch (e) {}
+    };
+  }, 0);
+  
     // only trigger when visible fields exist (optional safety)
     if (!hide_qty_fields) dialog.trigger("for_quantity");
   }
-
+  
   // -------------------------
   // Events (namespaced)
   // -------------------------
