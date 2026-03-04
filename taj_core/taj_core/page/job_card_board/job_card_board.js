@@ -757,6 +757,37 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     )}</button>`;
   }
 
+  function render_extra(d) {
+    // نحدد Plant Floor من taj_plant_floor أو plant_floor (effective)
+    const pf = String(d.taj_plant_floor || d.plant_floor || "").trim();
+    const isSubmitted = cint(d.docstatus) === 1;
+
+    let label = "";
+    let val = 0;
+
+    if (pf === "Preparation Area") {
+      label = __("RM Used Qty");
+      val = flt(d.taj_rm_used_qty || 0);
+    } else if (pf === "Cooking Area") {
+      label = __("Total Weight");
+      val = flt(d.taj_total_weight || 0);
+    } else {
+      return "";
+    }
+
+    // يظهر إذا القيمة ≠ 0 أو إذا Submitted
+    const shouldShow = isSubmitted || Math.abs(val) > 0.000001;
+    if (!shouldShow) return "";
+
+    return `
+      <div class="jc-extra" data-pf="${pf}">
+        <span class="lbl">${label}</span>
+        <span class="eq">=</span>
+        <span class="val">${format_qty(val)}</span>
+      </div>
+    `;
+  }
+
   function render_card(d) {
     const planned = flt(d.planned) || flt(d.for_quantity) || 0;
     const done = flt(d.done) || flt(d.total_completed_qty) || 0;
@@ -888,6 +919,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       "Open"
     )}</a>
         </div>
+        ${render_extra(d)}
       </div>
     `);
   }
@@ -1226,7 +1258,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       try { $w.off("keydown.jc_enter_fix"); } catch (e) {}
     };
   }, 0);
-  
+
     // only trigger when visible fields exist (optional safety)
     if (!hide_qty_fields) dialog.trigger("for_quantity");
   }

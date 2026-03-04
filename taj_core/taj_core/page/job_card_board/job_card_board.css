@@ -102,6 +102,40 @@
 .jc-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
 .jc-actions .btn{ border-radius:10px; }
 
+/* =========================================================
+   Extra field (bottom-right)
+   ========================================================= */
+
+/* Extra field: same height as button (btn-sm) + single line */
+.jc-card { position: relative; }
+
+/* reserve space so buttons don't overlap it */
+.jc-actions { padding-right: 210px; }
+
+.jc-extra{
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+
+  height: 32px;              /* ✅ نفس ارتفاع btn-sm غالباً */
+  padding: 0 10px;           /* ✅ بدون padding عمودي */
+  white-space: nowrap;
+
+  background: var(--control-bg, #f7f7f7);
+  border: 1px solid var(--border-color, #e6e6e6);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.jc-extra .lbl{ margin: 0; color: var(--text-muted, #6b7280); font-size: 12px; }
+.jc-extra .eq { margin: 0; color: var(--text-muted, #6b7280); font-size: 12px; }
+.jc-extra .val{ margin: 0; font-weight: 800; font-size: 13px; }
+
 /* Timer */
 .jc-timer{
   font-weight: 800;
@@ -179,13 +213,18 @@
   .jc-progress .pct{ font-size: 8px !important; margin-bottom: 4px !important; }
   .jc-progress .bar{ height: 6px !important; }
 
-  /* Actions */
-  .jc-actions{ margin-top: 6px !important; gap: 6px !important; }
-  .jc-actions .btn{ padding: 4px 8px; font-size: 10px !important; }
+  .jc-actions{ padding-right: 170px !important; }
 
-  /* Cooking labels */
-  .jc-cooking-ws{ font-size: 16px !important; font-weight: 700 !important; }
-  .jc-cooking-op{ margin-top: 3px !important; font-size: 13px !important; font-weight: 500 !important; color: #6b7280; }
+  .jc-extra{
+    right: 8px !important;
+    bottom: 8px !important;
+    height: 24px !important;     /* ✅ نفس زرّك (تقريباً) */
+    padding: 0 8px !important;
+    border-radius: 9px !important;
+    gap: 5px !important;
+  }
+  .jc-extra .lbl, .jc-extra .eq{ font-size: 10px !important; }
+  .jc-extra .val{ font-size: 10px !important; font-weight: 700 !important; }
 }
 
 /* =========================================================
@@ -196,3 +235,4 @@ body.jc-wall .jc-title { font-size: 18px; }
 body.jc-wall .jc-timer { font-size: 18px; }
 body.jc-wall .jc-card  { min-height: 190px; }
 body.jc-wall .jc-actions { display:none; }
+
