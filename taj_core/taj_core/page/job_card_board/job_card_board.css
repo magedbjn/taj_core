@@ -101,7 +101,7 @@
 /* Actions */
 .jc-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
 .jc-actions .btn{ border-radius:10px; }
-
+.jc-actions .btn{ padding: 4px 8px; font-size: 10px !important; }
 /* =========================================================
    Extra field (bottom-right)
    ========================================================= */
@@ -110,7 +110,7 @@
 .jc-card { position: relative; }
 
 /* reserve space so buttons don't overlap it */
-.jc-actions { padding-right: 210px; }
+/* .jc-actions { padding-right: 210px; } */
 
 .jc-extra{
   position: absolute;
@@ -212,8 +212,8 @@
   .jc-progress{ margin-top: 6px !important; }
   .jc-progress .pct{ font-size: 8px !important; margin-bottom: 4px !important; }
   .jc-progress .bar{ height: 6px !important; }
-
-  .jc-actions{ padding-right: 170px !important; }
+  
+  /* .jc-actions{ padding-right: 170px !important; } */
 
   .jc-extra{
     right: 8px !important;
@@ -225,6 +225,10 @@
   }
   .jc-extra .lbl, .jc-extra .eq{ font-size: 10px !important; }
   .jc-extra .val{ font-size: 10px !important; font-weight: 700 !important; }
+
+   /* Cooking labels */
+  .jc-cooking-ws{ font-size: 16px !important; font-weight: 700 !important; }
+  .jc-cooking-op{ margin-top: 3px !important; font-size: 13px !important; font-weight: 500 !important; color: #6b7280; }
 }
 
 /* =========================================================
