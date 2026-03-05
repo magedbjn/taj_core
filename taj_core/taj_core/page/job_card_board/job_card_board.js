@@ -266,27 +266,27 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
   
   // حساب الترقيم حسب (WO+OP)
-  function refresh_serials() {
-    const counters = new Map();
+  // function refresh_serials() {
+  //   const counters = new Map();
 
-    grid.find(".jc-card").each(function () {
-      const c = $(this);
-      const wo = (c.attr("data-wo") || "").trim();
-      const op = (c.attr("data-op") || "").trim();
+  //   grid.find(".jc-card").each(function () {
+  //     const c = $(this);
+  //     const wo = (c.attr("data-wo") || "").trim();
+  //     const op = (c.attr("data-op") || "").trim();
 
-      // إذا ما فيه WO/OP لا تعرض رقم
-      if (!wo && !op) {
-        c.find(".jc-seq").text("");
-        return;
-      }
+  //     // إذا ما فيه WO/OP لا تعرض رقم
+  //     if (!wo && !op) {
+  //       c.find(".jc-seq").text("");
+  //       return;
+  //     }
 
-      const key = `${wo}||${op}`;
-      const n = (counters.get(key) || 0) + 1;
-      counters.set(key, n);
+  //     const key = `${wo}||${op}`;
+  //     const n = (counters.get(key) || 0) + 1;
+  //     counters.set(key, n);
 
-      c.find(".jc-seq").text(`${n}# `); // لاحظ المسافة بعد #
-    });
-  }
+  //     c.find(".jc-seq").text(`${n}# `); // لاحظ المسافة بعد #
+  //   });
+  // }
 
   function toggleMute(name) {
     if (IS_WALL) return;
@@ -567,7 +567,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   function remove_card(name) {
     const el = grid.find(`.jc-card[data-name="${name}"]`);
     if (el.length) el.remove();
-    refresh_serials();
+    // refresh_serials();
   }
 
   function update_single_card(card) {
@@ -585,7 +585,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     if (el.length) el.replaceWith(render_card(card));
     else insert_card_sorted(render_card(card), card.name);
 
-    refresh_serials();
+    // refresh_serials();
     startTimerTickerIfNeeded();
     refresh_alarm_state();
     
@@ -710,7 +710,8 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
           data.is_completed = isCompleted ? 1 : 0;
           data.running = 0;
 
-          update_single_card(data);
+          // update_single_card(data);
+          markDirty(data.name);
           return;
         }
 
@@ -911,6 +912,8 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const timerSeconds = cint(d.timer_seconds || 0);
     const expectedSeconds = cint(d.expected_seconds || 0);
 
+    const seq = cint(d.wo_op_seq || 0);
+
     return $(`
       <div class="jc-card ${stateClass} ${idleStatusClass} ${wipBlink} ${overdueClass} ${
       isMuted(d.name) ? "is-muted" : ""
@@ -924,7 +927,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
           <div class="jc-head">
             <div>
               <div class="jc-title">
-                <span class="jc-seq"></span>
+                <span class="jc-seq">${seq ? `${seq}# ` : ""}</span>
                 <a href="/app/job-card/${d.name}" target="_blank">${d.name}</a>
               </div>
               
@@ -1404,7 +1407,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       }
 
       for (const d of items) insert_card_sorted(render_card(d), d.name);
-      refresh_serials();
+      // refresh_serials();
       state.offset += state.limit;
 
       startTimerTickerIfNeeded();

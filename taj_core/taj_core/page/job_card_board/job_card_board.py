@@ -321,7 +321,40 @@ def _is_cooking_mode(jc_pf: str, ws_stage: str) -> bool:
     # taj_plant_floor == 'Cooking Area' OR workstation.taj_production_stage == 'Cooking'
     return ((jc_pf or "").strip() == "Cooking Area") or ((ws_stage or "").strip() == "Cooking")
 
+def _wo_op_seq_map(work_orders, operations, effective_pfs=None):
+    """
+    Stable sequence within (work_order, operation) ordered by Job Card.name ASC.
+    Independent from board filters (docstatus/status/date...), except Plant Floor security.
+    """
+    if not work_orders or not operations:
+        return {}
 
+    filters = {
+        "docstatus": ["<", 2],
+        "work_order": ["in", list(set(work_orders))],
+        "operation": ["in", list(set(operations))],
+    }
+
+    # OPTIONAL: keep numbering within allowed plant floors only
+    if effective_pfs:
+        if _has_col("Job Card", "taj_plant_floor"):
+            filters["taj_plant_floor"] = ["in", list(set(effective_pfs))]
+
+    rows = frappe.get_all(
+        "Job Card",
+        filters=filters,
+        fields=["name", "work_order", "operation"],
+        order_by="work_order asc, operation asc, name asc",
+        limit_page_length=0,
+    ) or []
+
+    counters = {}
+    out = {}
+    for r in rows:
+        key = (r.get("work_order") or "", r.get("operation") or "")
+        counters[key] = counters.get(key, 0) + 1
+        out[r["name"]] = counters[key]
+    return out
 # -------------------------
 # Time logs helpers
 # -------------------------
@@ -589,6 +622,42 @@ def _assert_user_can_access_job_card_pf(job_card_name: str):
 # -------------------------
 # Payload builders
 # -------------------------
+def _add_wo_op_seq(job_cards: List[dict]) -> None:
+    # adds: d["wo_op_seq"]
+    if not job_cards:
+        return
+
+    wos = sorted({d.get("work_order") for d in job_cards if d.get("work_order")})
+    ops = sorted({d.get("operation") for d in job_cards if d.get("operation")})
+    if not wos or not ops:
+        for d in job_cards:
+            d["wo_op_seq"] = 0
+        return
+
+    # Fetch all relevant JC for these WOs/OPs (independent of current filters)
+    rows = frappe.get_all(
+        "Job Card",
+        filters={
+            "docstatus": ["<", 2],
+            "work_order": ["in", wos],
+            "operation": ["in", ops],
+        },
+        fields=["name", "work_order", "operation"],
+        order_by="work_order asc, operation asc, name asc",
+        limit_page_length=0,
+    ) or []
+
+    # rank within each (wo, op)
+    counters: Dict[Tuple[str, str], int] = {}
+    rank_by_name: Dict[str, int] = {}
+    for r in rows:
+        key = (r.get("work_order") or "", r.get("operation") or "")
+        counters[key] = counters.get(key, 0) + 1
+        rank_by_name[r["name"]] = counters[key]
+
+    for d in job_cards:
+        d["wo_op_seq"] = int(rank_by_name.get(d["name"], 0) or 0)
+
 def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
     """
     PERF:
@@ -640,6 +709,11 @@ def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
     # Timer: compute only for actually running cards
     timer_map_running = _compute_timer_seconds(list(running_set)) if running_set else {}
 
+    # ✅ compute once
+    work_orders = [d.get("work_order") for d in job_cards if d.get("work_order")]
+    operations = [d.get("operation") for d in job_cards if d.get("operation")]
+    seq_map = _wo_op_seq_map(work_orders, operations)
+    
     # Expected: only for candidates (used for overdue)
     expected_map_all: Dict[str, int] = {n: 0 for n in names}
     if active_cards:
@@ -715,6 +789,7 @@ def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
                 "plant_floor": eff_pf,
                 "taj_production_stage": ws_stage,
                 "is_cooking_mode": int(_is_cooking_mode(jc_pf, ws_stage)),
+                "wo_op_seq": int(seq_map.get(name, 0) or 0),
             }
         )
 
@@ -784,6 +859,7 @@ def get_cards_payload_bulk_api(names):
                 filtered.append(d)
         job_cards = filtered
 
+    _add_wo_op_seq(job_cards)
     return {"items": _build_payloads_for_cards(job_cards)}
 
 
@@ -905,9 +981,11 @@ def get_board_data(
         limit_page_length=limit,
     ) or []
 
+    
     if post_search:
         job_cards = [d for d in job_cards if post_search in str(d.get("name") or "")]
 
+    _add_wo_op_seq(job_cards)
     return {"items": _build_payloads_for_cards(job_cards), "limit": limit, "offset": offset}
 
 
