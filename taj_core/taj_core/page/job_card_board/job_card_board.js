@@ -1,13 +1,60 @@
 /* ============================================================
-   job-card-board.js  (PERF + SAFE)
-   - Lite realtime batching: __lite -> bulk fetch -> update cards
-   - Bulk polling (single request) + no overlapping polls
-   - Cleanup on page hide (no timers/poll leaks)
-   - Wallboard mode: ?mode=wall  (read-only)
-   - ✅ Poll default OFF. Only ON if ?poll=on
-   - ✅ Realtime robustness: subscribe to doctype rooms with/without space
-   - ✅ When Search is exact Job Card name => subscribe to doc room (fastest)
-   - ✅ For On Hold / Completed => instant timer from total_time_in_mins (no API)
+   Job Card Board (job-card-board.js) — Performance + Safety + UX
+   ------------------------------------------------------------
+   This page renders a kanban-like board for ERPNext Job Cards with:
+   
+   ✅ Data Loading
+   - Fetches board items via `get_board_data` with filters (Plant Floor, Work Order,
+     Workstation, Operation, Status, Docstatus, Search, From/To Date).
+   - Pagination: `limit/offset` + "Load more".
+   - Default From/To Date = اليوم إذا كانت الحقول فاضية.
+
+   ✅ Realtime Updates (Fast + Robust)
+   - Subscribes to realtime event: `job_card_board_update`.
+   - Subscribes to BOTH doctype room variants:
+       - "doctype: Job Card" و "doctype:Job Card" (لتفادي اختلاف الاسم).
+   - Optional targeted subscriptions:
+       - Plant Floor room: `jc_board:pf:<slug>`
+       - Doc room عند البحث باسم Job Card كامل: `doc:Job Card/<name>`
+   - Lite events (`__lite=1`) تُحدّث الكرت بسرعة أو تعمل batching ثم bulk fetch
+     لتقليل ضغط السيرفر.
+
+   ✅ Polling (Fallback)
+   - Polling OFF by default.
+   - Enabled only if URL has `?poll=on` (bulk sync visible cards كل 12 ثانية).
+   - Prevents overlapping polls باستخدام `pollInFlight`.
+
+   ✅ Timer Handling
+   - Only running cards get a 1-second ticker (no wasted intervals).
+   - On Hold / Completed / Submitted:
+     timer is shown instantly from `total_time_in_mins` (stable source).
+   - Overdue detection: compares `timer_seconds` vs `expected_seconds + 120s`.
+
+   ✅ Alarm / Sound (Overdue)
+   - Beep pulses for overdue cards (unless muted).
+   - Per-card mute stored in localStorage + "Mute All" option.
+   - Disabled بالكامل في Wallboard mode.
+
+   ✅ Wallboard Mode (Read-only)
+   - Enabled with `?mode=wall` or `?wall=1`.
+   - Hides form/actions, disables sound + buttons.
+
+   ✅ Serial Numbers per (Work Order + Operation)
+   - Shows a sequential prefix like: `1#` before the Job Card title.
+   - Sequence is calculated client-side based on CURRENT board order:
+       key = (work_order + operation)
+       first card in the group => 1#, next => 2#, ...
+   - Requires these in DOM:
+       - `.jc-seq` span inside `.jc-title`
+       - `data-wo` and `data-op` attributes on `.jc-card`
+   - Recomputed after:
+       - initial load
+       - insert/update/remove from realtime
+       - refresh/load more
+
+   ✅ Cleanup / Safety
+   - On page hide: stops poll, timers, alarms, dirty batching timer,
+     unsubscribes rooms, removes event handlers, and turns off realtime listener.
    ============================================================ */
 
 frappe.pages["job-card-board"].on_page_load = function (wrapper) {
@@ -216,6 +263,29 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     } else {
       stopAlarm();
     }
+  }
+  
+  // حساب الترقيم حسب (WO+OP)
+  function refresh_serials() {
+    const counters = new Map();
+
+    grid.find(".jc-card").each(function () {
+      const c = $(this);
+      const wo = (c.attr("data-wo") || "").trim();
+      const op = (c.attr("data-op") || "").trim();
+
+      // إذا ما فيه WO/OP لا تعرض رقم
+      if (!wo && !op) {
+        c.find(".jc-seq").text("");
+        return;
+      }
+
+      const key = `${wo}||${op}`;
+      const n = (counters.get(key) || 0) + 1;
+      counters.set(key, n);
+
+      c.find(".jc-seq").text(`${n}# `); // لاحظ المسافة بعد #
+    });
   }
 
   function toggleMute(name) {
@@ -493,9 +563,11 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     if (!inserted) grid.append(cardEl);
   }
 
+
   function remove_card(name) {
     const el = grid.find(`.jc-card[data-name="${name}"]`);
     if (el.length) el.remove();
+    refresh_serials();
   }
 
   function update_single_card(card) {
@@ -513,8 +585,10 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     if (el.length) el.replaceWith(render_card(card));
     else insert_card_sorted(render_card(card), card.name);
 
+    refresh_serials();
     startTimerTickerIfNeeded();
     refresh_alarm_state();
+    
   }
 
   // -------------------------
@@ -679,7 +753,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       pollInFlight = false;
     }
   }
-
+  
   function start_poll() {
     if (pollTimer) return;
     pollTimer = setInterval(() => poll_visible_cards(), 12000);
@@ -842,12 +916,15 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       isMuted(d.name) ? "is-muted" : ""
     } ${isCooking ? "mode-cooking" : ""}"
            data-name="${d.name}"
+           data-wo="${d.work_order || ""}"
+           data-op="${d.operation || ""}"
            data-docstatus="${cint(d.docstatus || 0)}"
            data-completed="${isCompleted ? 1 : 0}">
         <div>
           <div class="jc-head">
             <div>
               <div class="jc-title">
+                <span class="jc-seq"></span>
                 <a href="/app/job-card/${d.name}" target="_blank">${d.name}</a>
               </div>
               
@@ -1327,6 +1404,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       }
 
       for (const d of items) insert_card_sorted(render_card(d), d.name);
+      refresh_serials();
       state.offset += state.limit;
 
       startTimerTickerIfNeeded();

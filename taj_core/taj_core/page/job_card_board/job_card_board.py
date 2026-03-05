@@ -1,3 +1,104 @@
+"""
+============================================================
+Job Card Board Backend (job_card_board.py) — PERF + SAFE + RT
+------------------------------------------------------------
+
+This module powers the ERPNext/Frappe "Job Card Board" page.
+
+Core responsibilities
+---------------------
+1) Board Data API
+   - `get_board_data(...)`
+     Returns paginated Job Cards with filters:
+       Plant Floor, Work Order, Workstation, Operation, Status, Docstatus, Search,
+       and Date range.
+     Notes:
+       - Uses `frappe.get_list` (respects user permissions).
+       - Default date range = today if From/To are empty.
+       - Current implementation filters by:
+           Job Card.posting_date (Date) if exists
+           else fallback to Job Card.creation (Datetime).
+
+2) Payload building (for board rendering + polling/bulk refresh)
+   - `_safe_fields()`
+     Whitelist DB columns only (safe for get_list/SQL).
+     Uses `_has_col()` with caching to avoid repeated schema checks.
+   - `_build_payloads_for_cards(job_cards)`
+     Adds computed fields:
+       planned/done/remaining, is_paused, running, timer_seconds,
+       expected_seconds, is_overdue, plant_floor (effective), taj_production_stage,
+       is_cooking_mode.
+     Performance rules:
+       - Only calculates "running" state for candidate cards.
+       - Timer seconds:
+           * Running cards => computed from time logs (live)
+           * Paused/Completed/Idle => from Job Card.total_time_in_mins (stable) if exists
+           * Fallback => compute from time logs if total_time_in_mins missing
+
+3) Expected time + Overdue logic
+   - `_get_expected_seconds_map(job_cards)`
+     Expected time priority:
+       Work Order Operation.time_in_mins (first match by idx)
+       then BOM Operation.time_in_mins (fallback)
+   - `is_overdue` when:
+       - Draft + not completed + not finished qty + not paused
+       - expected_seconds > 0
+       - timer_seconds > expected_seconds + OVERDUE_TOLERANCE_SEC
+   - `OVERDUE_TOLERANCE_SEC = 120` (2 minutes)
+
+4) Plant Floor security (server-side enforced)
+   - `_allowed_plant_floors_for_user(user)`
+     Sources:
+       (1) User Permission allow="Plant Floor"
+       (2) User Default "Plant Floor" fallback
+   - `_assert_pf_allowed(pf, user)` and `_assert_user_can_access_job_card_pf(job_card)`
+     Ensures users can only see/act on Job Cards in allowed Plant Floors.
+   - Effective Plant Floor resolution:
+       Job Card.taj_plant_floor (if present) else Workstation.plant_floor
+
+5) Board actions (button endpoints)
+   - `board_start_job(job_card, employees, start_time)`
+   - `board_pause_job(job_card, end_time)`
+   - `board_resume_job(job_card, start_time)`
+   - `board_complete_job(job_card, qty)`
+   - `board_submit_job(job_card, for_quantity, confirm_loss, taj_* fields...)`
+     Submit validations:
+       - Manpower required if field exists
+       - Cooking Area => taj_total_weight required (if field exists)
+       - Preparation Area => taj_rm_used_qty required (if field exists)
+     Also handles process loss confirmation when for_quantity > completed.
+
+6) Realtime publishing (critical for poll=off)
+   - Publishes event: `job_card_board_update`
+   - Sends lightweight payload (`__lite=1`) to reduce bandwidth.
+   - Publishes to:
+       - doc room: `doc:Job Card/<name>`
+       - doctype rooms (both variants to avoid mismatch):
+           "doctype: Job Card" and "doctype:Job Card"
+       - plant floor room: `jc_board:pf:<slug>`
+   - Hooks:
+       - `job_card_changed(doc, method)` for Job Card doc_events
+       - `job_card_time_log_changed(doc, method)` for Job Card Time Log changes
+         (because standard screens often update Time Logs without Job Card doc_events)
+
+Special behavior
+----------------
+- Cooking Mode:
+    `is_cooking_mode = 1` if:
+       Job Card.taj_plant_floor == "Cooking Area"
+       OR Workstation.taj_production_stage == "Cooking"
+- Supports bulk payload fetch for realtime batching:
+    `get_cards_payload_bulk_api(names)` returns items for a list of Job Cards
+    (filtered by Plant Floor server-side).
+
+Implementation notes
+--------------------
+- `_COL_CACHE` caches schema checks (`frappe.db.has_column`) for performance.
+- Timer calculations tolerate open time logs and invalid empty to_time values.
+- Designed for high-frequency realtime updates with minimal DB work.
+
+============================================================
+"""
 from __future__ import annotations
 
 import datetime
@@ -759,20 +860,33 @@ def get_board_data(
     else:
         filters["status"] = status_filter
 
-    # ✅ Date filter based on Job Card.posting_date (NOT time logs)
+    # ✅ Date filter based on Work Order.planned_start_date (Datetime)
     if date_from and not date_to:
         date_to = date_from
     if date_to and not date_from:
         date_from = date_to
 
     if date_from and date_to:
-        if _has_col("Job Card", "posting_date"):
-            # posting_date is a Date field => use between inclusive
-            filters["posting_date"] = ["between", [str(date_from), str(date_to)]]
+        start_dt, end_dt = _time_range_to_datetimes(date_from, date_to)
+
+        wo_names = frappe.get_all(
+            "Work Order",
+            filters={
+                "docstatus": ["<", 2],
+                "planned_start_date": ["between", [start_dt, end_dt]],
+            },
+            pluck="name",
+        ) or []
+
+        # لو المستخدم محدد Work Order معيّن: نخليها Intersection
+        if work_order:
+            if work_order not in set(wo_names):
+                return {"items": [], "limit": limit, "offset": offset}
+            # filters["work_order"] already set above
         else:
-            # fallback (اختياري): إذا ما فيه posting_date استخدم creation
-            start_dt, end_dt = _time_range_to_datetimes(date_from, date_to)
-            filters["creation"] = ["between", [start_dt, end_dt]]
+            if not wo_names:
+                return {"items": [], "limit": limit, "offset": offset}
+            filters["work_order"] = ["in", wo_names]
 
     post_search = None
     if search:
