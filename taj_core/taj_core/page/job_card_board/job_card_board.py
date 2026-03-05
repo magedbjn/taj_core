@@ -36,6 +36,7 @@ def _safe_fields() -> List[str]:
     """
     fields = ["name", "modified", "docstatus", "creation"]
     for f in [
+        "psoting_date",
         "company",
         "work_order",
         "workstation",
@@ -758,15 +759,20 @@ def get_board_data(
     else:
         filters["status"] = status_filter
 
-    # Date filter: time logs in range + new cards with no logs created in range
-    start_dt, end_dt = _time_range_to_datetimes(date_from, date_to)
-    if start_dt and end_dt:
-        names_logs = _jobcards_by_time_logs(start_dt, end_dt)
-        names_nologs = _jobcards_without_time_logs_in_range(start_dt, end_dt)
-        names = sorted(list(set((names_logs or []) + (names_nologs or []))))
-        if not names:
-            return {"items": [], "limit": limit, "offset": offset}
-        filters["name"] = ["in", names]
+    # ✅ Date filter based on Job Card.posting_date (NOT time logs)
+    if date_from and not date_to:
+        date_to = date_from
+    if date_to and not date_from:
+        date_from = date_to
+
+    if date_from and date_to:
+        if _has_col("Job Card", "posting_date"):
+            # posting_date is a Date field => use between inclusive
+            filters["posting_date"] = ["between", [str(date_from), str(date_to)]]
+        else:
+            # fallback (اختياري): إذا ما فيه posting_date استخدم creation
+            start_dt, end_dt = _time_range_to_datetimes(date_from, date_to)
+            filters["creation"] = ["between", [start_dt, end_dt]]
 
     post_search = None
     if search:
