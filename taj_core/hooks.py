@@ -24,7 +24,8 @@ scheduler_events = {
 
 override_doctype_class = {                
     "Party Specific Item": "taj_core.overrides.party_specific_item.TajPartySpecificItem",
-    "Leave Application": "taj_core.overrides.leave_application.LeaveApplication"
+    "Leave Application": "taj_core.overrides.leave_application.LeaveApplication",
+    "Job Card": "taj_core.overrides.job_card.CustomJobCard",
 }
 
 override_whitelisted_methods = {
@@ -32,6 +33,7 @@ override_whitelisted_methods = {
         "taj_core.overrides.leave_application.get_number_of_leave_days",
     "erpnext.manufacturing.doctype.work_order.work_order.create_pick_list":
 		"taj_core.overrides.work_order.create_pick_list",
+    "erpnext.manufacturing.doctype.job_card.job_card.make_time_log": "taj_core.overrides.job_card.make_time_log_strict",
 }
 
 doc_events = {
