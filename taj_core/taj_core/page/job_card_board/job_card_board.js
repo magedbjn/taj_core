@@ -1,66 +1,10 @@
-/* ============================================================
-   Job Card Board (job-card-board.js) — Performance + Safety + UX
-   ------------------------------------------------------------
-   This page renders a kanban-like board for ERPNext Job Cards with:
-   
-   ✅ Data Loading
-   - Fetches board items via `get_board_data` with filters (Plant Floor, Work Order,
-     Workstation, Operation, Status, Docstatus, Search, From/To Date).
-   - Pagination: `limit/offset` + "Load more".
-   - Default From/To Date = اليوم إذا كانت الحقول فاضية.
-
-   ✅ Realtime Updates (Fast + Robust)
-   - Subscribes to realtime event: `job_card_board_update`.
-   - Subscribes to BOTH doctype room variants:
-       - "doctype: Job Card" و "doctype:Job Card" (لتفادي اختلاف الاسم).
-   - Optional targeted subscriptions:
-       - Plant Floor room: `jc_board:pf:<slug>`
-       - Doc room عند البحث باسم Job Card كامل: `doc:Job Card/<name>`
-   - Lite events (`__lite=1`) تُحدّث الكرت بسرعة أو تعمل batching ثم bulk fetch
-     لتقليل ضغط السيرفر.
-
-   ✅ Polling (Fallback)
-   - Polling OFF by default.
-   - Enabled only if URL has `?poll=on` (bulk sync visible cards كل 12 ثانية).
-   - Prevents overlapping polls باستخدام `pollInFlight`.
-
-   ✅ Timer Handling
-   - Only running cards get a 1-second ticker (no wasted intervals).
-   - On Hold / Completed / Submitted:
-     timer is shown instantly from `total_time_in_mins` (stable source).
-   - Overdue detection: compares `timer_seconds` vs `expected_seconds + 120s`.
-
-   ✅ Alarm / Sound (Overdue)
-   - Beep pulses for overdue cards (unless muted).
-   - Per-card mute stored in localStorage + "Mute All" option.
-   - Disabled بالكامل في Wallboard mode.
-
-   ✅ Wallboard Mode (Read-only)
-   - Enabled with `?mode=wall` or `?wall=1`.
-   - Hides form/actions, disables sound + buttons.
-
-   ✅ Serial Numbers per (Work Order + Operation)
-   - Shows a sequential prefix like: `1#` before the Job Card title.
-   - Sequence is calculated client-side based on CURRENT board order:
-       key = (work_order + operation)
-       first card in the group => 1#, next => 2#, ...
-   - Requires these in DOM:
-       - `.jc-seq` span inside `.jc-title`
-       - `data-wo` and `data-op` attributes on `.jc-card`
-   - Recomputed after:
-       - initial load
-       - insert/update/remove from realtime
-       - refresh/load more
-
-   ✅ Cleanup / Safety
-   - On page hide: stops poll, timers, alarms, dirty batching timer,
-     unsubscribes rooms, removes event handlers, and turns off realtime listener.
-   ============================================================ */
-
 frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   $(document.body).addClass("full-width");
 
   const RT_EVENT = "job_card_board_update";
+  const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+  const OP_SPEC_CACHE_PREFIX = "jc_board:op_spec:v1:";
+  const COOK_REQ_CACHE_PREFIX = "jc_board:cook_req:v1:";
 
   const urlParams = new URLSearchParams(window.location.search || "");
 
@@ -81,7 +25,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   const root = $(`<div class="jc-board"></div>`).appendTo(page.body);
   const grid = $(`<div class="jc-grid"></div>`).appendTo(root);
 
-  
   // -------------------------
   // Helpers
   // -------------------------
@@ -109,11 +52,9 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     return `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
   }
 
-  // Detect decimal separator from current locale/number_format safely
-  // Detect decimal separator safely (no args passed)
   const DEC_SEP = (() => {
     try {
-      const s = String(format_number(1.1)); // e.g. "1.1" / "1,1" / "١٫١"
+      const s = String(format_number(1.1));
       const onlySep = s.replace(/[0-9\u0660-\u0669\u06F0-\u06F9]/g, "").trim();
       return onlySep ? onlySep[0] : ".";
     } catch (e) {
@@ -127,28 +68,222 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
     let s = "";
     try {
-      // ✅ precision is 3rd arg, 2nd arg must be string/format (use null)
       s = String(format_number(n, null, max_dp));
     } catch (e) {
-      // fallback
       s = String(n);
     }
 
     const ds = DEC_SEP;
     const esc = ds.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    // 7.010000 -> 7.01  |  7.011000 -> 7.011
     s = s.replace(new RegExp(`(${esc}\\d*?[1-9])0+$`), "$1");
-    // 7.000000 -> 7
     s = s.replace(new RegExp(`${esc}0+$`), "");
-    // safety
     s = s.replace(new RegExp(`${esc}$`), "");
 
     return s;
   }
 
+  function escape_html(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function read_ttl_cache(prefix, key) {
+    try {
+      const raw = localStorage.getItem(`${prefix}${key}`);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.expires_at) return null;
+
+      if (Date.now() > cint(parsed.expires_at)) {
+        localStorage.removeItem(`${prefix}${key}`);
+        return null;
+      }
+
+      return parsed.payload || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function write_ttl_cache(prefix, key, payload) {
+    try {
+      localStorage.setItem(
+        `${prefix}${key}`,
+        JSON.stringify({
+          expires_at: Date.now() + CACHE_TTL_MS,
+          payload: payload || {},
+        })
+      );
+    } catch (e) {}
+  }
+
+  const opSpecCache = new Map();
+  const cookReqCache = new Map();
+
+  async function get_operation_spec(job_card) {
+    if (!job_card) return {};
+
+    if (opSpecCache.has(job_card)) {
+      return opSpecCache.get(job_card);
+    }
+
+    const lsCached = read_ttl_cache(OP_SPEC_CACHE_PREFIX, job_card);
+    if (lsCached) {
+      opSpecCache.set(job_card, lsCached);
+      return lsCached;
+    }
+
+    const r = await frappe.call({
+      method: "taj_core.taj_core.page.job_card_board.job_card_board.get_operation_spec",
+      args: { job_card },
+      freeze: false,
+    });
+
+    const payload = r.message || {};
+    opSpecCache.set(job_card, payload);
+    write_ttl_cache(OP_SPEC_CACHE_PREFIX, job_card, payload);
+    return payload;
+  }
+
+  async function get_cooking_operation_items(job_card) {
+    if (!job_card) return {};
+
+    if (cookReqCache.has(job_card)) {
+      return cookReqCache.get(job_card);
+    }
+
+    const lsCached = read_ttl_cache(COOK_REQ_CACHE_PREFIX, job_card);
+    if (lsCached) {
+      cookReqCache.set(job_card, lsCached);
+      return lsCached;
+    }
+
+    const r = await frappe.call({
+      method: "taj_core.taj_core.page.job_card_board.job_card_board.get_cooking_operation_items",
+      args: { job_card },
+      freeze: false,
+    });
+
+    const payload = r.message || {};
+    cookReqCache.set(job_card, payload);
+    write_ttl_cache(COOK_REQ_CACHE_PREFIX, job_card, payload);
+    return payload;
+  }
+
+  function show_operation_spec_popup(data) {
+    const op = data?.operation || "-";
+    const wo = data?.work_order || "-";
+    const desc = String(data?.description || "").trim();
+
+    const d = new frappe.ui.Dialog({
+      title: `${__("Operation Specs")} - ${op}`,
+      fields: [{ fieldtype: "HTML", fieldname: "content" }],
+      primary_action_label: __("Close"),
+      primary_action() {
+        d.hide();
+      },
+    });
+
+    d.fields_dict.content.$wrapper.html(`
+      <div style="display:grid; gap:10px;">
+        <div style="font-size:12px; color:#6b7280;">
+          <div><b>${__("Work Order")}:</b> ${escape_html(wo)}</div>
+          <div><b>${__("Operation")}:</b> ${escape_html(op)}</div>
+        </div>
+        <div style="
+          white-space: pre-wrap;
+          line-height: 1.7;
+          background: #f8fafc;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          padding: 12px;
+          min-height: 90px;
+        ">
+          ${
+            desc
+              ? escape_html(desc)
+              : `<span class="text-muted">${__("No operation description found.")}</span>`
+          }
+        </div>
+      </div>
+    `);
+
+    d.show();
+  }
+
+  function show_cooking_operation_items_popup(data) {
+    const op = data?.operation || "-";
+    const wo = data?.work_order || "-";
+    const pf = data?.plant_floor || "-";
+    const items = Array.isArray(data?.items) ? data.items : [];
+
+    const rows = items.length
+      ? items
+          .map(
+            (r, i) => `
+        <tr>
+          <td style="padding:8px; border:1px solid #e5e7eb;">${i + 1}</td>
+          <td style="padding:8px; border:1px solid #e5e7eb;">${escape_html(r.item_name || "-")}</td>
+          <td style="padding:8px; border:1px solid #e5e7eb;">${escape_html(r.taj_temperature ?? "-")}</td>
+          <td style="padding:8px; border:1px solid #e5e7eb;">${escape_html(r.taj_duration ?? "-")}</td>
+          <td style="padding:8px; border:1px solid #e5e7eb; white-space:pre-wrap;">${escape_html(r.taj_notes ?? "-")}</td>
+        </tr>
+      `
+          )
+          .join("")
+      : `
+        <tr>
+          <td colspan="5" style="padding:12px; text-align:center; border:1px solid #e5e7eb;" class="text-muted">
+            ${__("No cooking items found for this operation.")}
+          </td>
+        </tr>
+      `;
+
+    const d = new frappe.ui.Dialog({
+      title: `${__("Cooking Items")} - ${op}`,
+      fields: [{ fieldtype: "HTML", fieldname: "content" }],
+      primary_action_label: __("Close"),
+      primary_action() {
+        d.hide();
+      },
+    });
+
+    d.fields_dict.content.$wrapper.html(`
+      <div style="display:grid; gap:10px;">
+        <div style="font-size:12px; color:#6b7280;">
+          <div><b>${__("Work Order")}:</b> ${escape_html(wo)}</div>
+          <div><b>${__("Operation")}:</b> ${escape_html(op)}</div>
+          <div><b>${__("Plant Floor")}:</b> ${escape_html(pf)}</div>
+        </div>
+
+        <div style="overflow:auto; max-height:420px;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+              <tr style="background:#f8fafc;">
+                <th style="padding:8px; border:1px solid #e5e7eb;">#</th>
+                <th style="padding:8px; border:1px solid #e5e7eb;">${__("Item Name")}</th>
+                <th style="padding:8px; border:1px solid #e5e7eb;">${__("Temperature")}</th>
+                <th style="padding:8px; border:1px solid #e5e7eb;">${__("Duration")}</th>
+                <th style="padding:8px; border:1px solid #e5e7eb;">${__("Notes")}</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    `);
+
+    d.show();
+  }
+
   // -------------------------
-  // Sound / Mute (disabled in wall mode)
+  // Sound / Mute
   // -------------------------
   let audioCtx = null;
   let alarmInterval = null;
@@ -166,11 +301,13 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       return new Set();
     }
   }
+
   function saveMutedSet(set) {
     try {
       localStorage.setItem(MUTE_KEY, JSON.stringify(Array.from(set)));
     } catch {}
   }
+
   function loadMuteAll() {
     if (IS_WALL) return true;
     try {
@@ -179,6 +316,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       return false;
     }
   }
+
   function saveMuteAll(v) {
     try {
       localStorage.setItem(MUTE_ALL_KEY, v ? "1" : "0");
@@ -205,7 +343,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     if (IS_WALL || muteAll) return;
 
     const now = performance.now();
-    if (now - lastBeepAt < 600) return; // prevent overlap
+    if (now - lastBeepAt < 600) return;
     lastBeepAt = now;
 
     const ctx = ensureAudioCtx();
@@ -264,29 +402,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       stopAlarm();
     }
   }
-  
-  // حساب الترقيم حسب (WO+OP)
-  // function refresh_serials() {
-  //   const counters = new Map();
-
-  //   grid.find(".jc-card").each(function () {
-  //     const c = $(this);
-  //     const wo = (c.attr("data-wo") || "").trim();
-  //     const op = (c.attr("data-op") || "").trim();
-
-  //     // إذا ما فيه WO/OP لا تعرض رقم
-  //     if (!wo && !op) {
-  //       c.find(".jc-seq").text("");
-  //       return;
-  //     }
-
-  //     const key = `${wo}||${op}`;
-  //     const n = (counters.get(key) || 0) + 1;
-  //     counters.set(key, n);
-
-  //     c.find(".jc-seq").text(`${n}# `); // لاحظ المسافة بعد #
-  //   });
-  // }
 
   function toggleMute(name) {
     if (IS_WALL) return;
@@ -317,7 +432,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   // -------------------------
-  // Timer ticker (running only)
+  // Timer ticker
   // -------------------------
   let timerTicker = null;
 
@@ -448,7 +563,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     label: __("Search"),
     fieldname: "search",
     change: frappe.utils.debounce(() => {
-      setup_realtime_subscription(); // ✅ important for doc-room subscription
+      setup_realtime_subscription();
       refresh_board();
     }, 350),
   });
@@ -457,7 +572,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     page.set_primary_action(__("Refresh"), () => refresh_board(), "refresh");
     page.add_action_item(__("Load more"), () => load_cards(false));
   } else {
-    // Wallboard: hide form & actions bar
     try {
       $(page.page_form).hide();
     } catch (e) {}
@@ -467,7 +581,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   // -------------------------
-  // Default dates => today if empty
+  // Default dates
   // -------------------------
   let setting_dates = false;
 
@@ -509,7 +623,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   // -------------------------
-  // Filter matching (for realtime updates)
+  // Filter matching
   // -------------------------
   function card_matches_filters(d) {
     const pf = (f_plant_floor.get_value() || "").trim();
@@ -543,7 +657,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   // -------------------------
-  // DOM update (card only)
+  // DOM update
   // -------------------------
   function insert_card_sorted(cardEl, name) {
     const cards = grid.find(".jc-card");
@@ -563,11 +677,9 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     if (!inserted) grid.append(cardEl);
   }
 
-
   function remove_card(name) {
     const el = grid.find(`.jc-card[data-name="${name}"]`);
     if (el.length) el.remove();
-    // refresh_serials();
   }
 
   function update_single_card(card) {
@@ -585,14 +697,12 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     if (el.length) el.replaceWith(render_card(card));
     else insert_card_sorted(render_card(card), card.name);
 
-    // refresh_serials();
     startTimerTickerIfNeeded();
     refresh_alarm_state();
-    
   }
 
   // -------------------------
-  // Lite realtime batching (KEY PERF)
+  // Lite realtime batching
   // -------------------------
   const dirtyNames = new Set();
   let dirtyTimer = null;
@@ -613,9 +723,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     try {
       const items = await fetch_card_payload_bulk(names);
       for (const c of items) update_single_card(c);
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
   }
 
   // -------------------------
@@ -629,18 +737,14 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const v = (s || "").trim();
     if (!v) return false;
     if (v.includes(" ")) return false;
-    // heuristic: at least 5 chars (avoid subscribing to tiny fragments)
     if (v.length < 5) return false;
     return true;
   }
 
   function ensure_doctype_subscribe() {
     if (!frappe.realtime || doctypeSubscribed) return;
-
-    // ✅ robust: subscribe to both variants
     try { frappe.realtime.subscribe("doctype: Job Card"); } catch (e) {}
     try { frappe.realtime.subscribe("doctype:Job Card"); } catch (e) {}
-
     doctypeSubscribed = true;
   }
 
@@ -654,22 +758,18 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const s = (f_search.get_value() || "").trim();
     const nextDocRoom = looks_like_job_card_name(s) ? `doc:Job Card/${s}` : null;
 
-    // unsubscribe PF room if changed
     if (currentPfRoom && frappe.realtime.unsubscribe && currentPfRoom !== nextPfRoom) {
       try { frappe.realtime.unsubscribe(currentPfRoom); } catch (e) {}
     }
 
-    // unsubscribe DOC room if changed
     if (currentDocRoom && frappe.realtime.unsubscribe && currentDocRoom !== nextDocRoom) {
       try { frappe.realtime.unsubscribe(currentDocRoom); } catch (e) {}
     }
 
-    // subscribe PF room
     if (nextPfRoom && nextPfRoom !== currentPfRoom) {
       try { frappe.realtime.subscribe(nextPfRoom); } catch (e) {}
     }
 
-    // subscribe DOC room
     if (nextDocRoom && nextDocRoom !== currentDocRoom) {
       try { frappe.realtime.subscribe(nextDocRoom); } catch (e) {}
     }
@@ -678,11 +778,9 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     currentDocRoom = nextDocRoom;
   }
 
-  // Listen to realtime event
   if (frappe.realtime) {
     setup_realtime_subscription();
 
-    // unique event name, safe to reset
     if (frappe.realtime.off) frappe.realtime.off(RT_EVENT);
 
     frappe.realtime.on(RT_EVENT, (data) => {
@@ -693,41 +791,32 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
         return;
       }
 
-      // ✅ Lite event
       if (data.__lite) {
         const st = (data.status || "").trim();
         const isCompleted = cint(data.docstatus) === 1 || st === "Completed";
         const isPaused = cint(data.is_paused) === 1 || st === "On Hold";
 
-        // ✅ Fast path: On Hold / Completed / Submitted
-        // update instantly from total_time_in_mins WITHOUT API call
         if (isCompleted || isPaused) {
           const mins = flt(data.total_time_in_mins || 0);
           data.timer_seconds = Math.round(mins * 60);
-
           data.expected_seconds = 0;
           data.is_overdue = 0;
           data.is_completed = isCompleted ? 1 : 0;
           data.running = 0;
-
-          // update_single_card(data);
           markDirty(data.name);
           return;
         }
 
-        // otherwise, fetch full payload in batch
         markDirty(data.name);
         return;
       }
 
-      // Full payload => update directly
       update_single_card(data);
     });
   }
 
   // -------------------------
-  // Fallback poll: bulk sync visible cards (no overlaps)
-  // (✅ Default OFF. Only ON if ?poll=on)
+  // Fallback poll
   // -------------------------
   let pollTimer = null;
   let pollInFlight = false;
@@ -749,12 +838,11 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       const cards = await fetch_card_payload_bulk(sample);
       for (const c of cards) update_single_card(c);
     } catch (e) {
-      // ignore
     } finally {
       pollInFlight = false;
     }
   }
-  
+
   function start_poll() {
     if (pollTimer) return;
     pollTimer = setInterval(() => poll_visible_cards(), 12000);
@@ -766,7 +854,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     pollInFlight = false;
   }
 
-  // ✅ Poll is OFF by default; only ON if poll=on
   const pollRaw = (urlParams.get("poll") || "").trim().toLowerCase();
   const pollOnValues = new Set(["on", "1", "true", "yes"]);
   const pollEnabled = pollOnValues.has(pollRaw);
@@ -797,43 +884,31 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const done = flt(d.done) || flt(d.total_completed_qty) || 0;
     const remaining = Math.max(planned - done, 0);
 
-    const paused =
-      String(d.status || "") === "On Hold" || cint(d.is_paused) === 1;
+    const paused = String(d.status || "") === "On Hold" || cint(d.is_paused) === 1;
     const running = cint(d.running) === 1 && !paused;
     const is_submitted = cint(d.docstatus) === 1;
 
     if (is_submitted) return "";
 
     if (paused) {
-      return `<button type="button" class="btn btn-primary btn-sm" data-cmd="resume" data-name="${d.name}">${__(
-        "Resume Job"
-      )}</button>`;
+      return `<button type="button" class="btn btn-primary btn-sm" data-cmd="resume" data-name="${d.name}">${__("Resume Job")}</button>`;
     }
 
     if (running) {
       return `
-        <button type="button" class="btn btn-default btn-sm" data-cmd="pause" data-name="${d.name}">${__(
-          "Pause Job"
-        )}</button>
-        <button type="button" class="btn btn-primary btn-sm" data-cmd="complete" data-name="${d.name}">${__(
-          "Complete Job"
-        )}</button>
+        <button type="button" class="btn btn-default btn-sm" data-cmd="pause" data-name="${d.name}">${__("Pause Job")}</button>
+        <button type="button" class="btn btn-primary btn-sm" data-cmd="complete" data-name="${d.name}">${__("Complete Job")}</button>
       `;
     }
 
     if (planned && remaining <= 0) {
-      return `<button type="button" class="btn btn-primary btn-sm" data-cmd="submit" data-name="${d.name}">${__(
-        "Submit"
-      )}</button>`;
+      return `<button type="button" class="btn btn-primary btn-sm" data-cmd="submit" data-name="${d.name}">${__("Submit")}</button>`;
     }
 
-    return `<button type="button" class="btn btn-primary btn-sm" data-cmd="start" data-name="${d.name}">${__(
-      "Start Job"
-    )}</button>`;
+    return `<button type="button" class="btn btn-primary btn-sm" data-cmd="start" data-name="${d.name}">${__("Start Job")}</button>`;
   }
 
   function render_extra(d) {
-    // نحدد Plant Floor من taj_plant_floor أو plant_floor (effective)
     const pf = String(d.taj_plant_floor || d.plant_floor || "").trim();
     const isSubmitted = cint(d.docstatus) === 1;
 
@@ -850,7 +925,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       return "";
     }
 
-    // يظهر إذا القيمة ≠ 0 أو إذا Submitted
     const shouldShow = isSubmitted || Math.abs(val) > 0.000001;
     if (!shouldShow) return "";
 
@@ -869,8 +943,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const remaining = flt(d.remaining) || Math.max(planned - done, 0);
     const pct = planned ? Math.min((done / planned) * 100, 100) : 0;
 
-    const paused =
-      String(d.status || "") === "On Hold" || cint(d.is_paused) === 1;
+    const paused = String(d.status || "") === "On Hold" || cint(d.is_paused) === 1;
     const running = cint(d.running) === 1 && !paused;
 
     const isCompleted =
@@ -886,8 +959,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       ? "state-running"
       : "state-idle";
 
-    const idleStatusClass =
-      !paused && !running ? `idle-${slug_status(d.status)}` : "";
+    const idleStatusClass = !paused && !running ? `idle-${slug_status(d.status)}` : "";
 
     const showSubmit =
       !paused &&
@@ -911,8 +983,10 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const badgeClass = get_badge_class(d.status);
     const timerSeconds = cint(d.timer_seconds || 0);
     const expectedSeconds = cint(d.expected_seconds || 0);
-
     const seq = cint(d.wo_op_seq || 0);
+
+    const showCookItemsBtn =
+      String(d.plant_floor || "").trim() === "Cooking Area" && !!String(d.operation || "").trim();
 
     return $(`
       <div class="jc-card ${stateClass} ${idleStatusClass} ${wipBlink} ${overdueClass} ${
@@ -925,17 +999,38 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
            data-completed="${isCompleted ? 1 : 0}">
         <div>
           <div class="jc-head">
-            <div>
-              <div class="jc-title">
-                <span class="jc-seq">${seq ? `${seq}# ` : ""}</span>
-                <a href="/app/job-card/${d.name}" target="_blank">${d.name}</a>
+            <div style="min-width:0;">
+              <div class="jc-title jc-title-row">
+                <div class="jc-title-main">
+                  <span class="jc-seq">${seq ? `${seq}# ` : ""}</span>
+                  <a class="jc-title-link" href="/app/job-card/${d.name}" target="_blank">${d.name}</a>
+                </div>
+
+                <div class="jc-title-actions">
+                  ${
+                    d.operation
+                      ? `<button type="button"
+                           class="btn btn-default btn-xs jc-mini-btn jc-spec-btn"
+                           data-name="${d.name}"
+                           title="${__("View Operation Specs")}">ⓘ</button>`
+                      : ""
+                  }
+
+                  ${
+                    showCookItemsBtn
+                      ? `<button type="button"
+                           class="btn btn-default btn-xs jc-mini-btn jc-cook-req-btn"
+                           data-name="${d.name}"
+                           title="${__("View Cooking Items")}">📋</button>`
+                      : ""
+                  }
+                </div>
               </div>
-              
+
               <div class="jc-meta">
                 <div>${__("WS")}: ${d.workstation || "-"}</div>
                 <div>${__("Op")}: ${d.operation || "-"}</div>
               </div>
-              
             </div>
 
             <div class="jc-right">
@@ -943,9 +1038,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
                 ${
                   IS_WALL
                     ? ""
-                    : `<button type="button" class="btn btn-default btn-xs jc-mute" data-name="${d.name}" title="${__(
-                        "Mute"
-                      )}">
+                    : `<button type="button" class="btn btn-default btn-xs jc-mute" data-name="${d.name}" title="${__("Mute")}">
                         ${isMuted(d.name) ? "🔕" : "🔔"}
                        </button>`
                 }
@@ -970,24 +1063,14 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
           `
               : `
             <div class="jc-kpis">
-              <div class="jc-kpi"><div class="lbl">${__(
-                "Planned"
-              )}</div><div class="val">${format_qty(planned)}</div></div>
-              <div class="jc-kpi"><div class="lbl">${__(
-                "Done"
-              )}</div><div class="val">${format_qty(done)}</div></div>
-              <div class="jc-kpi"><div class="lbl">${__(
-                "Remaining"
-              )}</div><div class="val">${format_qty(remaining)}</div></div>
+              <div class="jc-kpi"><div class="lbl">${__("Planned")}</div><div class="val">${format_qty(planned)}</div></div>
+              <div class="jc-kpi"><div class="lbl">${__("Done")}</div><div class="val">${format_qty(done)}</div></div>
+              <div class="jc-kpi"><div class="lbl">${__("Remaining")}</div><div class="val">${format_qty(remaining)}</div></div>
             </div>
 
             <div class="jc-progress">
-              <div class="pct"><span>${__("Progress")}</span><b>${pct.toFixed(
-                1
-              )}%</b></div>
-              <div class="bar"><div class="fill" style="width:${pct.toFixed(
-                1
-              )}%"></div></div>
+              <div class="pct"><span>${__("Progress")}</span><b>${pct.toFixed(1)}%</b></div>
+              <div class="bar"><div class="fill" style="width:${pct.toFixed(1)}%"></div></div>
             </div>
           `
           }
@@ -995,9 +1078,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
         <div class="jc-actions">
           ${render_actions(d)}
-          <a class="btn btn-default btn-sm" href="/app/job-card/${d.name}" target="_blank">${__(
-      "Open"
-    )}</a>
+          <a class="btn btn-default btn-sm" href="/app/job-card/${d.name}" target="_blank">${__("Open")}</a>
         </div>
         ${render_extra(d)}
       </div>
@@ -1005,7 +1086,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   // -------------------------
-  // Actions (card-only updates)
+  // Actions
   // -------------------------
   async function start_job(name) {
     const doc = await frappe
@@ -1015,9 +1096,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       })
       .then((r) => r.message);
 
-    const existing = (doc.employee || [])
-      .map((r) => r.employee)
-      .filter(Boolean);
+    const existing = (doc.employee || []).map((r) => r.employee).filter(Boolean);
 
     const do_start = async (emp_ids) => {
       const employees = (emp_ids || []).map((emp) => ({ employee: emp }));
@@ -1081,7 +1160,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   async function complete_job(name) {
-    // fetch latest for smart default remaining
     const one = (await fetch_card_payload_bulk([name]))[0];
     const planned = flt(one?.for_quantity || one?.planned || 0) || 0;
     const done = flt(one?.total_completed_qty || one?.done || 0) || 0;
@@ -1120,8 +1198,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
     if (cint(cur.docstatus) === 1) return;
 
-    // ✅ NEW: decide whether to hide qty fields
-    const fq_default = (planned_now && planned_now > 0) ? planned_now : completed;
+    const fq_default = planned_now && planned_now > 0 ? planned_now : completed;
     const hide_qty_fields = Math.abs(fq_default - completed) < 0.000001;
 
     const fields = [];
@@ -1154,9 +1231,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       });
     }
 
-    // ✅ CHANGED: qty fields shown only when needed
     if (hide_qty_fields) {
-      // keep them in payload but NOT visible
       fields.push(
         {
           fieldtype: "Float",
@@ -1184,7 +1259,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
         }
       );
     } else {
-      // your existing UX (visible)
       fields.push(
         {
           fieldtype: "Float",
@@ -1270,86 +1344,125 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       __("Submit Job Card"),
       __("Submit")
     );
-    
-  setTimeout(() => {
-    const $w = dialog.$wrapper;
 
-    function normalizeNumber(v) {
-      // (اختياري) يدعم الأرقام العربية + الفاصلة
-      if (v == null) return v;
-      v = String(v);
+    setTimeout(() => {
+      const $w = dialog.$wrapper;
 
-      const map = { "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9",
-                    "۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9" };
-      v = v.replace(/[٠-٩۰-۹]/g, (d) => map[d] || d);
+      function normalizeNumber(v) {
+        if (v == null) return v;
+        v = String(v);
 
-      // comma -> dot
-      v = v.replace(/,/g, ".");
-      // Arabic decimal separator -> dot
-      v = v.replace(/\u066B/g, ".");
-      return v;
-    }
-
-    function commitValue($inp) {
-      const $ctrl = $inp.closest(".frappe-control");
-      const fieldname = $ctrl.attr("data-fieldname");
-      if (!fieldname) return;
-
-      let raw = $inp.val();
-      raw = normalizeNumber(raw);
-
-      // ✅ أهم جزء: نحفظ القيمة داخل dialog قبل validation
-      dialog.set_value(fieldname, raw);
-
-      // وثبّت على مستوى الـ UI
-      $inp.trigger("input");
-      $inp.trigger("change");
-      $inp.blur();
-    }
-
-    $w.on("keydown.jc_enter_fix", "input, textarea, select", function (e) {
-      const isEnter = (e.key === "Enter") || (e.keyCode === 13) || (e.which === 13);
-      if (!isEnter) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      const $inp = $(this);
-      commitValue($inp);
-
-      // تنقل للحقل التالي، وإذا هذا آخر حقل → Submit تلقائي
-      const $focusables = $w.find("input, textarea, select")
-        .filter(":visible:enabled:not([readonly])");
-
-      const idx = $focusables.index(this);
-      const hasNext = idx >= 0 && idx < $focusables.length - 1;
-
-      if (hasNext) {
-        setTimeout(() => $focusables.eq(idx + 1).focus(), 0);
-      } else {
-        setTimeout(() => dialog.get_primary_btn().trigger("click"), 0);
+        const map = {
+          "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
+          "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9",
+          "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
+          "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9",
+        };
+        v = v.replace(/[٠-٩۰-۹]/g, (d) => map[d] || d);
+        v = v.replace(/,/g, ".");
+        v = v.replace(/\u066B/g, ".");
+        return v;
       }
 
-      return false;
-    });
+      function commitValue($inp) {
+        const $ctrl = $inp.closest(".frappe-control");
+        const fieldname = $ctrl.attr("data-fieldname");
+        if (!fieldname) return;
 
-    // تنظيف الهاندلر عند إغلاق الديالوج
-    dialog.onhide = () => {
-      try { $w.off("keydown.jc_enter_fix"); } catch (e) {}
-    };
-  }, 0);
+        let raw = $inp.val();
+        raw = normalizeNumber(raw);
 
-    // only trigger when visible fields exist (optional safety)
+        dialog.set_value(fieldname, raw);
+        $inp.trigger("input");
+        $inp.trigger("change");
+        $inp.blur();
+      }
+
+      $w.on("keydown.jc_enter_fix", "input, textarea, select", function (e) {
+        const isEnter = e.key === "Enter" || e.keyCode === 13 || e.which === 13;
+        if (!isEnter) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $inp = $(this);
+        commitValue($inp);
+
+        const $focusables = $w.find("input, textarea, select").filter(":visible:enabled:not([readonly])");
+
+        const idx = $focusables.index(this);
+        const hasNext = idx >= 0 && idx < $focusables.length - 1;
+
+        if (hasNext) {
+          setTimeout(() => $focusables.eq(idx + 1).focus(), 0);
+        } else {
+          setTimeout(() => dialog.get_primary_btn().trigger("click"), 0);
+        }
+
+        return false;
+      });
+
+      dialog.onhide = () => {
+        try { $w.off("keydown.jc_enter_fix"); } catch (e) {}
+      };
+    }, 0);
+
     if (!hide_qty_fields) dialog.trigger("for_quantity");
   }
-  
+
   // -------------------------
-  // Events (namespaced)
+  // Events
   // -------------------------
   $(page.body).on("click.jcboard", ".jc-mute", function (e) {
     e.preventDefault();
     e.stopPropagation();
     toggleMute($(this).attr("data-name"));
+  });
+
+  $(page.body).on("click.jcboard", ".jc-spec-btn", async function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const btn = $(this);
+    const name = btn.attr("data-name");
+    if (!name) return;
+
+    try {
+      btn.prop("disabled", true);
+      const data = await get_operation_spec(name);
+      show_operation_spec_popup(data);
+    } catch (err) {
+      frappe.msgprint({
+        title: __("Operation Specs"),
+        message: err?.message || __("Unable to load operation description."),
+        indicator: "red",
+      });
+    } finally {
+      btn.prop("disabled", false);
+    }
+  });
+
+  $(page.body).on("click.jcboard", ".jc-cook-req-btn", async function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const btn = $(this);
+    const name = btn.attr("data-name");
+    if (!name) return;
+
+    try {
+      btn.prop("disabled", true);
+      const data = await get_cooking_operation_items(name);
+      show_cooking_operation_items_popup(data);
+    } catch (err) {
+      frappe.msgprint({
+        title: __("Cooking Items"),
+        message: err?.message || __("Unable to load cooking items."),
+        indicator: "red",
+      });
+    } finally {
+      btn.prop("disabled", false);
+    }
   });
 
   $(page.body).on("click.jcboard", ".jc-actions button[data-cmd]", async function () {
@@ -1407,7 +1520,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       }
 
       for (const d of items) insert_card_sorted(render_card(d), d.name);
-      // refresh_serials();
       state.offset += state.limit;
 
       startTimerTickerIfNeeded();
@@ -1439,7 +1551,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     }
     dirtyNames.clear();
 
-    // unsubscribe PF room
     if (currentPfRoom && frappe.realtime?.unsubscribe) {
       try {
         frappe.realtime.unsubscribe(currentPfRoom);
@@ -1447,7 +1558,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     }
     currentPfRoom = null;
 
-    // unsubscribe DOC room
     if (currentDocRoom && frappe.realtime?.unsubscribe) {
       try {
         frappe.realtime.unsubscribe(currentDocRoom);
@@ -1455,12 +1565,10 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     }
     currentDocRoom = null;
 
-    // remove handlers
     try {
       $(page.body).off(".jcboard");
     } catch (e) {}
 
-    // stop realtime listener for our event
     if (frappe.realtime?.off) {
       try {
         frappe.realtime.off(RT_EVENT);
@@ -1475,7 +1583,6 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   setup_realtime_subscription();
   load_cards(true);
 
-  // expose destroy to on_page_hide
   wrapper.__jc_destroy = destroy_board;
 };
 

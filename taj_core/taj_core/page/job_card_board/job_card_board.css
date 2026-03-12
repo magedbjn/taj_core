@@ -18,8 +18,6 @@
 
 /* =========================================================
    10.1-inch tablets (Landscape) - Force 3 columns
-   - يحاول يستهدف التابلت (touch) عشان ما يأثر على اللابتوبات
-   - إذا جهازك مو touch، احذف (hover/pointer) من الشرط
    ========================================================= */
 @media (orientation: landscape)
   and (min-width: 1025px)
@@ -59,6 +57,52 @@
 /* Header */
 .jc-head{ display:flex; justify-content:space-between; gap:10px; align-items:start; }
 .jc-title{ font-size:16px; font-weight:800; line-height:1.2; }
+
+.jc-title-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.jc-title-main{
+  min-width:0;
+  display:flex;
+  align-items:flex-start;
+  gap:4px;
+  flex-wrap:wrap;
+}
+
+.jc-title-link{
+  color: inherit;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.jc-title-link:hover{
+  text-decoration: underline;
+}
+
+.jc-title-actions{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  flex-shrink:0;
+}
+
+.jc-mini-btn{
+  width:18px;
+  height:18px;
+  min-height:18px;
+  padding:0 !important;
+  border-radius:999px !important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px !important;
+  line-height:1;
+}
+
 .jc-meta{ margin-top:4px; font-size:12px; color: var(--text-muted, #6b7280); }
 
 .jc-right{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
@@ -102,15 +146,11 @@
 .jc-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
 .jc-actions .btn{ border-radius:10px; }
 .jc-actions .btn{ padding: 4px 8px; font-size: 10px !important; }
+
 /* =========================================================
    Extra field (bottom-right)
    ========================================================= */
-
-/* Extra field: same height as button (btn-sm) + single line */
 .jc-card { position: relative; }
-
-/* reserve space so buttons don't overlap it */
-/* .jc-actions { padding-right: 210px; } */
 
 .jc-extra{
   position: absolute;
@@ -122,8 +162,8 @@
   justify-content: flex-end;
   gap: 6px;
 
-  height: 32px;              /* ✅ نفس ارتفاع btn-sm غالباً */
-  padding: 0 10px;           /* ✅ بدون padding عمودي */
+  height: 32px;
+  padding: 0 10px;
   white-space: nowrap;
 
   background: var(--control-bg, #f7f7f7);
@@ -182,43 +222,45 @@
 .jc-card.is-muted { opacity: 0.88; }
 
 /* =========================================================
-   10-inch landscape: 3 cards + compact UI (تقليل ارتفاع الكرت)
+   10-inch landscape: 3 cards + compact UI
    ========================================================= */
 @media (max-width: 1024px) and (orientation: landscape){
 
   .jc-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px !important; }
 
-  /* الكرت أقصر + مسافات أقل */
   .jc-card{
     padding: 8px !important;
     border-radius: 10px !important;
-    /* min-height: 110px !important; */
     min-height: 0 !important;
   }
 
-  /* Header */
   .jc-head{ gap: 6px !important; }
   .jc-title{ font-size: 10px !important; line-height: 1.1 !important; }
   .jc-right{ font-size: 10px !important; line-height: 1.1 !important; }
   .jc-meta{ margin-top: 2px !important; font-size: 9px !important; }
 
-  /* KPIs */
+  .jc-title-row{ gap: 4px !important; }
+  .jc-title-actions{ gap: 2px !important; }
+  .jc-mini-btn{
+    width:16px !important;
+    height:16px !important;
+    min-height:16px !important;
+    font-size:10px !important;
+  }
+
   .jc-kpis{ gap: 4px !important; margin-top: 4px !important; }
   .jc-kpi{ padding: 4px 6px !important; border-radius: 9px !important; }
   .jc-kpi .lbl{ font-size:10px !important; color: var(--text-muted, #6b7280); }
   .jc-kpi .val{ font-weight:600 !important; font-size:12px !important; margin-top:1px !important; }
 
-  /* Progress */
   .jc-progress{ margin-top: 6px !important; }
   .jc-progress .pct{ font-size: 8px !important; margin-bottom: 4px !important; }
   .jc-progress .bar{ height: 6px !important; }
-  
-  /* .jc-actions{ padding-right: 170px !important; } */
 
   .jc-extra{
     right: 8px !important;
     bottom: 8px !important;
-    height: 24px !important;     /* ✅ نفس زرّك (تقريباً) */
+    height: 24px !important;
     padding: 0 8px !important;
     border-radius: 9px !important;
     gap: 5px !important;
@@ -226,7 +268,6 @@
   .jc-extra .lbl, .jc-extra .eq{ font-size: 10px !important; }
   .jc-extra .val{ font-size: 10px !important; font-weight: 700 !important; }
 
-   /* Cooking labels */
   .jc-cooking-ws{ font-size: 16px !important; font-weight: 700 !important; }
   .jc-cooking-op{ margin-top: 3px !important; font-size: 13px !important; font-weight: 500 !important; color: #6b7280; }
 }
@@ -239,4 +280,3 @@ body.jc-wall .jc-title { font-size: 18px; }
 body.jc-wall .jc-timer { font-size: 18px; }
 body.jc-wall .jc-card  { min-height: 190px; }
 body.jc-wall .jc-actions { display:none; }
-
