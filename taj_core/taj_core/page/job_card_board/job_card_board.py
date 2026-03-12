@@ -5,7 +5,7 @@ import re
 from typing import List, Set, Optional, Dict, Any, Tuple
 
 import frappe
-from frappe.utils import flt, get_datetime, today
+from frappe.utils import flt, cint, get_datetime, today
 
 OVERDUE_TOLERANCE_SEC = 120
 
@@ -1127,7 +1127,7 @@ def board_resume_job(job_card: str, start_time=None):
 
 
 @frappe.whitelist()
-def board_complete_job(job_card: str, qty: float):
+def board_complete_job(job_card: str, qty: float, taj_temperature=None):
     _assert_user_can_access_job_card_pf(job_card)
 
     doc = frappe.get_doc("Job Card", job_card)
@@ -1143,7 +1143,28 @@ def board_complete_job(job_card: str, qty: float):
     if (doc.get("status") or "").strip() == "On Hold" or int(doc.get("is_paused") or 0) == 1:
         frappe.throw("Job is On Hold. Please Resume first.")
 
+    # -----------------------------------
+    # Check if operation requires temperature
+    # -----------------------------------
+    operation_name = (doc.get("operation") or "").strip()
+    requires_temperature = 0
+
+    if operation_name and frappe.db.exists("Operation", operation_name):
+        if _has_col("Operation", "taj_requires_temperature"):
+            # requires_temperature = cint(
+            #     frappe.db.get_value("Operation", operation_name, "taj_requires_temperature") or 0
+            # )
+            requires_temperature = int(
+                frappe.db.get_value("Operation", operation_name, "taj_requires_temperature") or 0
+            )
+            
+    if requires_temperature:
+        temp_val = flt(taj_temperature)
+        if temp_val <= 0:
+            frappe.throw("Temperature is required for this operation.")
+
     end_time = _safe_now()
+
     open_rows = _open_time_log_rows(doc)
     if not open_rows:
         return {"ok": True, "card": get_card_payload(job_card)}
@@ -1151,7 +1172,12 @@ def board_complete_job(job_card: str, qty: float):
     for r in open_rows:
         r.to_time = _ensure_to_time_after(r.from_time, end_time)
 
+    # set completed qty on the last open row
     open_rows[-1].completed_qty = qty
+
+    # set temperature on the same row if field exists
+    if requires_temperature and hasattr(open_rows[-1], "meta") and open_rows[-1].meta.has_field("taj_temperature"):
+        open_rows[-1].taj_temperature = flt(taj_temperature)
 
     total_done = 0.0
     for r in (doc.get("time_logs") or []):
@@ -1172,12 +1198,12 @@ def board_complete_job(job_card: str, qty: float):
 
     _set_is_paused(doc, 0)
 
+    # show Start Job again in Job Card UI when remaining exists
     if planned and total_done < planned:
         _set_started_time(doc, None)
 
     doc.save()
     return {"ok": True, "card": get_card_payload(job_card)}
-
 
 def _effective_pf_for_doc(doc) -> str:
     jc_pf = (doc.get("taj_plant_floor") or "").strip() if _has_col("Job Card", "taj_plant_floor") else ""

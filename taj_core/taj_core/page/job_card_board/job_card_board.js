@@ -1160,26 +1160,67 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   async function complete_job(name) {
+    // fetch latest card payload for smart defaults
     const one = (await fetch_card_payload_bulk([name]))[0];
     const planned = flt(one?.for_quantity || one?.planned || 0) || 0;
     const done = flt(one?.total_completed_qty || one?.done || 0) || 0;
     const remaining_default = Math.max(planned - done, 0);
 
+    // read Job Card to know operation
+    const jc = await frappe
+      .call({
+        method: "frappe.client.get",
+        args: { doctype: "Job Card", name },
+      })
+      .then((r) => r.message || {});
+
+    const operation_name = jc?.operation || "";
+
+    let requires_temperature = 0;
+
+    if (operation_name) {
+      try {
+        const op = await frappe
+          .call({
+            method: "frappe.client.get",
+            args: { doctype: "Operation", name: operation_name },
+          })
+          .then((r) => r.message || {});
+
+        requires_temperature = cint(op?.taj_requires_temperature || 0);
+      } catch (e) {
+        requires_temperature = 0;
+      }
+    }
+
+    const fields = [
+      {
+        fieldtype: "Float",
+        label: __("Completed Quantity"),
+        fieldname: "completed_qty",
+        reqd: 1,
+        default: remaining_default,
+      },
+    ];
+
+    if (requires_temperature) {
+      fields.push({
+        fieldtype: "Float",
+        label: __("Temperature"),
+        fieldname: "taj_temperature",
+        reqd: 1,
+      });
+    }
+
     frappe.prompt(
-      [
-        {
-          fieldtype: "Float",
-          label: __("Completed Quantity"),
-          fieldname: "completed_qty",
-          reqd: 1,
-          default: remaining_default,
-        },
-      ],
+      fields,
       async (d) => {
         const r = await call_api("board_complete_job", {
           job_card: name,
           qty: d.completed_qty,
+          taj_temperature: d.taj_temperature,
         });
+
         if (r.message?.card) update_single_card(r.message.card);
         else markDirty(name);
       },
