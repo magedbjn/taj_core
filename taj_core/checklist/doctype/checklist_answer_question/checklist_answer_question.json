@@ -1,0 +1,98 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-03-13 03:05:55.089238",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "question",
+  "type",
+  "answer",
+  "has_issue",
+  "issue_note"
+ ],
+ "fields": [
+  {
+    "fieldname": "question",
+    "fieldtype": "Data",
+    "label": "Question",
+    "read_only": 1,
+    "in_list_view": 1
+  },
+  {
+    "fieldname": "type",
+    "fieldtype": "Data",
+    "label": "Type",
+    "read_only": 1
+  },
+  {
+    "fieldname": "answer",
+    "fieldtype": "Data",
+    "label": "Answer",
+    "read_only": 1,
+    "in_list_view": 1
+  },
+  {
+    "fieldname": "yes_no_answer",
+    "fieldtype": "Select",
+    "label": "Yes / No Answer",
+    "options": "\nYes\nNo",
+    "depends_on": "eval: doc.type == 'Yes/No'"
+  },
+  {
+    "fieldname": "int_answer",
+    "fieldtype": "Int",
+    "label": "Int Answer",
+    "depends_on": "eval: doc.type == 'Int'"
+  },
+  {
+    "fieldname": "float_answer",
+    "fieldtype": "Float",
+    "label": "Float Answer",
+    "depends_on": "eval: doc.type == 'Float'"
+  },
+  {
+    "fieldname": "select_answer",
+    "fieldtype": "Select",
+    "label": "Select Answer",
+    "depends_on": "eval: doc.type == 'Select'"
+  },
+  {
+    "fieldname": "answer_select_options",
+    "fieldtype": "Small Text",
+    "label": "Answer Select Options",
+    "hidden": 1,
+    "read_only": 1
+  },
+  {
+    "fieldname": "has_issue",
+    "fieldtype": "Check",
+    "label": "Has Issue",
+    "read_only": 1,
+    "in_list_view": 1
+  },
+  {
+    "fieldname": "issue_note",
+    "fieldtype": "Small Text",
+    "label": "Issue Note",
+    "read_only": 1,
+    "depends_on": "eval: doc.has_issue"
+  }
+],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-13 13:49:37.426958",
+ "modified_by": "Administrator",
+ "module": "Checklist",
+ "name": "Checklist Answer Question",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

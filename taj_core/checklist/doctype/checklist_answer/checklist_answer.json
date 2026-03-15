@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "autoname": "CK.-.YY.-.MM.-.DD.-.##",
+ "creation": "2026-03-13 03:05:09.724492",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "amended_from",
+  "posting_date",
+  "template",
+  "status",
+  "result_status",
+  "column_break_uwgo",
+  "department",
+  "assignment_type",
+  "assigned_user",
+  "answer_by",
+  "section_break_fewk",
+  "answer"
+ ],
+ "fields": [
+  {
+   "fieldname": "answer",
+   "fieldtype": "Table",
+   "label": "Answer",
+   "options": "Checklist Answer Question"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Checklist Answer",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Template",
+   "options": "Checklist Question Template",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nIn Progress\nCompleted\nExpired\nAuto Closed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_uwgo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "answer_by",
+   "fieldtype": "Link",
+   "label": "Answer By",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_break_fewk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "template.assigned_user",
+   "fieldname": "assigned_user",
+   "fieldtype": "Link",
+   "label": "Assigned User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "template.assignment_type",
+   "fieldname": "assignment_type",
+   "fieldtype": "Data",
+   "label": "Assignment Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "result_status",
+   "fieldtype": "Select",
+   "label": "Result Status",
+   "options": "Normal\nHas Issue\nCritical"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-13 13:46:07.570707",
+ "modified_by": "Administrator",
+ "module": "Checklist",
+ "name": "Checklist Answer",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
