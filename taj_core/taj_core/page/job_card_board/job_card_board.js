@@ -5,6 +5,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
   const OP_SPEC_CACHE_PREFIX = "jc_board:op_spec:v1:";
   const COOK_REQ_CACHE_PREFIX = "jc_board:cook_req:v1:";
+  const FILTERS_HIDDEN_KEY = "job_card_board_filters_hidden_v1";
 
   const urlParams = new URLSearchParams(window.location.search || "");
 
@@ -280,6 +281,51 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     `);
 
     d.show();
+  }
+
+  async function print_preparation_label(name) {
+    if (!name) return;
+
+    try {
+      const r = await frappe.call({
+        method: "taj_core.taj_manufacturing.api.preparation_labels.render_preparation_labels_from_job_card",
+        args: {
+          job_card: name,
+        },
+        freeze: true,
+        freeze_message: __("Generating Prep Tags..."),
+      });
+
+      const html = r.message && r.message.html;
+
+      if (!html) {
+        frappe.msgprint(__("No labels were generated."));
+        return;
+      }
+
+      const printWindow = window.open("", "_blank");
+
+      if (!printWindow) {
+        frappe.msgprint(__("Popup blocked. Please allow popups and try again."));
+        return;
+      }
+
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+
+      printWindow.focus();
+
+      setTimeout(() => {
+        printWindow.print();
+      }, 300);
+    } catch (e) {
+      frappe.msgprint({
+        title: __("Print"),
+        message: e?.message || __("Unable to generate Preparation Label."),
+        indicator: "red",
+      });
+    }
   }
 
   // -------------------------
@@ -581,6 +627,78 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   // -------------------------
+  // Responsive filters toggle
+  // -------------------------
+  function loadFiltersHidden() {
+    try {
+      return localStorage.getItem(FILTERS_HIDDEN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  function saveFiltersHidden(v) {
+    try {
+      localStorage.setItem(FILTERS_HIDDEN_KEY, v ? "1" : "0");
+    } catch {}
+  }
+
+  function isCompactFiltersScreen() {
+    return window.matchMedia(
+      "(max-width: 1180px), (orientation: landscape) and (max-width: 1366px) and (hover: none) and (pointer: coarse)"
+    ).matches;
+  }
+
+  let filtersHidden = loadFiltersHidden() || isCompactFiltersScreen();
+
+  const $filterToggleBtn = $(`
+    <button type="button"
+            class="btn btn-default btn-sm jc-filter-toggle"
+            title="${__("Show / Hide Filters")}">☰</button>
+  `);
+
+  if (!IS_WALL) {
+    const $actions = $(page.page_actions);
+    if ($actions.length) $actions.prepend($filterToggleBtn);
+  }
+
+  function syncFiltersUI(animate = false) {
+    const compact = !IS_WALL && isCompactFiltersScreen();
+    const $form = $(page.page_form);
+
+    if (!compact) {
+      $filterToggleBtn.hide();
+      $form.show();
+      return;
+    }
+
+    $filterToggleBtn.show();
+    $filterToggleBtn.text(filtersHidden ? "☰" : "✕");
+    $filterToggleBtn.attr("title", filtersHidden ? __("Show Filters") : __("Hide Filters"));
+
+    if (animate) {
+      if (filtersHidden) $form.stop(true, true).slideUp(180);
+      else $form.stop(true, true).slideDown(180);
+    } else {
+      if (filtersHidden) $form.hide();
+      else $form.show();
+    }
+  }
+
+  $filterToggleBtn.on("click", function () {
+    filtersHidden = !filtersHidden;
+    saveFiltersHidden(filtersHidden);
+    syncFiltersUI(true);
+  });
+
+  const handleResponsiveFilters = frappe.utils.debounce(() => {
+    syncFiltersUI(false);
+  }, 100);
+
+  window.addEventListener("resize", handleResponsiveFilters);
+  window.addEventListener("orientationchange", handleResponsiveFilters);
+
+  // -------------------------
   // Default dates
   // -------------------------
   let setting_dates = false;
@@ -743,8 +861,12 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
   function ensure_doctype_subscribe() {
     if (!frappe.realtime || doctypeSubscribed) return;
-    try { frappe.realtime.subscribe("doctype: Job Card"); } catch (e) {}
-    try { frappe.realtime.subscribe("doctype:Job Card"); } catch (e) {}
+    try {
+      frappe.realtime.subscribe("doctype: Job Card");
+    } catch (e) {}
+    try {
+      frappe.realtime.subscribe("doctype:Job Card");
+    } catch (e) {}
     doctypeSubscribed = true;
   }
 
@@ -759,19 +881,27 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const nextDocRoom = looks_like_job_card_name(s) ? `doc:Job Card/${s}` : null;
 
     if (currentPfRoom && frappe.realtime.unsubscribe && currentPfRoom !== nextPfRoom) {
-      try { frappe.realtime.unsubscribe(currentPfRoom); } catch (e) {}
+      try {
+        frappe.realtime.unsubscribe(currentPfRoom);
+      } catch (e) {}
     }
 
     if (currentDocRoom && frappe.realtime.unsubscribe && currentDocRoom !== nextDocRoom) {
-      try { frappe.realtime.unsubscribe(currentDocRoom); } catch (e) {}
+      try {
+        frappe.realtime.unsubscribe(currentDocRoom);
+      } catch (e) {}
     }
 
     if (nextPfRoom && nextPfRoom !== currentPfRoom) {
-      try { frappe.realtime.subscribe(nextPfRoom); } catch (e) {}
+      try {
+        frappe.realtime.subscribe(nextPfRoom);
+      } catch (e) {}
     }
 
     if (nextDocRoom && nextDocRoom !== currentDocRoom) {
-      try { frappe.realtime.subscribe(nextDocRoom); } catch (e) {}
+      try {
+        frappe.realtime.subscribe(nextDocRoom);
+      } catch (e) {}
     }
 
     currentPfRoom = nextPfRoom;
@@ -986,7 +1116,12 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const seq = cint(d.wo_op_seq || 0);
 
     const showCookItemsBtn =
-      String(d.plant_floor || "").trim() === "Cooking Area" && !!String(d.operation || "").trim();
+      String(d.plant_floor || "").trim() === "Cooking Area" &&
+      !!String(d.operation || "").trim();
+
+    const showPrepPrintBtn =
+      String(d.taj_plant_floor || d.plant_floor || "").trim() === "Preparation Area" &&
+      !!String(d.work_order || "").trim();
 
     return $(`
       <div class="jc-card ${stateClass} ${idleStatusClass} ${wipBlink} ${overdueClass} ${
@@ -1017,6 +1152,15 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
                   }
 
                   ${
+                    showPrepPrintBtn
+                      ? `<button type="button"
+                           class="btn btn-default btn-xs jc-mini-btn jc-prep-print-btn"
+                           data-name="${d.name}"
+                           title="${__("Print Preparation Label")}">🖨️</button>`
+                      : ""
+                  }
+
+                  ${
                     showCookItemsBtn
                       ? `<button type="button"
                            class="btn btn-default btn-xs jc-mini-btn jc-cook-req-btn"
@@ -1028,6 +1172,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
               </div>
 
               <div class="jc-meta">
+                <div>${__("Item")}: ${d.item_name || d.item_code || "-"}</div>
                 <div>${__("WS")}: ${d.workstation || "-"}</div>
                 <div>${__("Op")}: ${d.operation || "-"}</div>
               </div>
@@ -1080,6 +1225,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
           ${render_actions(d)}
           <a class="btn btn-default btn-sm" href="/app/job-card/${d.name}" target="_blank">${__("Open")}</a>
         </div>
+
         ${render_extra(d)}
       </div>
     `);
@@ -1160,13 +1306,11 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   async function complete_job(name) {
-    // fetch latest card payload for smart defaults
     const one = (await fetch_card_payload_bulk([name]))[0];
     const planned = flt(one?.for_quantity || one?.planned || 0) || 0;
     const done = flt(one?.total_completed_qty || one?.done || 0) || 0;
     const remaining_default = Math.max(planned - done, 0);
 
-    // read Job Card to know operation
     const jc = await frappe
       .call({
         method: "frappe.client.get",
@@ -1444,7 +1588,9 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       });
 
       dialog.onhide = () => {
-        try { $w.off("keydown.jc_enter_fix"); } catch (e) {}
+        try {
+          $w.off("keydown.jc_enter_fix");
+        } catch (e) {}
       };
     }, 0);
 
@@ -1483,6 +1629,22 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     }
   });
 
+  $(page.body).on("click.jcboard", ".jc-prep-print-btn", async function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const btn = $(this);
+    const name = btn.attr("data-name");
+    if (!name) return;
+
+    try {
+      btn.prop("disabled", true);
+      await print_preparation_label(name);
+    } finally {
+      btn.prop("disabled", false);
+    }
+  });
+
   $(page.body).on("click.jcboard", ".jc-cook-req-btn", async function (e) {
     e.preventDefault();
     e.stopPropagation();
@@ -1511,6 +1673,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
     const cmd = $(this).attr("data-cmd");
     const name = $(this).attr("data-name");
+
     if (cmd === "start") return start_job(name);
     if (cmd === "pause") return pause_job(name);
     if (cmd === "resume") return resume_job(name);
@@ -1610,6 +1773,15 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       $(page.body).off(".jcboard");
     } catch (e) {}
 
+    try {
+      $filterToggleBtn.off("click");
+    } catch (e) {}
+
+    try {
+      window.removeEventListener("resize", handleResponsiveFilters);
+      window.removeEventListener("orientationchange", handleResponsiveFilters);
+    } catch (e) {}
+
     if (frappe.realtime?.off) {
       try {
         frappe.realtime.off(RT_EVENT);
@@ -1622,6 +1794,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   // -------------------------
   ensure_today_dates_in_fields();
   setup_realtime_subscription();
+  syncFiltersUI(false);
   load_cards(true);
 
   wrapper.__jc_destroy = destroy_board;

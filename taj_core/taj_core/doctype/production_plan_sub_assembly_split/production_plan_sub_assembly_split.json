@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-03-16 10:17:50.033461",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "source_assembly_item",
+  "source_fg_item_code",
+  "source_fg_bom_no",
+  "assembly_qty",
+  "source_sub_assembly_item",
+  "sub_assembly_item_code",
+  "sub_assembly_bom_no",
+  "sub_assembly_qty",
+  "merged_sub_assembly_item",
+  "merge_group_id"
+ ],
+ "fields": [
+  {
+   "fieldname": "source_fg_bom_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Source Fg Bom No",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "assembly_qty",
+   "fieldtype": "Float",
+   "label": "Assembly Qty"
+  },
+  {
+   "fieldname": "sub_assembly_item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sub Assembly Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "sub_assembly_bom_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sub Assembly Bom No",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "sub_assembly_qty",
+   "fieldtype": "Float",
+   "label": "Sub Assembly Qty"
+  },
+  {
+   "fieldname": "source_fg_item_code",
+   "fieldtype": "Link",
+   "label": "Source Fg Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "merged_sub_assembly_item",
+   "fieldtype": "Data",
+   "label": "Merged Sub Assembly Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_assembly_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Source Assembly item",
+   "options": "Production Plan Item"
+  },
+  {
+   "fieldname": "source_sub_assembly_item",
+   "fieldtype": "Data",
+   "label": "Source Sub Assembly item"
+  },
+  {
+   "fieldname": "merge_group_id",
+   "fieldtype": "Data",
+   "label": "Merge Group Id"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-16 14:22:59.615730",
+ "modified_by": "Administrator",
+ "module": "Taj Core",
+ "name": "Production Plan Sub Assembly Split",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

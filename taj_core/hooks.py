@@ -6,10 +6,12 @@ app_email = "m.bajandooh@tajff.sa"
 app_license = "mit"
 
 doctype_js = {
-    "Production Plan": "public/production_plan/production_plan.js",
     "Material Request": "public/js/material_request.js",
     "Purchase Order": "public/js/purchase_order.js",
     "BOM": "public/js/bom.js",
+    "Production Plan": "public/js/production_plan.js",
+    "Work Order": "public/js/work_order.js",
+    "Job Card": "public/js/job_card.js",
 }
 
 scheduler_events = {
@@ -17,14 +19,11 @@ scheduler_events = {
 		"taj_core.company_documents.doctype.license.license.scheduled_status_update",
         "taj_core.qc.doctype.supplier_qualification.supplier_qualification.update_certificate_statuses"
 	],
-    "monthly": [
-        "taj_core.public.production_plan.generate_stickers.delete_old_production_stickers"
-    ]
 }
 
 override_doctype_class = {                
     "Party Specific Item": "taj_core.overrides.party_specific_item.TajPartySpecificItem",
-    "Leave Application": "taj_core.overrides.leave_application.LeaveApplication"
+    "Leave Application": "taj_core.overrides.leave_application.LeaveApplication",
 }
 
 override_whitelisted_methods = {

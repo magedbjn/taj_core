@@ -41,6 +41,7 @@
   flex-direction: column;
   justify-content: space-between;
   box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  position: relative;
 }
 
 /* Left border by state */
@@ -49,14 +50,24 @@
 .jc-card.state-idle   { border-left: 6px solid var(--gray-300, #d1d5db); }
 
 /* Idle sub-states */
-.jc-card.idle-completed           { border-left-color: #22c55e; }
-.jc-card.idle-open                { border-left-color: #94a3b8; }
-.jc-card.idle-material-transferred{ border-left-color: #06b6d4; }
-.jc-card.idle-submitted           { border-left-color: #16a34a; }
+.jc-card.idle-completed            { border-left-color: #22c55e; }
+.jc-card.idle-open                 { border-left-color: #94a3b8; }
+.jc-card.idle-material-transferred { border-left-color: #06b6d4; }
+.jc-card.idle-submitted            { border-left-color: #16a34a; }
 
 /* Header */
-.jc-head{ display:flex; justify-content:space-between; gap:10px; align-items:start; }
-.jc-title{ font-size:16px; font-weight:800; line-height:1.2; }
+.jc-head{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:start;
+}
+
+.jc-title{
+  font-size:16px;
+  font-weight:800;
+  line-height:1.2;
+}
 
 .jc-title-row{
   display:flex;
@@ -103,10 +114,24 @@
   line-height:1;
 }
 
-.jc-meta{ margin-top:4px; font-size:12px; color: var(--text-muted, #6b7280); }
+.jc-meta{
+  margin-top:4px;
+  font-size:12px;
+  color: var(--text-muted, #6b7280);
+}
 
-.jc-right{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
-.jc-top-right{ display:flex; gap:8px; align-items:center; }
+.jc-right{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+}
+
+.jc-top-right{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
 
 /* KPIs */
 .jc-kpis{
@@ -115,6 +140,7 @@
   gap:10px;
   margin-top:10px;
 }
+
 .jc-kpi{
   background: var(--control-bg, #f7f7f7);
   border: 1px solid var(--border-color, #e6e6e6);
@@ -122,11 +148,21 @@
   padding:8px 10px;
   font-size:13px;
 }
-.jc-kpi .lbl{ color: var(--text-muted, #6b7280); font-size:12px; }
-.jc-kpi .val{ font-weight:800; font-size:14px; margin-top:2px; }
+
+.jc-kpi .lbl{
+  color: var(--text-muted, #6b7280);
+  font-size:12px;
+}
+
+.jc-kpi .val{
+  font-weight:800;
+  font-size:14px;
+  margin-top:2px;
+}
 
 /* Progress */
 .jc-progress{ margin-top:10px; }
+
 .jc-progress .pct{
   font-size:12px;
   color: var(--text-muted, #6b7280);
@@ -134,47 +170,71 @@
   justify-content:space-between;
   margin-bottom:6px;
 }
+
 .jc-progress .bar{
   height:8px;
   border-radius:999px;
   overflow:hidden;
   background: var(--control-bg, #eef2f7);
 }
-.jc-progress .fill{ height:100%; border-radius:999px; background:#3b82f6; }
+
+.jc-progress .fill{
+  height:100%;
+  border-radius:999px;
+  background:#3b82f6;
+}
 
 /* Actions */
-.jc-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-.jc-actions .btn{ border-radius:10px; }
-.jc-actions .btn{ padding: 4px 8px; font-size: 10px !important; }
+.jc-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.jc-actions .btn{
+  border-radius:10px;
+  padding:4px 8px;
+  font-size:10px !important;
+}
 
 /* =========================================================
    Extra field (bottom-right)
    ========================================================= */
-.jc-card { position: relative; }
-
 .jc-extra{
   position: absolute;
   right: 14px;
   bottom: 14px;
-
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-
   height: 32px;
   padding: 0 10px;
   white-space: nowrap;
-
   background: var(--control-bg, #f7f7f7);
   border: 1px solid var(--border-color, #e6e6e6);
   border-radius: 10px;
   font-size: 13px;
 }
 
-.jc-extra .lbl{ margin: 0; color: var(--text-muted, #6b7280); font-size: 12px; }
-.jc-extra .eq { margin: 0; color: var(--text-muted, #6b7280); font-size: 12px; }
-.jc-extra .val{ margin: 0; font-weight: 800; font-size: 13px; }
+.jc-extra .lbl{
+  margin: 0;
+  color: var(--text-muted, #6b7280);
+  font-size: 12px;
+}
+
+.jc-extra .eq{
+  margin: 0;
+  color: var(--text-muted, #6b7280);
+  font-size: 12px;
+}
+
+.jc-extra .val{
+  margin: 0;
+  font-weight: 800;
+  font-size: 13px;
+}
 
 /* Timer */
 .jc-timer{
@@ -194,8 +254,18 @@
   margin-bottom: 8px;
   text-align:center;
 }
-.jc-cooking-ws{ font-size: 22px; font-weight: 900; }
-.jc-cooking-op{ margin-top: 6px; font-size: 16px; font-weight: 700; color: #6b7280; }
+
+.jc-cooking-ws{
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.jc-cooking-op{
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #6b7280;
+}
 
 /* =========================================================
    WIP blink (only when remaining > 0)
@@ -205,6 +275,7 @@
   50%  { box-shadow: 0 0 0 4px rgba(59,130,246,0.18); }
   100% { box-shadow: 0 0 0 rgba(59,130,246,0); }
 }
+
 .jc-card.state-wip{ animation: jcPulse 1.2s infinite; }
 
 /* Overdue red + blink */
@@ -213,20 +284,41 @@
   50%  { background:#fff1f2; }
   100% { background:#fff; }
 }
+
 .jc-card.is-overdue{ border-color:#fecaca; }
+
 .jc-card.alerting{
   animation: jcAlert 1.0s infinite;
   border-left-color:#ef4444 !important;
 }
 
-.jc-card.is-muted { opacity: 0.88; }
+.jc-card.is-muted{ opacity: 0.88; }
+
+/* =========================================================
+   Filter toggle button
+   ========================================================= */
+.jc-filter-toggle{
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 36px;
+  padding: 0 10px;
+  margin-inline-end: 8px;
+  border-radius: 10px !important;
+  font-size: 16px !important;
+  line-height: 1;
+}
 
 /* =========================================================
    10-inch landscape: 3 cards + compact UI
    ========================================================= */
 @media (max-width: 1024px) and (orientation: landscape){
 
-  .jc-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px !important; }
+  .jc-grid{
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 8px !important;
+  }
 
   .jc-card{
     padding: 8px !important;
@@ -241,6 +333,7 @@
 
   .jc-title-row{ gap: 4px !important; }
   .jc-title-actions{ gap: 2px !important; }
+
   .jc-mini-btn{
     width:16px !important;
     height:16px !important;
@@ -249,9 +342,22 @@
   }
 
   .jc-kpis{ gap: 4px !important; margin-top: 4px !important; }
-  .jc-kpi{ padding: 4px 6px !important; border-radius: 9px !important; }
-  .jc-kpi .lbl{ font-size:10px !important; color: var(--text-muted, #6b7280); }
-  .jc-kpi .val{ font-weight:600 !important; font-size:12px !important; margin-top:1px !important; }
+
+  .jc-kpi{
+    padding: 4px 6px !important;
+    border-radius: 9px !important;
+  }
+
+  .jc-kpi .lbl{
+    font-size:10px !important;
+    color: var(--text-muted, #6b7280);
+  }
+
+  .jc-kpi .val{
+    font-weight:600 !important;
+    font-size:12px !important;
+    margin-top:1px !important;
+  }
 
   .jc-progress{ margin-top: 6px !important; }
   .jc-progress .pct{ font-size: 8px !important; margin-bottom: 4px !important; }
@@ -265,11 +371,51 @@
     border-radius: 9px !important;
     gap: 5px !important;
   }
-  .jc-extra .lbl, .jc-extra .eq{ font-size: 10px !important; }
-  .jc-extra .val{ font-size: 10px !important; font-weight: 700 !important; }
 
-  .jc-cooking-ws{ font-size: 16px !important; font-weight: 700 !important; }
-  .jc-cooking-op{ margin-top: 3px !important; font-size: 13px !important; font-weight: 500 !important; color: #6b7280; }
+  .jc-extra .lbl,
+  .jc-extra .eq{ font-size: 10px !important; }
+
+  .jc-extra .val{
+    font-size: 10px !important;
+    font-weight: 700 !important;
+  }
+
+  .jc-cooking-ws{
+    font-size: 16px !important;
+    font-weight: 700 !important;
+  }
+
+  .jc-cooking-op{
+    margin-top: 3px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #6b7280;
+  }
+}
+
+/* =========================================================
+   Small screens / tablets
+   ========================================================= */
+@media (max-width: 1180px),
+       (orientation: landscape) and (max-width: 1366px) and (hover: none) and (pointer: coarse) {
+  .jc-filter-toggle{
+    display: inline-flex !important;
+  }
+
+  .layout-main-section .page-form{
+    margin-bottom: 10px;
+  }
+}
+
+/* Extra compact tablets / phones */
+@media (max-width: 768px){
+  .jc-filter-toggle{
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    font-size: 15px !important;
+    border-radius: 9px !important;
+  }
 }
 
 /* =========================================================

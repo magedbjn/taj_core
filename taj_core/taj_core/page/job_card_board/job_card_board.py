@@ -45,6 +45,8 @@ def _safe_fields() -> List[str]:
         "taj_manpower_used",
         "taj_total_weight",
         "taj_rm_used_qty",
+        "item_code",
+        "item_name",
     ]:
         if _has_col("Job Card", f):
             fields.append(f)

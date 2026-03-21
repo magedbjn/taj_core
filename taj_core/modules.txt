@@ -4,3 +4,4 @@ QC
 Engineering
 RND
 PeopleOps
+Taj Manufacturing
