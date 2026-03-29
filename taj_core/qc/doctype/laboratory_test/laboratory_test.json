@@ -8,6 +8,8 @@
  "field_order": [
   "test_for",
   "section_break_ksom",
+  "look_no",
+  "batch_no_link",
   "batch_no",
   "date",
   "column_break_e1se",
@@ -35,9 +37,9 @@
   {
    "fieldname": "batch_no",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Batch No/Look No",
-   "reqd": 1
+   "hidden": 1,
+   "label": "Old Batch / Look No",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.test_for == 'Production'",
@@ -121,14 +123,27 @@
    "label": "Item RND",
    "placeholder": "New Item for RND",
    "unique": 1
+  },
+  {
+   "fieldname": "look_no",
+   "fieldtype": "Data",
+   "label": "Look No"
+  },
+  {
+   "depends_on": "eval:doc.test_for == 'Production'",
+   "fieldname": "batch_no_link",
+   "fieldtype": "Link",
+   "label": "Batch No",
+   "mandatory_depends_on": "eval:doc.test_for == 'Production'",
+   "options": "Batch"
   }
  ],
  "links": [],
- "modified": "2025-11-30 13:06:30.940558",
- "modified_by": "m.bajandooh@tajff.sa",
+ "modified": "2026-03-29 12:25:37.686885",
+ "modified_by": "Administrator",
  "module": "QC",
  "name": "Laboratory Test",
- "naming_rule": "Expression (old style)",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

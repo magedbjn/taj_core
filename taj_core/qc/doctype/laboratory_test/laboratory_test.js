@@ -1,13 +1,8 @@
-// Copyright (c) 2024, MAged BAjandooh and contributors
-// For license information, please see license.txt
-
 frappe.ui.form.on("Laboratory Test", {
 	refresh(frm) {
 		frm.set_query("item", () => {
-			// فلتر ثابت دائمًا
 			const filters = { disabled: 0 };
 
-			// فلتر إضافي فقط في حالة: Production + Finished Product
 			if (
 				frm.doc.test_for === "Production" &&
 				frm.doc.section_break_ksom === "Finished Product"
@@ -17,23 +12,40 @@ frappe.ui.form.on("Laboratory Test", {
 
 			return { filters };
 		});
+
+		frm.trigger("set_batch_query");
 	},
 
-	// (اختياري) لما تتغير القيم، خَلّي المستخدم يختار Item من جديد
+	set_batch_query(frm) {
+		frm.set_query("batch_no_link", () => {
+			if (!frm.doc.item) {
+				return {
+					filters: {
+						name: ["=", ""]
+					}
+				};
+			}
+
+			return {
+				filters: {
+					item: frm.doc.item
+				}
+			};
+		});
+	},
+
 	test_for(frm) {
 		frm.set_value("item", null);
-	},
-	section_break_ksom(frm) {
-		frm.set_value("item", null);
+		frm.set_value("batch_no_link", null);
 	},
 
-	// item:function(frm) {
-	// 	frm.set_query("item", function () {
-	// 		return {
-	// 			filters: {
-	// 				disabled: 0,
-	// 			},
-	// 		};
-	// 	});
-	// },
+	section_break_ksom(frm) {
+		frm.set_value("item", null);
+		frm.set_value("batch_no_link", null);
+	},
+
+	item(frm) {
+		frm.set_value("batch_no_link", null);
+		frm.trigger("set_batch_query");
+	}
 });
