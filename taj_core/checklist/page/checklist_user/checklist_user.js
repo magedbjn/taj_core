@@ -1,8 +1,26 @@
-frappe.pages["checklist-answer-ent"].on_page_load = function (wrapper) {
-    new ChecklistAnswerEntryPage(wrapper);
+frappe.pages["checklist-user"].on_page_load = function (wrapper) {
+    new ChecklistUserPage(wrapper);
 };
 
-class ChecklistAnswerEntryPage {
+function setup_checklist_fullwidth(wrapper) {
+    $(wrapper).addClass("checklist-page-fullscreen");
+    $("body").addClass("checklist-fullwidth-mode");
+
+    if (!window.__checklist_fullwidth_route_guard_added) {
+        window.__checklist_fullwidth_route_guard_added = true;
+
+        frappe.router.on("change", () => {
+            const route = frappe.get_route ? frappe.get_route() : [];
+            const current_page = route && route.length ? route[0] : "";
+
+            if (current_page !== "checklist-user") {
+                $("body").removeClass("checklist-fullwidth-mode");
+            }
+        });
+    }
+}
+
+class ChecklistUserPage {
     constructor(wrapper) {
         this.wrapper = wrapper;
         this.doc = null;
@@ -10,22 +28,30 @@ class ChecklistAnswerEntryPage {
         this.pending_changes = {};
         this.save_timer = null;
         this.is_saving = false;
+        this.is_submitting = false;
         this.last_save_promise = Promise.resolve();
         this.activeTab = "my-new";
-        this.dashboardData = null;
         this.activeSummaryView = null;
+        this.dashboardData = null;
+        this.selectedDocname = null;
+        this.saveState = "";
 
         this.page = frappe.ui.make_app_page({
             parent: wrapper,
-            title: __("Checklist User Screen"),
+            title: __("Checklist User"),
             single_column: true
         });
 
         $(this.page.wrapper).find(".page-head").remove();
+        setup_checklist_fullwidth(this.page.wrapper);
 
         this.render_layout();
         this.bind_events();
         this.load_initial_state();
+    }
+
+    escape(value) {
+        return frappe.utils.escape_html(value == null ? "" : String(value));
     }
 
     render_layout() {
@@ -230,6 +256,11 @@ class ChecklistAnswerEntryPage {
         this.$tabPanels.filter(`[data-tab="${tabName}"]`).addClass("is-active");
     }
 
+    set_save_state(stateText = "") {
+        this.saveState = stateText;
+        this.render_progress();
+    }
+
     apply_summary_view(viewName) {
         this.activeSummaryView = viewName;
         this.$summaryCards.removeClass("is-active");
@@ -291,35 +322,43 @@ class ChecklistAnswerEntryPage {
     }
 
     async load_dashboard() {
-        const search_date = this.history_date_control.get_value();
+        try {
+            const search_date = this.history_date_control.get_value();
 
-        const r = await frappe.call({
-            method: "taj_core.checklist.api.get_user_dashboard_data",
-            args: { search_date }
-        });
+            const r = await frappe.call({
+                method: "taj_core.checklist.api.get_user_dashboard_data",
+                args: { search_date }
+            });
 
-        const data = r.message || {};
-        this.dashboardData = data;
+            const data = r.message || {};
+            this.dashboardData = data;
 
-        const summary = data.summary || {};
+            const summary = data.summary || {};
+            this.$myNewCount.text(summary.my_new_count || 0);
+            this.$myOpenCount.text(summary.my_open_count || 0);
+            this.$teamOpenCount.text(summary.team_open_count || 0);
+            this.$completedCount.text(summary.completed_count || 0);
+            this.$todayHasIssueCount.text(summary.today_has_issue_count || 0);
 
-        this.$myNewCount.text(summary.my_new_count || 0);
-        this.$myOpenCount.text(summary.my_open_count || 0);
-        this.$teamOpenCount.text(summary.team_open_count || 0);
-        this.$completedCount.text(summary.completed_count || 0);
-        this.$todayHasIssueCount.text(summary.today_has_issue_count || 0);
+            this.render_list(this.$myNewList, data.my_new || [], __("No new tasks."));
+            this.render_list(this.$myOpenList, data.my_open || [], __("No open tasks."));
+            this.render_list(this.$teamOpenList, data.team_open || [], __("No team open tasks."));
 
-        this.render_list(this.$myNewList, data.my_new || [], __("No new tasks."));
-        this.render_list(this.$myOpenList, data.my_open || [], __("No open tasks."));
-        this.render_list(this.$teamOpenList, data.team_open || [], __("No team open tasks."));
+            this.$searchResultsTitle.text(__("Search Results"));
+            this.render_list(this.$historyList, data.history_results || [], __("No results for selected date."));
 
-        this.$searchResultsTitle.text(__("Search Results"));
-        this.render_list(this.$historyList, data.history_results || [], __("No results for selected date."));
-
-        if (this.activeSummaryView === "completed") {
-            this.render_completed_only_results();
-        } else if (this.activeSummaryView === "today-has-issue") {
-            this.render_today_issue_results();
+            if (this.activeSummaryView === "completed") {
+                this.render_completed_only_results();
+            } else if (this.activeSummaryView === "today-has-issue") {
+                this.render_today_issue_results();
+            }
+        } catch (e) {
+            frappe.msgprint({
+                title: __("Error"),
+                indicator: "red",
+                message: __("Failed to load dashboard data.")
+            });
+            console.error(e);
         }
     }
 
@@ -333,19 +372,21 @@ class ChecklistAnswerEntryPage {
 
         docs.forEach(doc => {
             const issueClass = doc.has_issue ? "has-issue" : "";
+            const activeClass = this.selectedDocname === doc.name ? "is-active" : "";
             const issueBadge = doc.has_issue
                 ? `<span class="issue-badge is-issue">${__("Has Issue")}</span>`
                 : `<span class="issue-badge is-normal">${__("Normal")}</span>`;
 
             const $item = $(`
-                <div class="checklist-list-item ${issueClass}">
-                    <div class="checklist-list-template">${frappe.utils.escape_html(doc.template || "-")}</div>
-                    <div class="checklist-list-docname">${frappe.utils.escape_html(doc.name || "-")}</div>
+                <div class="checklist-list-item ${issueClass} ${activeClass}">
+                    <div class="checklist-list-template">${this.escape(doc.template || "-")}</div>
+                    <div class="checklist-list-docname">${this.escape(doc.name || "-")}</div>
                     <div>${issueBadge}</div>
                     <div class="checklist-list-meta">
-                        <div><strong>${__("Status")}:</strong> ${frappe.utils.escape_html(doc.status || "-")}</div>
-                        <div><strong>${__("Department")}:</strong> ${frappe.utils.escape_html(doc.department || "-")}</div>
-                        <div><strong>${__("Assigned User")}:</strong> ${frappe.utils.escape_html(doc.assigned_user || "-")}</div>
+                        <div><strong>${__("Status")}:</strong> ${this.escape(doc.status || "-")}</div>
+                        <div><strong>${__("Department")}:</strong> ${this.escape(doc.department || "-")}</div>
+                        <div><strong>${__("Assigned User")}:</strong> ${this.escape(doc.assigned_user || "-")}</div>
+                        <div><strong>${__("Result")}:</strong> ${this.escape(doc.result_status || "Normal")}</div>
                     </div>
                 </div>
             `);
@@ -356,13 +397,35 @@ class ChecklistAnswerEntryPage {
     }
 
     async load_doc(docname) {
-        const r = await frappe.call({
-            method: "taj_core.checklist.api.get_checklist_answer",
-            args: { docname }
-        });
+        try {
+            const r = await frappe.call({
+                method: "taj_core.checklist.api.get_checklist_answer",
+                args: { docname }
+            });
 
-        this.doc = r.message;
-        this.render_doc();
+            this.doc = r.message;
+            this.selectedDocname = docname;
+            this.render_doc();
+
+            this.render_list(this.$myNewList, this.dashboardData?.my_new || [], __("No new tasks."));
+            this.render_list(this.$myOpenList, this.dashboardData?.my_open || [], __("No open tasks."));
+            this.render_list(this.$teamOpenList, this.dashboardData?.team_open || [], __("No team open tasks."));
+
+            if (this.activeSummaryView === "completed") {
+                this.render_completed_only_results();
+            } else if (this.activeSummaryView === "today-has-issue") {
+                this.render_today_issue_results();
+            } else {
+                this.render_list(this.$historyList, this.dashboardData?.history_results || [], __("No results for selected date."));
+            }
+        } catch (e) {
+            frappe.msgprint({
+                title: __("Error"),
+                indicator: "red",
+                message: __("Failed to load checklist document.")
+            });
+            console.error(e);
+        }
     }
 
     render_doc() {
@@ -378,13 +441,13 @@ class ChecklistAnswerEntryPage {
         this.$meta.html(`
             <div style="margin-bottom:12px;">${issueBadge}</div>
             <div class="selected-doc-meta-grid">
-                <div class="meta-line"><strong>${__("Template")}:</strong> ${this.doc.template || "-"}</div>
-                <div class="meta-line"><strong>${__("Document")}:</strong> ${this.doc.name}</div>
-                <div class="meta-line"><strong>${__("Posting Date")}:</strong> ${this.doc.posting_date || "-"}</div>
-                <div class="meta-line"><strong>${__("Department")}:</strong> ${this.doc.department || "-"}</div>
-                <div class="meta-line"><strong>${__("Assigned User")}:</strong> ${this.doc.assigned_user || "-"}</div>
-                <div class="meta-line"><strong>${__("Status")}:</strong> ${this.doc.status || "-"}</div>
-                <div class="meta-line"><strong>${__("Result")}:</strong> ${this.doc.result_status || "Normal"}</div>
+                <div class="meta-line"><strong>${__("Template")}:</strong> ${this.escape(this.doc.template || "-")}</div>
+                <div class="meta-line"><strong>${__("Document")}:</strong> ${this.escape(this.doc.name || "-")}</div>
+                <div class="meta-line"><strong>${__("Posting Date")}:</strong> ${this.escape(this.doc.posting_date || "-")}</div>
+                <div class="meta-line"><strong>${__("Department")}:</strong> ${this.escape(this.doc.department || "-")}</div>
+                <div class="meta-line"><strong>${__("Assigned User")}:</strong> ${this.escape(this.doc.assigned_user || "-")}</div>
+                <div class="meta-line"><strong>${__("Status")}:</strong> ${this.escape(this.doc.status || "-")}</div>
+                <div class="meta-line"><strong>${__("Result")}:</strong> ${this.escape(this.doc.result_status || "Normal")}</div>
             </div>
         `);
 
@@ -396,15 +459,30 @@ class ChecklistAnswerEntryPage {
     }
 
     render_progress() {
+        if (!this.$progress) return;
+
         const questions = this.doc?.questions || [];
         const answered = questions.filter(q => String(q.answer || "").trim()).length;
+        const saveStateHtml = this.saveState
+            ? `<div class="save-state">${this.escape(this.saveState)}</div>`
+            : "";
 
         this.$progress.html(`
-            <div>
+            <div class="progress-line">
                 <strong>${__("Progress")}:</strong>
                 ${answered} / ${questions.length} ${__("answered")}
             </div>
+            ${saveStateHtml}
         `);
+    }
+
+    normalize_select_options(raw) {
+        const lines = String(raw || "")
+            .split(/\r?\n/)
+            .map(v => v.trim())
+            .filter(Boolean);
+
+        return "\n" + lines.join("\n");
     }
 
     render_questions() {
@@ -428,12 +506,12 @@ class ChecklistAnswerEntryPage {
                     <div class="checklist-answer-readonly ${issueClass}">
                         ${issueLine}
                         <div class="checklist-question-title">
-                            ${index + 1}- ${frappe.utils.escape_html(row.question_text || row.question || "")}
+                            ${index + 1}- ${this.escape(row.question_text || row.question || "")}
                         </div>
                         <div class="readonly-answer-value">
-                            <strong>${__("Answer")}:</strong> ${frappe.utils.escape_html(row.answer || "-")}
+                            <strong>${__("Answer")}:</strong> ${this.escape(row.answer || "-")}
                         </div>
-                        ${row.issue_note ? `<div class="readonly-answer-value"><strong>${__("Issue Note")}:</strong> ${frappe.utils.escape_html(row.issue_note)}</div>` : ""}
+                        ${row.issue_note ? `<div class="readonly-answer-value"><strong>${__("Issue Note")}:</strong> ${this.escape(row.issue_note)}</div>` : ""}
                     </div>
                 `);
             });
@@ -444,7 +522,7 @@ class ChecklistAnswerEntryPage {
             const $card = $(`
                 <div class="checklist-question-card">
                     <div class="checklist-question-title">
-                        ${index + 1}- ${frappe.utils.escape_html(row.question_text || row.question || "")}
+                        ${index + 1}- ${this.escape(row.question_text || row.question || "")}
                     </div>
                     <div class="question-control"></div>
                 </div>
@@ -478,11 +556,15 @@ class ChecklistAnswerEntryPage {
         `);
 
         this.$actions.find(".btn-submit-doc").on("click", () => this.submit_doc());
+
+        if (this.is_submitting) {
+            this.$actions.find(".btn-submit-doc").prop("disabled", true).text(__("Submitting..."));
+        }
     }
 
     get_df_for_row(row) {
         const base_df = {
-            label: __("Answer"),
+            label: "",
             fieldname: `answer_${row.row_name}`,
             reqd: 1,
             change: () => {
@@ -505,7 +587,11 @@ class ChecklistAnswerEntryPage {
         }
 
         if (row.type === "Select") {
-            return { ...base_df, fieldtype: "Select", options: "\n" + (row.answer_options || "") };
+            return {
+                ...base_df,
+                fieldtype: "Select",
+                options: this.normalize_select_options(row.answer_options)
+            };
         }
 
         return { ...base_df, fieldtype: "Data" };
@@ -515,6 +601,7 @@ class ChecklistAnswerEntryPage {
         if (!this.doc?.name || !this.doc.is_editable) return;
 
         this.pending_changes[row_name] = answer;
+        this.set_save_state(__("Pending changes..."));
 
         if (this.save_timer) {
             clearTimeout(this.save_timer);
@@ -522,7 +609,7 @@ class ChecklistAnswerEntryPage {
 
         this.save_timer = setTimeout(() => {
             this.last_save_promise = this.last_save_promise.then(() => this.flush_pending_saves());
-        }, 300);
+        }, 400);
     }
 
     async flush_pending_saves() {
@@ -530,9 +617,15 @@ class ChecklistAnswerEntryPage {
         if (this.is_saving) return;
 
         const entries = Object.entries(this.pending_changes);
-        if (!entries.length) return;
+        if (!entries.length) {
+            if (!this.is_submitting) {
+                this.set_save_state(__("All changes saved."));
+            }
+            return;
+        }
 
         this.is_saving = true;
+        this.set_save_state(__("Saving..."));
 
         const payload = entries.map(([row_name, answer]) => ({ row_name, answer }));
         this.pending_changes = {};
@@ -547,14 +640,21 @@ class ChecklistAnswerEntryPage {
             });
 
             this.doc = r.message;
-            this.render_progress();
+            this.set_save_state(__("All changes saved."));
         } catch (e) {
             payload.forEach(item => {
                 this.pending_changes[item.row_name] = item.answer;
             });
-            throw e;
+
+            this.set_save_state(__("Save failed."));
+            frappe.show_alert({
+                message: __("Auto save failed. Please try again."),
+                indicator: "red"
+            });
+            console.error(e);
         } finally {
             this.is_saving = false;
+            this.render_progress();
         }
 
         if (Object.keys(this.pending_changes).length) {
@@ -562,38 +662,77 @@ class ChecklistAnswerEntryPage {
         }
     }
 
+    validate_before_submit() {
+        const missing = [];
+
+        (this.doc?.questions || []).forEach(row => {
+            const control = this.row_controls[row.row_name];
+            const liveValue = control ? control.get_value() : row.answer;
+            if (!String(liveValue || "").trim()) {
+                missing.push(row.question_text || row.question || row.row_name);
+            }
+        });
+
+        return missing;
+    }
+
     async submit_doc() {
-        if (!this.doc?.name || !this.doc.is_editable) {
-            frappe.msgprint(__("This checklist cannot be submitted from here."));
+        if (!this.doc?.name || !this.doc.is_editable || this.is_submitting) {
             return;
         }
 
-        if (this.save_timer) {
-            clearTimeout(this.save_timer);
-            this.save_timer = null;
+        const missing = this.validate_before_submit();
+        if (missing.length) {
+            frappe.msgprint({
+                title: __("Missing Answers"),
+                indicator: "orange",
+                message: __("Please answer all questions before submit.")
+            });
+            return;
         }
 
-        await this.last_save_promise;
-        await this.flush_pending_saves();
+        this.is_submitting = true;
+        this.render_actions();
 
-        const r = await frappe.call({
-            method: "taj_core.checklist.api.submit_checklist_answer",
-            args: { docname: this.doc.name }
-        });
+        try {
+            if (this.save_timer) {
+                clearTimeout(this.save_timer);
+                this.save_timer = null;
+            }
 
-        frappe.show_alert({
-            message: __("Checklist submitted successfully."),
-            indicator: "green"
-        });
+            await this.last_save_promise;
+            await this.flush_pending_saves();
 
-        await this.load_dashboard();
-        await this.load_doc(r.message.name);
+            const r = await frappe.call({
+                method: "taj_core.checklist.api.submit_checklist_answer",
+                args: { docname: this.doc.name }
+            });
+
+            frappe.show_alert({
+                message: __("Checklist submitted successfully."),
+                indicator: "green"
+            });
+
+            this.set_save_state("");
+            await this.load_dashboard();
+            await this.load_doc(r.message.name);
+        } catch (e) {
+            frappe.msgprint({
+                title: __("Error"),
+                indicator: "red",
+                message: __("Failed to submit checklist.")
+            });
+            console.error(e);
+        } finally {
+            this.is_submitting = false;
+            this.render_actions();
+        }
     }
 
     get_indicator_color(status) {
         if (status === "Completed") return "green";
         if (status === "In Progress") return "orange";
-        if (status === "Auto Closed") return "gray";
+        if (status === "Auto Closed") return "darkgrey";
         if (status === "Expired") return "red";
         return "blue";
     }

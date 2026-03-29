@@ -494,3 +494,173 @@
         grid-template-columns: 1fr;
     }
 }
+
+.checklist-list-item.is-active,
+.task-mini-card.is-active {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 2px rgba(56, 88, 233, 0.12), 0 8px 18px rgba(16, 24, 40, 0.10);
+}
+
+.save-state {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.progress-line {
+    font-size: 14px;
+}
+
+.btn[disabled] {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.task-mini-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+}
+
+/* =========================================================
+   FULL SCREEN MODE FOR CHECKLIST PAGES
+   Pages:
+   - checklist-user
+   - checklist-manager
+   ========================================================= */
+
+body.checklist-fullscreen-mode {
+    overflow-x: hidden;
+}
+
+/* make main content use full width */
+body.checklist-fullscreen-mode .layout-main-section-wrapper,
+body.checklist-fullscreen-mode .layout-main-section,
+body.checklist-fullscreen-mode .page-body {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* remove extra container spacing */
+body.checklist-fullscreen-mode .page-content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* page wrapper */
+.checklist-page-fullscreen {
+    width: 100%;
+    max-width: 100%;
+}
+
+.checklist-page-fullscreen .checklist-entry-page,
+.checklist-page-fullscreen .checklist-mgr-page {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100vh;
+    padding: 12px 16px;
+    box-sizing: border-box;
+}
+
+/* optional: stretch panels nicely */
+.checklist-page-fullscreen .checklist-panel,
+.checklist-page-fullscreen .mgr-panel,
+.checklist-page-fullscreen .mgr-section,
+.checklist-page-fullscreen .selected-doc-wrapper {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* selected active cards */
+.checklist-list-item.is-active,
+.task-mini-card.is-active {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 2px rgba(56, 88, 233, 0.12), 0 8px 18px rgba(16, 24, 40, 0.10);
+}
+
+/* save state line */
+.save-state {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.progress-line {
+    font-size: 14px;
+}
+
+.btn[disabled] {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* better responsive task grid */
+.task-mini-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+}
+
+/* =========================================================
+   TRUE FULL SCREEN
+   Hide navbar + sidebar inside Desk
+   If you do NOT want that, remove this whole block
+   ========================================================= */
+
+/* body.checklist-fullscreen-mode .navbar,
+body.checklist-fullscreen-mode .layout-side-section,
+body.checklist-fullscreen-mode .standard-sidebar,
+body.checklist-fullscreen-mode .desk-sidebar,
+body.checklist-fullscreen-mode .desk-sidebar-overlay {
+    display: none !important;
+} */
+
+/* make main layout fill page after hiding sidebar */
+/* body.checklist-fullscreen-mode .layout-main,
+body.checklist-fullscreen-mode .main-section {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+} */
+
+/* remove top spacing after hiding navbar */
+/* body.checklist-fullscreen-mode .page-head,
+body.checklist-fullscreen-mode .page-head-content,
+body.checklist-fullscreen-mode .container.page-body {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+} */
+
+/* keep forms and content neat on wide screens */
+.checklist-page-fullscreen .checklist-header,
+.checklist-page-fullscreen .mgr-header {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.checklist-page-fullscreen .checklist-summary-row,
+.checklist-page-fullscreen .mgr-summary-row {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.checklist-page-fullscreen .tab-strip,
+.checklist-page-fullscreen .selected-doc-meta-grid {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* responsive */
+@media (max-width: 1200px) {
+    .checklist-page-fullscreen .checklist-entry-page,
+    .checklist-page-fullscreen .checklist-mgr-page {
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .checklist-page-fullscreen .checklist-entry-page,
+    .checklist-page-fullscreen .checklist-mgr-page {
+        min-height: 100vh;
+        padding: 8px;
+    }
+}

@@ -1,10 +1,11 @@
+#file: taj_core/checklist/api.py
 import json
 from collections import defaultdict
 
 import frappe
 from frappe import _
 from frappe.exceptions import TimestampMismatchError
-from frappe.utils import nowdate
+from frappe.utils import nowdate, cint, flt, cstr
 
 from taj_core.checklist.doctype.checklist_answer.checklist_answer import get_question_meta
 from taj_core.checklist.permissions import is_checklist_manager
@@ -377,9 +378,9 @@ def save_answers(docname, answers):
                 row = row_map.get(item.get("row_name"))
                 if not row:
                     continue
-
+                
                 value = item.get("answer")
-                row.answer = "" if value is None else str(value).strip()
+                _set_row_answer_by_type(row, value)
 
             doc.flags.ignore_due_date_update = True
             doc.save()
@@ -444,3 +445,35 @@ def serialize_checklist_answer(doc):
         "result_status": result_status,
         "questions": questions,
     }
+
+def _set_row_answer_by_type(row, value):
+    raw_value = cstr(value).strip() if value is not None else ""
+
+    # reset typed fields first
+    if hasattr(row, "yes_no_answer"):
+        row.yes_no_answer = ""
+
+    if hasattr(row, "int_answer"):
+        row.int_answer = None
+
+    if hasattr(row, "float_answer"):
+        row.float_answer = None
+
+    if hasattr(row, "select_answer"):
+        row.select_answer = ""
+
+    # fill the proper field based on question type
+    if row.type == "Yes/No":
+        row.yes_no_answer = raw_value
+
+    elif row.type == "Int":
+        row.int_answer = cint(raw_value) if raw_value != "" else None
+
+    elif row.type == "Float":
+        row.float_answer = flt(raw_value) if raw_value != "" else None
+
+    elif row.type == "Select":
+        row.select_answer = raw_value
+
+    # keep unified answer too
+    row.answer = raw_value

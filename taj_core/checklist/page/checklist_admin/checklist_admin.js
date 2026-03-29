@@ -1,4 +1,29 @@
-frappe.pages["checklist-answer-mgr"].on_page_load = function (wrapper) {
+// frappe.pages['checklist-admin'].on_page_load = function(wrapper) {
+// 	var page = frappe.ui.make_app_page({
+// 		parent: wrapper,
+// 		title: 'Checklist Admin',
+// 		single_column: true
+// 	});
+// }
+function setup_checklist_fullscreen(wrapper) {
+    $(wrapper).addClass("checklist-page-fullscreen");
+    $("body").addClass("checklist-fullscreen-mode");
+
+    if (!window.__checklist_fullscreen_route_guard_added) {
+        window.__checklist_fullscreen_route_guard_added = true;
+
+        frappe.router.on("change", () => {
+            const route = frappe.get_route ? frappe.get_route() : [];
+            const current_page = route && route.length ? route[0] : "";
+
+            if (!["checklist-user", "checklist-manager"].includes(current_page)) {
+                $("body").removeClass("checklist-fullscreen-mode");
+            }
+        });
+    }
+}
+
+frappe.pages["checklist-admin"].on_page_load = function (wrapper) {
     new ChecklistAnswerManagerPage(wrapper);
 };
 
@@ -9,6 +34,7 @@ class ChecklistAnswerManagerPage {
         this.lastData = null;
         this.activeQuickView = null;
         this.activeTab = "today-open";
+        this.selectedDocname = null;
 
         this.page = frappe.ui.make_app_page({
             parent: wrapper,
@@ -17,10 +43,16 @@ class ChecklistAnswerManagerPage {
         });
 
         $(this.page.wrapper).find(".page-head").remove();
+
+        setup_checklist_fullscreen(this.page.wrapper);
         
         this.render_layout();
         this.bind_events();
         this.load_initial_state();
+    }
+
+    escape(value) {
+        return frappe.utils.escape_html(value == null ? "" : String(value));
     }
 
     render_layout() {
@@ -334,89 +366,100 @@ class ChecklistAnswerManagerPage {
 
     async load_initial_state() {
         await this.load_dashboard();
+
+        const opts = frappe.route_options || {};
+        if (opts.checklist_answer) {
+            await this.load_doc(opts.checklist_answer);
+        }
     }
 
     async load_dashboard() {
-        const r = await frappe.call({
-            method: "taj_core.checklist.api.get_manager_dashboard_data",
-            args: {
-                search_date: this.date_control.get_value(),
-                template: this.template_control.get_value(),
-                department: this.department_control.get_value(),
-                assigned_user: this.user_control.get_value(),
-                status: this.status_control.get_value(),
-                issue_filter: this.issue_control.get_value()
-            }
-        });
+        try {
+            const r = await frappe.call({
+                method: "taj_core.checklist.api.get_manager_dashboard_data",
+                args: {
+                    search_date: this.date_control.get_value(),
+                    template: this.template_control.get_value(),
+                    department: this.department_control.get_value(),
+                    assigned_user: this.user_control.get_value(),
+                    status: this.status_control.get_value(),
+                    issue_filter: this.issue_control.get_value()
+                }
+            });
 
-        const data = r.message || {};
-        const summary = data.summary || {};
+            const data = r.message || {};
+            const summary = data.summary || {};
 
-        this.lastData = data;
-        this.activeQuickView = null;
-        this.$summaryCards.removeClass("is-active");
-        this.$resetQuickView.hide();
+            this.lastData = data;
+            this.activeQuickView = null;
+            this.$summaryCards.removeClass("is-active");
+            this.$resetQuickView.hide();
 
-        this.$todayTotal.text(summary.today_total || 0);
-        this.$todayOpen.text(summary.today_open || 0);
-        this.$todayCompleted.text(summary.today_completed || 0);
-        this.$todayRemaining.text(summary.today_remaining || 0);
-        this.$todayHasIssue.text(summary.today_has_issue || 0);
+            this.$todayTotal.text(summary.today_total || 0);
+            this.$todayOpen.text(summary.today_open || 0);
+            this.$todayCompleted.text(summary.today_completed || 0);
+            this.$todayRemaining.text(summary.today_remaining || 0);
+            this.$todayHasIssue.text(summary.today_has_issue || 0);
 
-        this.render_mini_cards(
-            this.$todayOpenMiniGrid,
-            data.today_open || [],
-            __("No open tasks today."),
-            "is-open"
-        );
+            this.render_mini_cards(
+                this.$todayOpenMiniGrid,
+                data.today_open || [],
+                __("No open tasks today."),
+                "is-open"
+            );
 
-        this.render_mini_cards(
-            this.$todayCompletedMiniGrid,
-            data.today_completed || [],
-            __("No completed tasks today."),
-            "is-completed"
-        );
+            this.render_mini_cards(
+                this.$todayCompletedMiniGrid,
+                data.today_completed || [],
+                __("No completed tasks today."),
+                "is-completed"
+            );
 
-        this.render_doc_list(
-            this.$searchResultsList,
-            data.search_results || [],
-            __("No results found.")
-        );
+            this.render_doc_list(
+                this.$searchResultsList,
+                data.search_results || [],
+                __("No results found.")
+            );
 
-        this.render_summary_list(
-            this.$templateSummaryList,
-            data.template_summary || [],
-            __("No template summary found.")
-        );
+            this.render_summary_list(
+                this.$templateSummaryList,
+                data.template_summary || [],
+                __("No template summary found.")
+            );
 
-        this.render_summary_list(
-            this.$employeeSummaryList,
-            data.employee_summary || [],
-            __("No employee summary found.")
-        );
+            this.render_summary_list(
+                this.$employeeSummaryList,
+                data.employee_summary || [],
+                __("No employee summary found.")
+            );
+        } catch (e) {
+            frappe.msgprint({
+                title: __("Error"),
+                indicator: "red",
+                message: __("Failed to load manager dashboard.")
+            });
+            console.error(e);
+        }
     }
 
     render_mini_cards($target, docs, emptyText, toneClass) {
         $target.empty();
 
         if (!docs.length) {
-            $target.css("grid-template-columns", "1fr");
             $target.html(`<div class="empty-state">${emptyText}</div>`);
             return;
         }
 
-        const columns = Math.min(docs.length, 12);
-        $target.css("grid-template-columns", `repeat(${columns}, minmax(0, 1fr))`);
-
         docs.forEach((doc, index) => {
-            const template = frappe.utils.escape_html(doc.template || "-");
-            const docname = frappe.utils.escape_html(doc.name || "-");
-            const user = frappe.utils.escape_html(doc.assigned_user || "-");
-            const department = frappe.utils.escape_html(doc.department || "-");
+            const template = this.escape(doc.template || "-");
+            const docname = this.escape(doc.name || "-");
+            const user = this.escape(doc.assigned_user || "-");
+            const department = this.escape(doc.department || "-");
             const hasIssueClass = doc.has_issue ? "has-issue" : "";
+            const activeClass = this.selectedDocname === doc.name ? "is-active" : "";
 
             const $card = $(`
-                <div class="task-mini-card ${toneClass} ${hasIssueClass}" title="${template} | ${docname}">
+                <div class="task-mini-card ${toneClass} ${hasIssueClass} ${activeClass}" title="${template} | ${docname}">
                     <div class="task-mini-top">
                         <div class="task-mini-index">${index + 1}</div>
                         <div class="task-mini-status-dot"></div>
@@ -490,6 +533,7 @@ class ChecklistAnswerManagerPage {
         this.$summaryCards.removeClass("is-active");
         this.$resetQuickView.hide();
         this.$searchResultsTitle.text(__("Filtered Search Results"));
+
         this.render_doc_list(
             this.$searchResultsList,
             this.lastData.search_results || [],
@@ -507,20 +551,21 @@ class ChecklistAnswerManagerPage {
 
         docs.forEach(doc => {
             const issueClass = doc.has_issue ? "has-issue" : "";
+            const activeClass = this.selectedDocname === doc.name ? "is-active" : "";
             const issueBadge = doc.has_issue
                 ? `<span class="issue-badge is-issue">${__("Has Issue")}</span>`
                 : `<span class="issue-badge is-normal">${__("Normal")}</span>`;
 
             const $item = $(`
-                <div class="checklist-list-item ${issueClass}">
-                    <div class="checklist-list-template">${frappe.utils.escape_html(doc.template || "-")}</div>
-                    <div class="checklist-list-docname">${frappe.utils.escape_html(doc.name || "-")}</div>
+                <div class="checklist-list-item ${issueClass} ${activeClass}">
+                    <div class="checklist-list-template">${this.escape(doc.template || "-")}</div>
+                    <div class="checklist-list-docname">${this.escape(doc.name || "-")}</div>
                     <div style="margin-bottom:8px;">${issueBadge}</div>
                     <div class="checklist-list-meta">
-                        <div><strong>${__("Status")}:</strong> ${frappe.utils.escape_html(doc.status || "-")}</div>
-                        <div><strong>${__("Department")}:</strong> ${frappe.utils.escape_html(doc.department || "-")}</div>
-                        <div><strong>${__("Assigned User")}:</strong> ${frappe.utils.escape_html(doc.assigned_user || "-")}</div>
-                        <div><strong>${__("Result")}:</strong> ${frappe.utils.escape_html(doc.result_status || "Normal")}</div>
+                        <div><strong>${__("Status")}:</strong> ${this.escape(doc.status || "-")}</div>
+                        <div><strong>${__("Department")}:</strong> ${this.escape(doc.department || "-")}</div>
+                        <div><strong>${__("Assigned User")}:</strong> ${this.escape(doc.assigned_user || "-")}</div>
+                        <div><strong>${__("Result")}:</strong> ${this.escape(doc.result_status || "Normal")}</div>
                     </div>
                 </div>
             `);
@@ -541,7 +586,7 @@ class ChecklistAnswerManagerPage {
         rows.forEach(row => {
             $target.append(`
                 <div class="summary-list-item">
-                    <div class="summary-list-title">${frappe.utils.escape_html(row.label || "-")}</div>
+                    <div class="summary-list-title">${this.escape(row.label || "-")}</div>
                     <div class="summary-list-meta">
                         <div><strong>${__("Total")}:</strong> ${row.total || 0}</div>
                         <div><strong>${__("Completed")}:</strong> ${row.completed || 0}</div>
@@ -553,13 +598,43 @@ class ChecklistAnswerManagerPage {
     }
 
     async load_doc(docname) {
-        const r = await frappe.call({
-            method: "taj_core.checklist.api.get_checklist_answer",
-            args: { docname }
-        });
+        try {
+            const r = await frappe.call({
+                method: "taj_core.checklist.api.get_checklist_answer",
+                args: { docname }
+            });
 
-        this.doc = r.message;
-        this.render_doc();
+            this.doc = r.message;
+            this.selectedDocname = docname;
+            this.render_doc();
+
+            this.render_mini_cards(
+                this.$todayOpenMiniGrid,
+                this.lastData?.today_open || [],
+                __("No open tasks today."),
+                "is-open"
+            );
+
+            this.render_mini_cards(
+                this.$todayCompletedMiniGrid,
+                this.lastData?.today_completed || [],
+                __("No completed tasks today."),
+                "is-completed"
+            );
+
+            this.render_doc_list(
+                this.$searchResultsList,
+                this.lastData?.search_results || [],
+                __("No results found.")
+            );
+        } catch (e) {
+            frappe.msgprint({
+                title: __("Error"),
+                indicator: "red",
+                message: __("Failed to load checklist document.")
+            });
+            console.error(e);
+        }
     }
 
     render_doc() {
@@ -575,13 +650,13 @@ class ChecklistAnswerManagerPage {
         this.$meta.html(`
             <div style="margin-bottom:12px;">${issueBadge}</div>
             <div class="selected-doc-meta-grid">
-                <div class="meta-line"><strong>${__("Template")}:</strong> ${this.doc.template || "-"}</div>
-                <div class="meta-line"><strong>${__("Document")}:</strong> ${this.doc.name}</div>
-                <div class="meta-line"><strong>${__("Posting Date")}:</strong> ${this.doc.posting_date || "-"}</div>
-                <div class="meta-line"><strong>${__("Department")}:</strong> ${this.doc.department || "-"}</div>
-                <div class="meta-line"><strong>${__("Assigned User")}:</strong> ${this.doc.assigned_user || "-"}</div>
-                <div class="meta-line"><strong>${__("Status")}:</strong> ${this.doc.status || "-"}</div>
-                <div class="meta-line"><strong>${__("Result")}:</strong> ${this.doc.result_status || "Normal"}</div>
+                <div class="meta-line"><strong>${__("Template")}:</strong> ${this.escape(this.doc.template || "-")}</div>
+                <div class="meta-line"><strong>${__("Document")}:</strong> ${this.escape(this.doc.name || "-")}</div>
+                <div class="meta-line"><strong>${__("Posting Date")}:</strong> ${this.escape(this.doc.posting_date || "-")}</div>
+                <div class="meta-line"><strong>${__("Department")}:</strong> ${this.escape(this.doc.department || "-")}</div>
+                <div class="meta-line"><strong>${__("Assigned User")}:</strong> ${this.escape(this.doc.assigned_user || "-")}</div>
+                <div class="meta-line"><strong>${__("Status")}:</strong> ${this.escape(this.doc.status || "-")}</div>
+                <div class="meta-line"><strong>${__("Result")}:</strong> ${this.escape(this.doc.result_status || "Normal")}</div>
             </div>
         `);
 
@@ -612,12 +687,12 @@ class ChecklistAnswerManagerPage {
                 <div class="checklist-answer-readonly ${issueClass}">
                     ${issueLine}
                     <div class="checklist-question-title">
-                        ${index + 1}- ${frappe.utils.escape_html(row.question_text || row.question || "")}
+                        ${index + 1}- ${this.escape(row.question_text || row.question || "")}
                     </div>
                     <div class="readonly-answer-value">
-                        <strong>${__("Answer")}:</strong> ${frappe.utils.escape_html(row.answer || "-")}
+                        <strong>${__("Answer")}:</strong> ${this.escape(row.answer || "-")}
                     </div>
-                    ${row.issue_note ? `<div class="readonly-answer-value"><strong>${__("Issue Note")}:</strong> ${frappe.utils.escape_html(row.issue_note)}</div>` : ""}
+                    ${row.issue_note ? `<div class="readonly-answer-value"><strong>${__("Issue Note")}:</strong> ${this.escape(row.issue_note)}</div>` : ""}
                 </div>
             `);
         });
@@ -631,7 +706,7 @@ class ChecklistAnswerManagerPage {
     get_indicator_color(status) {
         if (status === "Completed") return "green";
         if (status === "In Progress") return "orange";
-        if (status === "Auto Closed") return "gray";
+        if (status === "Auto Closed") return "darkgrey";
         if (status === "Expired") return "red";
         return "blue";
     }
