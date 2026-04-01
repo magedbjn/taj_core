@@ -1150,20 +1150,48 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
     # -----------------------------------
     operation_name = (doc.get("operation") or "").strip()
     requires_temperature = 0
+    min_temp = 0.0
+    max_temp = 0.0
 
     if operation_name and frappe.db.exists("Operation", operation_name):
         if _has_col("Operation", "taj_requires_temperature"):
-            # requires_temperature = cint(
-            #     frappe.db.get_value("Operation", operation_name, "taj_requires_temperature") or 0
-            # )
             requires_temperature = int(
                 frappe.db.get_value("Operation", operation_name, "taj_requires_temperature") or 0
             )
-            
-    if requires_temperature:
-        temp_val = flt(taj_temperature)
-        if temp_val <= 0:
-            frappe.throw("Temperature is required for this operation.")
+
+        op_fields = []
+        if _has_col("Operation", "taj_min_temperature"):
+            op_fields.append("taj_min_temperature")
+        if _has_col("Operation", "taj_max_temperature"):
+            op_fields.append("taj_max_temperature")
+
+        if op_fields:
+            op_vals = frappe.db.get_value("Operation", operation_name, op_fields, as_dict=True) or {}
+            min_temp = flt(op_vals.get("taj_min_temperature") or 0)
+            max_temp = flt(op_vals.get("taj_max_temperature") or 0)
+
+        if requires_temperature:
+            raw_temp = taj_temperature
+
+            if raw_temp is None or str(raw_temp).strip() == "":
+                frappe.throw("Temperature is required for this operation.")
+
+            temp_val = flt(raw_temp)
+
+        # إذا كان أحد الحدين أو كلاهما غير صفر -> تحقق المجال
+        if not (min_temp == 0 and max_temp == 0):
+            low = min(min_temp, max_temp)
+            high = max(min_temp, max_temp)
+
+            if temp_val < low or temp_val > high:
+                frappe.msgprint(
+                    message=(
+                        f"Temperature {temp_val} is outside the recommended range "
+                        f"({low} to {high}) for operation {operation_name}."
+                    ),
+                    title="Temperature Warning",
+                    indicator="orange",
+                )
 
     end_time = _safe_now()
 

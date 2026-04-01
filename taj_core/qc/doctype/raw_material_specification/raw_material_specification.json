@@ -38,14 +38,16 @@
   "microbiological_analysis_tab",
   "section_break_xcgc",
   "microbilogical",
-  "enterobaceriaceae",
+  "total_plate_count",
   "yeasts_moulds",
   "aerobi_plate_count",
   "column_break_jllg",
+  "enterobaceriaceae",
+  "coliform",
   "escherichia_coli",
+  "column_break_vblq",
   "salmonella",
   "staphylococcus",
-  "column_break_vblq",
   "clostridium_botutinum",
   "clostridium_perfringens",
   "allergic_tab",
@@ -385,10 +387,20 @@
    "fieldtype": "Table",
    "label": "Shelf Lifes",
    "options": "Raw Material Shelf Life"
+  },
+  {
+   "fieldname": "total_plate_count",
+   "fieldtype": "Data",
+   "label": "Total Plate Count"
+  },
+  {
+   "fieldname": "coliform",
+   "fieldtype": "Data",
+   "label": "Coliform"
   }
  ],
  "links": [],
- "modified": "2026-03-29 12:12:28.744306",
+ "modified": "2026-03-31 15:09:49.435010",
  "modified_by": "Administrator",
  "module": "QC",
  "name": "Raw Material Specification",
