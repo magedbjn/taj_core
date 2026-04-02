@@ -133,13 +133,14 @@
    "depends_on": "eval:doc.test_for == 'Production'",
    "fieldname": "batch_no_link",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Batch No",
    "mandatory_depends_on": "eval:doc.test_for == 'Production'",
    "options": "Batch"
   }
  ],
  "links": [],
- "modified": "2026-03-29 12:25:37.686885",
+ "modified": "2026-04-02 09:44:54.231643",
  "modified_by": "Administrator",
  "module": "QC",
  "name": "Laboratory Test",

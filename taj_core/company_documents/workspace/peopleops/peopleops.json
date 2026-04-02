@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"3-NQaAT7Rm\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">PeopleOps</span>\",\"col\":12}},{\"id\":\"N4_ug6wbAc\",\"type\":\"card\",\"data\":{\"card_name\":\"Detials\",\"col\":4}},{\"id\":\"8fXjCAAGOx\",\"type\":\"card\",\"data\":{\"card_name\":\"Letters\",\"col\":4}},{\"id\":\"iP4qyToCiA\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}}]",
+ "content": "[{\"id\":\"3-NQaAT7Rm\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">PeopleOps</span>\",\"col\":12}},{\"id\":\"dvB6zHwhBt\",\"type\":\"card\",\"data\":{\"card_name\":\"Detials\",\"col\":4}},{\"id\":\"PXKi_hX2kb\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}}]",
  "creation": "2025-10-27 11:39:57.303985",
  "custom_blocks": [],
  "docstatus": 0,
@@ -9,7 +9,7 @@
  "hide_custom": 0,
  "icon": "share-people",
  "idx": 0,
- "indicator_color": "green",
+ "indicator_color": "",
  "is_hidden": 0,
  "label": "PeopleOps",
  "links": [
@@ -35,28 +35,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Letters",
-   "link_count": 2,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Letter Request",
    "link_count": 0,
    "link_to": "Employee Letter Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Letter Template",
-   "link_count": 0,
-   "link_to": "Employee Letter Template",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -73,7 +54,7 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "First Last Checkins",
+   "label": "First Last ChickIn",
    "link_count": 0,
    "link_to": "Employee First Last Checkins",
    "link_type": "Report",
@@ -81,7 +62,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-10-27 19:58:58.160645",
+ "modified": "2026-04-02 10:08:08.197185",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "PeopleOps",
@@ -91,7 +72,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 43.0,
+ "sequence_id": 39.0,
  "shortcuts": [],
  "title": "PeopleOps"
 }
