@@ -111,7 +111,11 @@ def get_raw_material_filter_condition(filters):
 
 def get_columns(filters=None):
 	filters = frappe._dict(filters or {})
-	hide_last_date = (filters.get("period_bucket") or "None") == "None"
+
+	period_bucket = (filters.get("period_bucket") or "None").strip()
+
+	hide_last_date = period_bucket == "None"
+	hide_count = period_bucket == "None"
 
 	return [
 		{
@@ -121,10 +125,11 @@ def get_columns(filters=None):
 			"width": 360,
 		},
 		{
-			"label": _("Count"),
+			"label": _("Grouped Items Count"),
 			"fieldname": "row_count",
 			"fieldtype": "Int",
-			"width": 90,
+			"width": 180,
+			"hidden": 1 if hide_count else 0,
 		},
 		{
 			"label": _("Qty"),
@@ -136,19 +141,19 @@ def get_columns(filters=None):
 			"label": _("Shelf Life (Days)"),
 			"fieldname": "shelf_life_in_days",
 			"fieldtype": "Int",
-			"width": 130,
+			"width": 150,
 		},
 		{
 			"label": _("Date"),
 			"fieldname": "first_date",
 			"fieldtype": "Datetime",
-			"width": 150,
+			"width": 170,
 		},
 		{
 			"label": _("Last Date"),
 			"fieldname": "last_date",
 			"fieldtype": "Datetime",
-			"width": 150,
+			"width": 170,
 			"hidden": 1 if hide_last_date else 0,
 		},
 		{
@@ -158,7 +163,6 @@ def get_columns(filters=None):
 			"hidden": 1,
 		},
 	]
-
 
 # ---------------------------------------------------------------------
 # Build hierarchy
@@ -477,9 +481,11 @@ def build_hierarchy_data(filters):
 					)
 					subs_count += 1
 
+			assemble_count_label = _("Grouped Items Count") if period_bucket == "None" else _("Assemble Count")
+
 			data[period_header_index]["label"] = (
 				f"{period_bucket_row['label']} | "
-				f"{_('Assemble Count')}: {period_assemble_count} | "
+				f"{assemble_count_label}: {period_assemble_count} | "
 				f"{_('Sub Assemble Count')}: {period_sub_count}"
 			)
 
@@ -522,6 +528,7 @@ def build_hierarchy_data(filters):
 		"subs_count": total_sub_count,
 		"raws_count": total_raw_count,
 		"planning_view": planning_view,
+		"period_bucket": period_bucket,
 	}
 	return data, meta
 
@@ -739,6 +746,7 @@ def explode_raw_materials_from_bom(bom_no, planned_qty, filters=None):
 
 def get_report_summary(meta):
 	planning_view = meta.get("planning_view")
+	period_bucket = meta.get("period_bucket") or "None"
 
 	if planning_view == "Raw Materials":
 		return [
@@ -756,6 +764,8 @@ def get_report_summary(meta):
 			},
 		]
 
+	assemble_summary_label = _("Count") if period_bucket == "None" else _("Assemble Count")
+
 	return [
 		{
 			"value": meta.get("periods_count", 0),
@@ -766,7 +776,7 @@ def get_report_summary(meta):
 		{
 			"value": meta.get("assemblies_count", 0),
 			"indicator": "Green",
-			"label": _("Assemble Count"),
+			"label": assemble_summary_label,
 			"datatype": "Int",
 		},
 		{

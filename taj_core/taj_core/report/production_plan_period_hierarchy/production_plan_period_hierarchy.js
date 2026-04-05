@@ -31,7 +31,12 @@ frappe.query_reports["Production Plan Period Hierarchy"] = {
 			label: __("Period Bucket"),
 			fieldtype: "Select",
 			options: "None\nWeek\n2 Weeks\n3 Weeks\nMonth",
-			default: "None"
+			default: "None",
+			on_change: function () {
+				const report = frappe.query_report;
+				toggle_planning_view_filters(report);
+				report.refresh();
+			}
 		},
 		{
 			fieldname: "planning_view",
@@ -89,6 +94,14 @@ frappe.query_reports["Production Plan Period Hierarchy"] = {
 
 		if (!data) {
 			return value;
+		}
+
+		if (column.fieldname === "row_count" && Number(data.row_count) === 1) {
+			return "";
+		}
+
+		if (column.fieldname === "qty" && typeof value === "string") {
+			value = value.replace(/\.000(?=<|$)/, "");
 		}
 
 		if (column.fieldname === "label") {
