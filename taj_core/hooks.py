@@ -31,6 +31,8 @@ override_whitelisted_methods = {
         "taj_core.overrides.leave_application.get_number_of_leave_days",
     "erpnext.manufacturing.doctype.work_order.work_order.create_pick_list":
 		"taj_core.overrides.work_order.create_pick_list",
+    "erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry":
+        "taj_core.overrides.work_order.make_stock_entry"
 }
 
 doc_events = {
