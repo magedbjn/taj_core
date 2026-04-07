@@ -24,6 +24,7 @@ scheduler_events = {
 override_doctype_class = {                
     "Party Specific Item": "taj_core.overrides.party_specific_item.TajPartySpecificItem",
     "Leave Application": "taj_core.overrides.leave_application.LeaveApplication",
+    "Stock Entry": "taj_core.overrides.stock_entry.CustomStockEntry",
 }
 
 override_whitelisted_methods = {
