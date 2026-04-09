@@ -75,6 +75,7 @@
    "options": "Operation"
   },
   {
+   "default": "Weight",
    "fieldname": "procees_type",
    "fieldtype": "Select",
    "label": "Procees Type",
@@ -104,7 +105,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-06 10:26:31.567831",
+ "modified": "2026-04-09 10:30:37.083088",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal Raw Material",

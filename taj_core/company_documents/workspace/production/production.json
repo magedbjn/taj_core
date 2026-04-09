@@ -1,0 +1,136 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"IWeVFAnYy7\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Production</span>\",\"col\":12}},{\"id\":\"_iBst6Ka6b\",\"type\":\"card\",\"data\":{\"card_name\":\"Manufacturing\",\"col\":4}},{\"id\":\"NuKuZ3ce0n\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}},{\"id\":\"Vlg_2QACWP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Production Dashboard\",\"col\":3}}]",
+ "creation": "2026-04-02 09:49:29.322570",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "income",
+ "idx": 0,
+ "indicator_color": "",
+ "is_hidden": 0,
+ "label": "Production",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Report",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Production Manager Smart",
+   "link_count": 0,
+   "link_to": "Production Manager Smart",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Production Plan Summary",
+   "link_count": 0,
+   "link_to": "Production Plan Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Global Stock Summary",
+   "link_count": 0,
+   "link_to": "Global Stock Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Quantity by Period",
+   "link_count": 0,
+   "link_to": "Quantity by Period",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Manufacturing",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Production Plan",
+   "link_count": 0,
+   "link_to": "Production Plan",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Work Order",
+   "link_count": 0,
+   "link_to": "Work Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Job Card",
+   "link_count": 0,
+   "link_to": "Job Card",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "BOM",
+   "link_count": 0,
+   "link_to": "BOM",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-04-09 10:35:22.767741",
+ "modified_by": "Administrator",
+ "module": "Company Documents",
+ "name": "Production",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Taj",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 34.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Production Dashboard",
+   "type": "URL",
+   "url": "https://tajfferp.frappe.cloud/production-dashboard"
+  }
+ ],
+ "title": "Production"
+}
