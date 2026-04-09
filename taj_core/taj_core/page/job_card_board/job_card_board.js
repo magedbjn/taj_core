@@ -1018,7 +1018,14 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const running = cint(d.running) === 1 && !paused;
     const is_submitted = cint(d.docstatus) === 1;
 
-    if (is_submitted) return "";
+    const wo_status = String(d.work_order_status || "").trim();
+    const wo_docstatus = cint(d.work_order_docstatus || 0);
+    const wo_closed =
+      cint(d.hide_actions_due_to_wo_closed) === 1 ||
+      wo_docstatus === 2 ||
+      ["Closed", "Completed", "Cancelled"].includes(wo_status);
+
+    if (is_submitted || wo_closed) return "";
 
     if (paused) {
       return `<button type="button" class="btn btn-primary btn-sm" data-cmd="resume" data-name="${d.name}">${__("Resume Job")}</button>`;

@@ -705,6 +705,29 @@ def _add_wo_op_seq(job_cards: List[dict]) -> None:
     for d in job_cards:
         d["wo_op_seq"] = int(rank_by_name.get(d["name"], 0) or 0)
 
+def _get_work_order_status_map(work_orders: List[str]) -> Dict[str, Dict[str, Any]]:
+    if not work_orders:
+        return {}
+
+    rows = frappe.get_all(
+        "Work Order",
+        filters={"name": ["in", list(set(work_orders))]},
+        fields=["name", "status", "docstatus"],
+        limit_page_length=0,
+    ) or []
+
+    return {
+        r["name"]: {
+            "status": (r.get("status") or "").strip(),
+            "docstatus": int(r.get("docstatus") or 0),
+        }
+        for r in rows
+    }
+
+
+def _is_work_order_closed_or_done(wo_status: str, wo_docstatus: int) -> bool:
+    closed_statuses = {"Closed", "Completed", "Cancelled"}
+    return int(wo_docstatus or 0) == 2 or (wo_status or "").strip() in closed_statuses
 
 def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
     if not job_cards:
@@ -747,6 +770,7 @@ def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
     timer_map_running = _compute_timer_seconds(list(running_set)) if running_set else {}
 
     work_orders = [d.get("work_order") for d in job_cards if d.get("work_order")]
+    wo_status_map = _get_work_order_status_map(work_orders)
     operations = [d.get("operation") for d in job_cards if d.get("operation")]
     seq_map = _wo_op_seq_map(work_orders, operations)
 
@@ -769,6 +793,12 @@ def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
         planned = base[name]["planned"]
         done = base[name]["done"]
         remaining = max(planned - done, 0.0)
+
+        wo_name = (d.get("work_order") or "").strip()
+        wo_meta = wo_status_map.get(wo_name, {}) if wo_name else {}
+        wo_status = (wo_meta.get("status") or "").strip()
+        wo_docstatus = int(wo_meta.get("docstatus") or 0)
+        wo_is_closed = _is_work_order_closed_or_done(wo_status, wo_docstatus)
 
         is_paused = int(base[name]["is_paused"])
         is_finished = bool(base[name]["is_finished"])
@@ -821,6 +851,9 @@ def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
                 "taj_production_stage": ws_stage,
                 "is_cooking_mode": int(_is_cooking_mode(jc_pf, ws_stage)),
                 "wo_op_seq": int(seq_map.get(name, 0) or 0),
+                "work_order_status": wo_status,
+                "work_order_docstatus": wo_docstatus,
+                "hide_actions_due_to_wo_closed": int(bool(wo_is_closed)),
             }
         )
 
@@ -1029,6 +1062,7 @@ def board_start_job(job_card: str, employees=None, start_time=None):
 
     doc = frappe.get_doc("Job Card", job_card)
     doc.check_permission("write")
+    _assert_work_order_not_closed(doc)
 
     if int(doc.docstatus or 0) != 0:
         frappe.throw("Only Draft Job Cards can be started from the board.")
@@ -1068,7 +1102,8 @@ def board_pause_job(job_card: str, end_time=None):
 
     doc = frappe.get_doc("Job Card", job_card)
     doc.check_permission("write")
-
+    _assert_work_order_not_closed(doc)
+    
     if int(doc.docstatus or 0) != 0:
         frappe.throw("Only Draft Job Cards can be paused from the board.")
 
@@ -1097,7 +1132,8 @@ def board_resume_job(job_card: str, start_time=None):
 
     doc = frappe.get_doc("Job Card", job_card)
     doc.check_permission("write")
-
+    _assert_work_order_not_closed(doc)
+    
     if int(doc.docstatus or 0) != 0:
         frappe.throw("Only Draft Job Cards can be resumed from the board.")
 
@@ -1134,7 +1170,8 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
 
     doc = frappe.get_doc("Job Card", job_card)
     doc.check_permission("write")
-
+    _assert_work_order_not_closed(doc)
+    
     if int(doc.docstatus or 0) != 0:
         frappe.throw("Only Draft Job Cards can be completed from the board.")
 
@@ -1271,7 +1308,8 @@ def board_submit_job(
 
     doc = frappe.get_doc("Job Card", job_card)
     doc.check_permission("submit")
-
+    _assert_work_order_not_closed(doc)
+    
     if int(doc.docstatus or 0) != 0:
         frappe.throw("Only Draft Job Cards can be submitted.")
 
@@ -1455,3 +1493,17 @@ def job_card_time_log_changed(doc, method=None):
         _publish_job_card_lite_by_name(parent, is_delete=is_delete)
     except Exception:
         frappe.log_error("Job Card Board realtime publish (time log) failed", frappe.get_traceback())
+
+def _assert_work_order_not_closed(doc):
+    wo = (doc.get("work_order") or "").strip()
+    if not wo:
+        return
+
+    wo_vals = frappe.db.get_value("Work Order", wo, ["status", "docstatus"], as_dict=True) or {}
+    wo_status = (wo_vals.get("status") or "").strip()
+    wo_docstatus = int(wo_vals.get("docstatus") or 0)
+
+    if _is_work_order_closed_or_done(wo_status, wo_docstatus):
+        frappe.throw(
+            f"Cannot perform this action because Work Order '{wo}' is {wo_status or 'Cancelled'}."
+        )

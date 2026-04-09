@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "autoname": "RND-PD-.####",
  "creation": "2025-10-06 14:56:59.515345",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -113,10 +114,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-26 13:48:01.812141",
+ "modified": "2026-04-09 15:32:37.228715",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Development",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
