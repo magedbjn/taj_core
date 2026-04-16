@@ -3,7 +3,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
   const RT_EVENT = "job_card_board_update";
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
-  const OP_SPEC_CACHE_PREFIX = "jc_board:op_spec:v1:";
+  const OP_SPEC_CACHE_PREFIX = "jc_board:op_spec:v9:";
   const COOK_REQ_CACHE_PREFIX = "jc_board:cook_req:v1:";
   const FILTERS_HIDDEN_KEY = "job_card_board_filters_hidden_v1";
 
@@ -23,8 +23,8 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
 
   const state = { limit: 60, offset: 0, loading: false };
 
-  const root = $(`<div class="jc-board"></div>`).appendTo(page.body);
-  const grid = $(`<div class="jc-grid"></div>`).appendTo(root);
+  const root = $("<div class=\"jc-board\"></div>").appendTo(page.body);
+  const grid = $("<div class=\"jc-grid\"></div>").appendTo(root);
 
   // -------------------------
   // Helpers
@@ -89,7 +89,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
+      .replace(/\"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
 
@@ -180,41 +180,167 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   function show_operation_spec_popup(data) {
     const op = data?.operation || "-";
     const wo = data?.work_order || "-";
+    const pf = data?.plant_floor || "-";
     const desc = String(data?.description || "").trim();
+
+    const rawMaterials = Array.isArray(data?.raw_materials) ? data.raw_materials : [];
+    const fillingDetails = data?.filling_details || {};
+    const fillingRows = Array.isArray(fillingDetails?.rows) ? fillingDetails.rows : [];
+    const fillingTotals = fillingDetails?.totals || {};
+    const pouchSize = fillingDetails?.pouch_size || "";
+
+    const fmt = (v, dp = 2) => escape_html(format_qty(v || 0, dp));
+    const txt = (v) => escape_html(v == null || v === "" ? "-" : String(v));
+
+    let bodyHtml = `
+      <div style="display:grid; gap:14px;">
+        <div style="font-size:12px; color:#6b7280;">
+          <div><b>${__("Work Order")}:</b> ${escape_html(wo)}</div>
+          <div><b>${__("Operation")}:</b> ${escape_html(op)}</div>
+          <div><b>${__("Plant Floor")}:</b> ${escape_html(pf)}</div>
+        </div>
+    `;
+
+    if (pf === "Preparation Area") {
+      const rawRows = rawMaterials.length
+        ? rawMaterials
+            .map(
+              (r, i) => `
+                <tr>
+                  <td style="padding:8px; border:1px solid #e5e7eb;">${i + 1}</td>
+                  <td style="padding:8px; border:1px solid #e5e7eb;">${txt(r.item_code)}</td>
+                  <td style="padding:8px; border:1px solid #e5e7eb;">${txt(r.item_name)}</td>
+                  <td style="padding:8px; border:1px solid #e5e7eb; text-align:right;">${fmt(r.qty, 2)}</td>
+                  <td style="padding:8px; border:1px solid #e5e7eb;">${txt(r.uom)}</td>
+                </tr>
+              `
+            )
+            .join("")
+        : `
+            <tr>
+              <td colspan="5" style="padding:12px; text-align:center; border:1px solid #e5e7eb;" class="text-muted">
+                ${__("No raw materials found.")}
+              </td>
+            </tr>
+          `;
+
+      bodyHtml += `
+        <div>
+          <div style="font-size:13px; font-weight:700; margin-bottom:6px;">${__("Raw Materials")}</div>
+          <div style="overflow:auto; max-height:320px;">
+            <table style="width:100%; border-collapse:collapse; font-size:13px;">
+              <thead>
+                <tr style="background:#f8fafc;">
+                  <th style="padding:8px; border:1px solid #e5e7eb;">#</th>
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("Item Code")}</th>
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("Item Name")}</th>
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("Qty")}</th>
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("UOM")}</th>
+                </tr>
+              </thead>
+              <tbody>${rawRows}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    } else if (pf === "Filling Area") {
+      const rows = fillingRows.length
+        ? fillingRows
+            .map(
+              (r) => `
+                <tr>
+                  <td style="padding:8px; border:1px solid #e5e7eb;">${txt(r.type)}</td>
+                  <td style="padding:8px; border:1px solid #e5e7eb;">${txt(r.value)}</td>
+                  <td style="padding:8px; border:1px solid #e5e7eb;">${txt(r.viscosity_or_size)}</td>
+                  <td style="padding:8px; border:1px solid #e5e7eb; text-align:right;">${fmt(r.weight, 2)}</td>
+                  <td style="padding:8px; border:1px solid #e5e7eb; text-align:right;">${fmt(r.under_weight, 2)}</td>
+                  <td style="padding:8px; border:1px solid #e5e7eb; text-align:right;">${fmt(r.over_weight, 2)}</td>
+                </tr>
+              `
+            )
+            .join("")
+        : `
+            <tr>
+              <td colspan="6" style="padding:12px; text-align:center; border:1px solid #e5e7eb;" class="text-muted">
+                ${__("No filling data available")}
+              </td>
+            </tr>
+          `;
+
+      bodyHtml += `
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:13px; font-weight:700;">${__("Filling Details")}</div>
+            <div style="font-size:12px; color:#6b7280;">${__("Pouch Size")}: ${txt(pouchSize)}</div>
+          </div>
+
+          <div style="overflow:auto; max-height:320px;">
+            <table style="width:100%; border-collapse:collapse; font-size:13px;">
+              <thead>
+                <tr style="background:#f8fafc;">
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("Type")}</th>
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("Value")}</th>
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("Viscosity/Size")}</th>
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("Weight")}</th>
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("Under Weight")}</th>
+                  <th style="padding:8px; border:1px solid #e5e7eb;">${__("Over Weight")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+                ${
+                  fillingRows.length
+                    ? `
+                      <tr style="background:#f8fafc; font-weight:700;">
+                        <td colspan="3" style="padding:8px; border:1px solid #e5e7eb;">${__("Total")}</td>
+                        <td style="padding:8px; border:1px solid #e5e7eb; text-align:right;">${fmt(fillingTotals.weight, 2)}</td>
+                        <td style="padding:8px; border:1px solid #e5e7eb; text-align:right;">${fmt(fillingTotals.under_weight, 2)}</td>
+                        <td style="padding:8px; border:1px solid #e5e7eb; text-align:right;">${fmt(fillingTotals.over_weight, 2)}</td>
+                      </tr>
+                    `
+                    : ""
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    } else {
+      bodyHtml += `
+        <div>
+          <div style="font-size:13px; font-weight:700; margin-bottom:6px;">${__("Description")}</div>
+          <div style="
+            white-space: pre-wrap;
+            line-height: 1.7;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 90px;
+          ">
+            ${
+              desc
+                ? escape_html(desc)
+                : `<span class="text-muted">${__("No operation description found.")}</span>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    bodyHtml += `</div>`;
 
     const d = new frappe.ui.Dialog({
       title: `${__("Operation Specs")} - ${op}`,
       fields: [{ fieldtype: "HTML", fieldname: "content" }],
+      size: "large",
       primary_action_label: __("Close"),
       primary_action() {
         d.hide();
       },
     });
 
-    d.fields_dict.content.$wrapper.html(`
-      <div style="display:grid; gap:10px;">
-        <div style="font-size:12px; color:#6b7280;">
-          <div><b>${__("Work Order")}:</b> ${escape_html(wo)}</div>
-          <div><b>${__("Operation")}:</b> ${escape_html(op)}</div>
-        </div>
-        <div style="
-          white-space: pre-wrap;
-          line-height: 1.7;
-          background: #f8fafc;
-          border: 1px solid #e5e7eb;
-          border-radius: 10px;
-          padding: 12px;
-          min-height: 90px;
-        ">
-          ${
-            desc
-              ? escape_html(desc)
-              : `<span class="text-muted">${__("No operation description found.")}</span>`
-          }
-        </div>
-      </div>
-    `);
-
+    d.fields_dict.content.$wrapper.html(bodyHtml);
     d.show();
   }
 
@@ -291,9 +417,10 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
         method: "taj_core.taj_manufacturing.api.preparation_labels.render_preparation_labels_from_job_card",
         args: {
           job_card: name,
+          label_mode: "cooking",
         },
         freeze: true,
-        freeze_message: __("Generating Prep Tags..."),
+        freeze_message: __("Generating Cooking Label..."),
       });
 
       const html = r.message && r.message.html;
@@ -321,8 +448,8 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       }, 300);
     } catch (e) {
       frappe.msgprint({
-        title: __("Print"),
-        message: e?.message || __("Unable to generate Preparation Label."),
+        title: __("Cooking Label"),
+        message: e?.message || __("Unable to generate Cooking Label."),
         indicator: "red",
       });
     }
@@ -1141,7 +1268,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
            data-completed="${isCompleted ? 1 : 0}">
         <div>
           <div class="jc-head">
-            <div style="min-width:0;">
+            <div class="jc-left">
               <div class="jc-title jc-title-row">
                 <div class="jc-title-main">
                   <span class="jc-seq">${seq ? `${seq}# ` : ""}</span>
@@ -1163,7 +1290,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
                       ? `<button type="button"
                            class="btn btn-default btn-xs jc-mini-btn jc-prep-print-btn"
                            data-name="${d.name}"
-                           title="${__("Print Preparation Label")}">🖨️</button>`
+                           title="${__("Cooking Label")}">🖨️</button>`
                       : ""
                   }
 

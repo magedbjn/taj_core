@@ -426,3 +426,147 @@ body.jc-wall .jc-title { font-size: 18px; }
 body.jc-wall .jc-timer { font-size: 18px; }
 body.jc-wall .jc-card  { min-height: 190px; }
 body.jc-wall .jc-actions { display:none; }
+
+/* =========================================================
+   Header layout hardening
+   ========================================================= */
+.jc-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:start;
+}
+
+.jc-left{ min-width:0; }
+
+.jc-title-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.jc-title-main{
+  min-width:0;
+  flex:1 1 180px;
+  display:flex;
+  align-items:flex-start;
+  gap:4px;
+  flex-wrap:wrap;
+}
+
+.jc-title-link{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+.jc-title-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  flex-wrap:wrap;
+  flex:0 0 auto;
+  max-width:100%;
+}
+
+.jc-mini-btn{
+  width:22px;
+  height:22px;
+  min-height:22px;
+  flex:0 0 22px;
+  padding:0 !important;
+  border-radius:999px !important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px !important;
+  line-height:1;
+}
+
+.jc-right{
+  min-width:92px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+}
+
+.jc-top-right{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+.jc-badges{
+  display:flex;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:4px;
+}
+
+@media (max-width: 1024px){
+  .jc-head{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .jc-right{
+    min-width:0;
+    width:100%;
+    align-items:stretch;
+  }
+
+  .jc-top-right{
+    width:100%;
+    justify-content:space-between;
+  }
+
+  .jc-badges{
+    justify-content:flex-start;
+  }
+
+  .jc-title-actions{
+    width:100%;
+    justify-content:flex-start;
+  }
+}
+
+@media (max-width: 768px){
+  .jc-card{
+    padding:10px !important;
+  }
+
+  .jc-title{
+    font-size:13px !important;
+    line-height:1.2 !important;
+  }
+
+  .jc-meta{
+    font-size:11px !important;
+    line-height:1.25 !important;
+  }
+
+  .jc-title-main{
+    flex:1 1 100%;
+  }
+
+  .jc-title-actions{
+    gap:6px;
+  }
+
+  .jc-mini-btn{
+    width:24px;
+    height:24px;
+    min-height:24px;
+    flex:0 0 24px;
+    font-size:12px !important;
+  }
+
+  .jc-timer{
+    font-size:12px;
+  }
+}

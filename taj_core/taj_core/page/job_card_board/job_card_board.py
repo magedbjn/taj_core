@@ -6,6 +6,7 @@ from typing import List, Set, Optional, Dict, Any, Tuple
 
 import frappe
 from frappe.utils import flt, cint, get_datetime, today
+from taj_core.taj_manufacturing.api.preparation_labels import get_raw_materials_from_job_card
 
 OVERDUE_TOLERANCE_SEC = 120
 
@@ -22,6 +23,12 @@ def _has_col(doctype: str, fieldname: str) -> bool:
     if key not in _COL_CACHE:
       _COL_CACHE[key] = bool(frappe.db.has_column(doctype, fieldname))
     return _COL_CACHE[key]
+
+
+def _existing_fields(doctype: str, wanted_fields):
+    meta = frappe.get_meta(doctype)
+    existing = {"name", "parent"} | {df.fieldname for df in meta.fields}
+    return [f for f in wanted_fields if f in existing]
 
 
 def _safe_fields() -> List[str]:
@@ -478,28 +485,213 @@ def _assert_user_can_access_job_card_pf(job_card_name: str):
 
 
 # -------------------------
+# Filling helpers
+# -------------------------
+def _resolve_pp_item_reference(production_plan, pp_item_ref):
+    if not pp_item_ref:
+        return None
+
+    if frappe.db.exists("Production Plan Item", pp_item_ref):
+        return pp_item_ref
+
+    return frappe.db.get_value(
+        "Production Plan Item",
+        {
+            "parent": production_plan,
+            "temporary_name": pp_item_ref,
+        },
+        "name",
+    )
+
+
+def _get_sub_assembly_row_fields():
+    return _existing_fields(
+        "Production Plan Sub Assembly Item",
+        [
+            "name",
+            "parent",
+            "production_item",
+            "bom_no",
+            "planned_start_date",
+            "schedule_date",
+            "operation",
+            "qty",
+            "stock_qty",
+            "planned_qty",
+            "required_qty",
+            "sub_assembly_qty",
+            "production_qty",
+            "taj_merge_group_id",
+            "production_plan_item",
+            "parent_item_code",
+        ],
+    )
+
+
+def _get_current_sub_assembly_row_from_work_order(work_order: str):
+    if not work_order:
+        return None
+
+    if not frappe.db.has_column("Work Order", "production_plan_sub_assembly_item"):
+        return None
+
+    sub_row_name = frappe.db.get_value("Work Order", work_order, "production_plan_sub_assembly_item")
+    if not sub_row_name:
+        return None
+
+    return frappe.db.get_value(
+        "Production Plan Sub Assembly Item",
+        sub_row_name,
+        _get_sub_assembly_row_fields(),
+        as_dict=True,
+    )
+
+
+def _get_filling_bom_no(job_card: str, work_order: str) -> str:
+    current_sub = _get_current_sub_assembly_row_from_work_order(work_order)
+    if current_sub:
+        pp_item_ref = (current_sub.get("production_plan_item") or "").strip()
+        production_plan = current_sub.get("parent")
+
+        actual_pp_item = _resolve_pp_item_reference(production_plan, pp_item_ref)
+        if actual_pp_item:
+            bom_no = (frappe.db.get_value("Production Plan Item", actual_pp_item, "bom_no") or "").strip()
+            frappe.log_error(
+                title="Filling Area Debug",
+                message=f"job_card={job_card}\nwork_order={work_order}\nsource=Production Plan Item\nproduction_plan_item={actual_pp_item}\nbom_no={bom_no}",
+            )
+            if bom_no:
+                return bom_no
+
+    bom_no = (frappe.db.get_value("Work Order", work_order, "bom_no") or "").strip()
+    frappe.log_error(
+        title="Filling Area Debug",
+        message=f"job_card={job_card}\nwork_order={work_order}\nsource=Work Order fallback\nbom_no={bom_no}",
+    )
+    return bom_no
+
+
+def _get_filling_details_from_bom(bom_no: str):
+    if not bom_no:
+        return {
+            "bom_no": "",
+            "rows": [],
+            "totals": {
+                "weight": 0,
+                "under_weight": 0,
+                "over_weight": 0,
+            },
+            "pouch_size": "",
+        }
+
+    fieldnames = _existing_fields("BOM", [
+        "name",
+        "taj_liquid_filling",
+        "taj_liquid_viscosity",
+        "taj_liquid_weight",
+        "taj_liquid_under_weight",
+        "taj_liquid_over_weight",
+        "taj_solid_filling_1",
+        "taj_solid_size_1",
+        "taj_solid_weight_1",
+        "taj_solid_under_weight_1",
+        "taj_solid_over_weight_1",
+        "taj_solid_filling_2",
+        "taj_solid_size_2",
+        "taj_solid_weight_2",
+        "taj_solid_under_weight_2",
+        "taj_solid_over_weight_2",
+        "taj_total_weight",
+        "taj_total_under_weight",
+        "taj_total_over_weight",
+        "taj_pouch_size",
+    ])
+
+    bom = frappe.db.get_value("BOM", bom_no, fieldnames, as_dict=True) or {}
+
+    rows = []
+
+    liquid_filling = str(bom.get("taj_liquid_filling") or "").strip()
+    solid_filling_1 = str(bom.get("taj_solid_filling_1") or "").strip()
+    solid_filling_2 = str(bom.get("taj_solid_filling_2") or "").strip()
+
+    if liquid_filling and liquid_filling not in ("0", "0.0"):
+        rows.append({
+            "type": "Liquid Filling",
+            "value": liquid_filling,
+            "viscosity_or_size": bom.get("taj_liquid_viscosity") or "",
+            "weight": bom.get("taj_liquid_weight") or 0,
+            "under_weight": bom.get("taj_liquid_under_weight") or 0,
+            "over_weight": bom.get("taj_liquid_over_weight") or 0,
+        })
+
+    if solid_filling_1 and solid_filling_1 not in ("0", "0.0"):
+        rows.append({
+            "type": "Solid Filling 1",
+            "value": solid_filling_1,
+            "viscosity_or_size": bom.get("taj_solid_size_1") or "",
+            "weight": bom.get("taj_solid_weight_1") or 0,
+            "under_weight": bom.get("taj_solid_under_weight_1") or 0,
+            "over_weight": bom.get("taj_solid_over_weight_1") or 0,
+        })
+
+    if solid_filling_2 and solid_filling_2 not in ("0", "0.0"):
+        rows.append({
+            "type": "Solid Filling 2",
+            "value": solid_filling_2,
+            "viscosity_or_size": bom.get("taj_solid_size_2") or "",
+            "weight": bom.get("taj_solid_weight_2") or 0,
+            "under_weight": bom.get("taj_solid_under_weight_2") or 0,
+            "over_weight": bom.get("taj_solid_over_weight_2") or 0,
+        })
+
+    
+    return {
+        "bom_no": bom_no,
+        "rows": rows,
+        "totals": {
+            "weight": bom.get("taj_total_weight") or 0,
+            "under_weight": bom.get("taj_total_under_weight") or 0,
+            "over_weight": bom.get("taj_total_over_weight") or 0,
+        },
+        "pouch_size": bom.get("taj_pouch_size") or "",
+    }
+# -------------------------
 # Popup APIs
 # -------------------------
 @frappe.whitelist()
 def get_operation_spec(job_card: str):
     _assert_user_can_access_job_card_pf(job_card)
 
-    jc = frappe.db.get_value(
-        "Job Card",
-        job_card,
-        ["name", "work_order", "operation"],
-        as_dict=True,
-    )
+    jc_fields = ["name", "work_order", "operation", "workstation"]
+    if _has_col("Job Card", "taj_plant_floor"):
+        jc_fields.append("taj_plant_floor")
+
+    jc = frappe.db.get_value("Job Card", job_card, jc_fields, as_dict=True)
     if not jc:
         return {
             "job_card": job_card,
             "work_order": "",
             "operation": "",
+            "plant_floor": "",
             "description": "",
+            "raw_materials": [],
+            "filling_details": {
+                "bom_no": "",
+                "rows": [],
+                "totals": {"weight": 0, "under_weight": 0, "over_weight": 0},
+                "pouch_size": "",
+            },
         }
 
     work_order = (jc.get("work_order") or "").strip()
     operation = (jc.get("operation") or "").strip()
+    workstation = (jc.get("workstation") or "").strip()
+    jc_pf = (jc.get("taj_plant_floor") or "").strip() if _has_col("Job Card", "taj_plant_floor") else ""
+
+    ws_pf_map = _get_ws_pf_map([workstation]) if workstation else {}
+    plant_floor = _effective_plant_floor_from_values(jc_pf, workstation, ws_pf_map)
+
     description = ""
 
     wo_op_desc_field = None
@@ -527,11 +719,33 @@ def get_operation_spec(job_card: str):
         if _has_col("Operation", "description"):
             description = (frappe.db.get_value("Operation", operation, "description") or "").strip()
 
+    raw_materials = []
+    filling_details = {
+        "bom_no": "",
+        "rows": [],
+        "totals": {"weight": 0, "under_weight": 0, "over_weight": 0},
+        "pouch_size": "",
+    }
+
+    if plant_floor == "Preparation Area":
+        try:
+            raw_payload = get_raw_materials_from_job_card(job_card)
+            raw_materials = raw_payload.get("items") or []
+        except Exception:
+            raw_materials = []
+
+    elif plant_floor == "Filling Area":
+        bom_no = _get_filling_bom_no(job_card, work_order)
+        filling_details = _get_filling_details_from_bom(bom_no)
+
     return {
         "job_card": job_card,
         "work_order": work_order,
         "operation": operation,
+        "plant_floor": plant_floor,
         "description": description,
+        "raw_materials": raw_materials,
+        "filling_details": filling_details,
     }
 
 
@@ -705,6 +919,7 @@ def _add_wo_op_seq(job_cards: List[dict]) -> None:
     for d in job_cards:
         d["wo_op_seq"] = int(rank_by_name.get(d["name"], 0) or 0)
 
+
 def _get_work_order_status_map(work_orders: List[str]) -> Dict[str, Dict[str, Any]]:
     if not work_orders:
         return {}
@@ -728,6 +943,7 @@ def _get_work_order_status_map(work_orders: List[str]) -> Dict[str, Dict[str, An
 def _is_work_order_closed_or_done(wo_status: str, wo_docstatus: int) -> bool:
     closed_statuses = {"Closed", "Completed", "Cancelled"}
     return int(wo_docstatus or 0) == 2 or (wo_status or "").strip() in closed_statuses
+
 
 def _build_payloads_for_cards(job_cards: List[dict]) -> List[dict]:
     if not job_cards:
@@ -1103,7 +1319,7 @@ def board_pause_job(job_card: str, end_time=None):
     doc = frappe.get_doc("Job Card", job_card)
     doc.check_permission("write")
     _assert_work_order_not_closed(doc)
-    
+
     if int(doc.docstatus or 0) != 0:
         frappe.throw("Only Draft Job Cards can be paused from the board.")
 
@@ -1133,7 +1349,7 @@ def board_resume_job(job_card: str, start_time=None):
     doc = frappe.get_doc("Job Card", job_card)
     doc.check_permission("write")
     _assert_work_order_not_closed(doc)
-    
+
     if int(doc.docstatus or 0) != 0:
         frappe.throw("Only Draft Job Cards can be resumed from the board.")
 
@@ -1171,7 +1387,7 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
     doc = frappe.get_doc("Job Card", job_card)
     doc.check_permission("write")
     _assert_work_order_not_closed(doc)
-    
+
     if int(doc.docstatus or 0) != 0:
         frappe.throw("Only Draft Job Cards can be completed from the board.")
 
@@ -1182,9 +1398,6 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
     if (doc.get("status") or "").strip() == "On Hold" or int(doc.get("is_paused") or 0) == 1:
         frappe.throw("Job is On Hold. Please Resume first.")
 
-    # -----------------------------------
-    # Check if operation requires temperature
-    # -----------------------------------
     operation_name = (doc.get("operation") or "").strip()
     requires_temperature = 0
     min_temp = 0.0
@@ -1215,7 +1428,6 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
 
             temp_val = flt(raw_temp)
 
-        # إذا كان أحد الحدين أو كلاهما غير صفر -> تحقق المجال
         if not (min_temp == 0 and max_temp == 0):
             low = min(min_temp, max_temp)
             high = max(min_temp, max_temp)
@@ -1239,10 +1451,8 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
     for r in open_rows:
         r.to_time = _ensure_to_time_after(r.from_time, end_time)
 
-    # set completed qty on the last open row
     open_rows[-1].completed_qty = qty
 
-    # set temperature on the same row if field exists
     if requires_temperature and hasattr(open_rows[-1], "meta") and open_rows[-1].meta.has_field("taj_temperature"):
         open_rows[-1].taj_temperature = flt(taj_temperature)
 
@@ -1265,12 +1475,12 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
 
     _set_is_paused(doc, 0)
 
-    # show Start Job again in Job Card UI when remaining exists
     if planned and total_done < planned:
         _set_started_time(doc, None)
 
     doc.save()
     return {"ok": True, "card": get_card_payload(job_card)}
+
 
 def _effective_pf_for_doc(doc) -> str:
     jc_pf = (doc.get("taj_plant_floor") or "").strip() if _has_col("Job Card", "taj_plant_floor") else ""
@@ -1309,7 +1519,7 @@ def board_submit_job(
     doc = frappe.get_doc("Job Card", job_card)
     doc.check_permission("submit")
     _assert_work_order_not_closed(doc)
-    
+
     if int(doc.docstatus or 0) != 0:
         frappe.throw("Only Draft Job Cards can be submitted.")
 
@@ -1493,6 +1703,7 @@ def job_card_time_log_changed(doc, method=None):
         _publish_job_card_lite_by_name(parent, is_delete=is_delete)
     except Exception:
         frappe.log_error("Job Card Board realtime publish (time log) failed", frappe.get_traceback())
+
 
 def _assert_work_order_not_closed(doc):
     wo = (doc.get("work_order") or "").strip()

@@ -2,12 +2,20 @@ frappe.ui.form.on("Work Order", {
     refresh(frm) {
         if (frm.is_new()) return;
 
-        frm.add_custom_button(__("Preparation Label"), function () {
+        frm.add_custom_button(__("Prepare Raw Materials"), function () {
             const selected = ((frm.get_selected() || {}).required_items || []);
 
             open_preparation_labels_print({
                 work_order: frm.doc.name,
-                selected_rows: selected
+                selected_rows: selected,
+                label_mode: "raw"
+            });
+        }, __("Print"));
+
+        frm.add_custom_button(__("Prepare for Cooking"), function () {
+            open_preparation_labels_print({
+                work_order: frm.doc.name,
+                label_mode: "cooking"
             });
         }, __("Print"));
     }

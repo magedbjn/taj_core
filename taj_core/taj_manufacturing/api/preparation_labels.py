@@ -1,3 +1,4 @@
+# file : taj_core.taj_manufacutring.api.preparation_labels.py
 import frappe
 from math import ceil
 from frappe.utils import flt, cint
@@ -69,6 +70,31 @@ def _get_item_name(item_code, fallback=None):
     if not item_code:
         return ""
     return frappe.db.get_value("Item", item_code, "item_name") or item_code
+
+
+def _aggregate_labels_by_item(labels):
+    rows = []
+    for lbl in (labels or []):
+        rows.append({
+            "item_code": _norm_txt(lbl.get("item_code")),
+            "item_name": lbl.get("item_name") or "",
+            "qty": flt(lbl.get("qty") or 0),
+            "uom": _get_item_stock_uom(_norm_txt(lbl.get("item_code"))),
+        })
+    return _aggregate_items(rows)
+
+def _get_item_description(item_code, fallback=None):
+    if fallback:
+        return fallback
+    if not item_code:
+        return ""
+    return frappe.db.get_value("Item", item_code, "description") or ""
+
+
+def _get_item_stock_uom(item_code):
+    if not item_code:
+        return ""
+    return frappe.db.get_value("Item", item_code, "stock_uom") or ""
 
 
 def _get_item_shelf_life(item_code):
@@ -770,13 +796,16 @@ def _get_print_sources(doc):
 # label builders
 # ---------------------------------------------------------------------
 
-def _append_label(labels, row, distribution, product_name, label_operation, planned_start_date):
+def _append_label(labels, row, distribution, product_name, label_operation, planned_start_date, show_ep=True):
     item_code = _norm_txt(_row_value(row, "item_code"))
     item_name = _row_value(row, "item_name") or _get_item_name(item_code)
-    description = _row_value(row, "description") or ""
+    description = _row_value(row, "description") or _get_item_description(item_code)
     shelf_days = _get_item_shelf_life(item_code)
 
     planned_txt, ep_txt = _format_planned_and_ep(planned_start_date, shelf_days)
+
+    if not show_ep:
+        ep_txt = ""
 
     labels.append({
         "product_name": product_name or "",
@@ -785,6 +814,7 @@ def _append_label(labels, row, distribution, product_name, label_operation, plan
         "description": description,
         "planned_txt": planned_txt,
         "ep_txt": ep_txt,
+        "show_ep": 1 if show_ep else 0,
         "qty": flt(distribution.get("out_qty") or 0),
         "load_i": distribution.get("load_i"),
         "loads": distribution.get("loads"),
@@ -794,7 +824,7 @@ def _append_label(labels, row, distribution, product_name, label_operation, plan
     })
 
 
-def _build_regular_work_order_labels(doc, source, selected_item_filters=None, source_job_card=None):
+def _build_regular_work_order_labels(doc, source, selected_item_filters=None, source_job_card=None, show_ep=True):
     labels = []
     selected_lookup = _build_selected_lookup(selected_item_filters or [])
     job_card_stage = _get_job_card_stage(source_job_card)
@@ -872,6 +902,7 @@ def _build_regular_work_order_labels(doc, source, selected_item_filters=None, so
                 product_name=source.get("item_name") or doc.item_name or "",
                 label_operation=op_name,
                 planned_start_date=source.get("planned_start_date"),
+                show_ep=show_ep,
             )
 
     return labels
@@ -921,7 +952,7 @@ def _build_sub_assembly_chunks(doc, sources, source_job_card=None):
     return chunks
 
 
-def _build_sub_assembly_labels(doc, sources, selected_item_filters=None, source_job_card=None):
+def _build_sub_assembly_labels(doc, sources, selected_item_filters=None, source_job_card=None, show_ep=True):
     labels = []
     selected_lookup = _build_selected_lookup(selected_item_filters or [])
     sub_total_qty = flt(doc.qty or 0)
@@ -955,21 +986,76 @@ def _build_sub_assembly_labels(doc, sources, selected_item_filters=None, source_
                 product_name=dist.get("product_name") or doc.item_name or "",
                 label_operation=dist.get("label_operation") or "",
                 planned_start_date=dist.get("planned_start_date"),
+                show_ep=show_ep,
             )
 
     return labels
 
 
-def _build_all_labels(doc, selected_item_filters=None, source_job_card=None):
+def _build_sub_assembly_product_labels(doc, sources, source_job_card=None):
+    labels = []
+
+    produced_item_code = getattr(doc, "production_item", None) or getattr(doc, "item_code", None)
+    if not produced_item_code:
+        return labels
+
+    produced_row = {
+        "item_code": produced_item_code,
+        "item_name": doc.item_name or _get_item_name(produced_item_code),
+        "description": _get_item_description(produced_item_code),
+    }
+
+    chunks = _build_sub_assembly_chunks(doc, sources, source_job_card=source_job_card)
+    if not chunks:
+        return labels
+
+    for chunk in chunks:
+        out_qty = flt(chunk.get("chunk_qty") or 0)
+        if out_qty <= 0:
+            continue
+
+        distribution = dict(chunk)
+        distribution["out_qty"] = out_qty
+
+        _append_label(
+            labels=labels,
+            row=produced_row,
+            distribution=distribution,
+            product_name=chunk.get("product_name") or doc.item_name or "",
+            label_operation=chunk.get("label_operation") or "",
+            planned_start_date=chunk.get("planned_start_date"),
+            show_ep=True,
+        )
+
+    return labels
+
+
+def _build_all_labels(doc, selected_item_filters=None, source_job_card=None, label_mode="standard"):
     sources = _get_print_sources(doc)
 
     if getattr(doc, "production_plan_sub_assembly_item", None):
-        labels = _build_sub_assembly_labels(
-            doc,
-            sources,
-            selected_item_filters=selected_item_filters,
-            source_job_card=source_job_card,
-        )
+        if label_mode == "cooking":
+            labels = _build_sub_assembly_product_labels(
+                doc,
+                sources,
+                source_job_card=source_job_card,
+            )
+        elif label_mode == "raw":
+            labels = _build_sub_assembly_labels(
+                doc,
+                sources,
+                selected_item_filters=selected_item_filters,
+                source_job_card=source_job_card,
+                show_ep=False,
+            )
+        else:
+            labels = _build_sub_assembly_labels(
+                doc,
+                sources,
+                selected_item_filters=selected_item_filters,
+                source_job_card=source_job_card,
+                show_ep=True,
+            )
     else:
         labels = []
         for source in sources:
@@ -979,10 +1065,33 @@ def _build_all_labels(doc, selected_item_filters=None, source_job_card=None):
                     source,
                     selected_item_filters=selected_item_filters,
                     source_job_card=source_job_card,
+                    show_ep=(label_mode != "raw"),
                 )
             )
 
     return labels
+
+
+def _aggregate_labels_by_item(labels):
+    grouped = {}
+
+    for lbl in (labels or []):
+        item_code = _norm_txt(lbl.get("item_code"))
+        if not item_code:
+            continue
+
+        key = item_code
+        if key not in grouped:
+            grouped[key] = {
+                "item_code": item_code,
+                "item_name": lbl.get("item_name") or _get_item_name(item_code),
+                "qty": 0,
+                "uom": _get_item_stock_uom(item_code),
+            }
+
+        grouped[key]["qty"] = flt(grouped[key]["qty"]) + flt(lbl.get("qty") or 0)
+
+    return list(grouped.values())
 
 
 # ---------------------------------------------------------------------
@@ -1007,7 +1116,7 @@ def get_required_items_for_work_order(work_order):
 
 
 @frappe.whitelist()
-def render_preparation_labels_html(work_order, selected_rows=None, source_job_card=None):
+def render_preparation_labels_html(work_order, selected_rows=None, source_job_card=None, label_mode="standard"):
     work_order_doc = frappe.get_doc("Work Order", work_order)
 
     selected_item_filters = _get_selected_required_item_filters(
@@ -1019,6 +1128,7 @@ def render_preparation_labels_html(work_order, selected_rows=None, source_job_ca
         work_order_doc,
         selected_item_filters=selected_item_filters,
         source_job_card=source_job_card,
+        label_mode=label_mode,
     )
 
     if not labels:
@@ -1036,7 +1146,7 @@ def render_preparation_labels_html(work_order, selected_rows=None, source_job_ca
 
 
 @frappe.whitelist()
-def render_preparation_labels_from_job_card(job_card, selected_rows=None):
+def render_preparation_labels_from_job_card(job_card, selected_rows=None, label_mode="standard"):
     jc = frappe.get_doc("Job Card", job_card)
 
     if not jc.work_order:
@@ -1046,7 +1156,34 @@ def render_preparation_labels_from_job_card(job_card, selected_rows=None):
         work_order=jc.work_order,
         selected_rows=selected_rows,
         source_job_card=jc.name,
+        label_mode=label_mode,
     )
+
+
+@frappe.whitelist()
+def get_raw_materials_from_job_card(job_card, selected_rows=None):
+    jc = frappe.get_doc("Job Card", job_card)
+
+    if not jc.work_order:
+        frappe.throw("Job Card does not have a linked Work Order.")
+
+    work_order_doc = frappe.get_doc("Work Order", jc.work_order)
+
+    selected_item_filters = _get_selected_required_item_filters(
+        work_order_doc,
+        _as_list(selected_rows),
+    )
+
+    labels = _build_all_labels(
+        work_order_doc,
+        selected_item_filters=selected_item_filters,
+        source_job_card=jc.name,
+        label_mode="raw",
+    )
+
+    return {
+        "items": _aggregate_labels_by_item(labels)
+    }
 
 def _resolve_non_merged_source(current_sub):
     pp_item_name = _norm_txt(current_sub.get("production_plan_item"))
@@ -1076,3 +1213,159 @@ def _resolve_non_merged_source(current_sub):
         linked_bom_hint=current_sub.get("bom_no"),
         linked_operation_hint=current_sub.get("operation"),
     )
+
+def _get_item_stock_uom(item_code):
+    if not item_code:
+        return ""
+    return frappe.db.get_value("Item", item_code, "stock_uom") or ""
+
+
+def _aggregate_labels_by_item(labels):
+    grouped = {}
+
+    for lbl in (labels or []):
+        item_code = _norm_txt(lbl.get("item_code"))
+        if not item_code:
+            continue
+
+        if item_code not in grouped:
+            grouped[item_code] = {
+                "item_code": item_code,
+                "item_name": lbl.get("item_name") or _get_item_name(item_code),
+                "qty": 0.0,
+                "uom": _get_item_stock_uom(item_code),
+            }
+
+        grouped[item_code]["qty"] = flt(grouped[item_code]["qty"]) + flt(lbl.get("qty") or 0)
+
+    return list(grouped.values())
+
+
+@frappe.whitelist()
+def get_raw_materials_from_job_card(job_card, selected_rows=None):
+    jc = frappe.get_doc("Job Card", job_card)
+
+    if not jc.work_order:
+        frappe.throw("Job Card does not have a linked Work Order.")
+
+    work_order_doc = frappe.get_doc("Work Order", jc.work_order)
+
+    selected_item_filters = _get_selected_required_item_filters(
+        work_order_doc,
+        _as_list(selected_rows),
+    )
+
+    try:
+        labels = _build_all_labels(
+            work_order_doc,
+            selected_item_filters=selected_item_filters,
+            source_job_card=jc.name,
+        )
+        items = _aggregate_labels_by_item(labels)
+        if items:
+            return {"items": items}
+    except Exception:
+        pass
+
+    selected_lookup = _build_selected_lookup(selected_item_filters or [])
+    items = []
+
+    for row in (work_order_doc.get(WORK_ORDER_REQUIRED_ITEMS_FIELD) or []):
+        if not _is_row_selected(row, selected_lookup):
+            continue
+
+        item_code = _norm_txt(_row_value(row, "item_code"))
+        if not item_code:
+            continue
+
+        qty = flt(_row_value(row, "required_qty") or _row_value(row, "qty") or 0)
+        if qty <= 0:
+            continue
+
+        items.append({
+            "item_code": item_code,
+            "item_name": _row_value(row, "item_name") or _get_item_name(item_code),
+            "qty": qty,
+            "uom": frappe.db.get_value("Item", item_code, "stock_uom") or "",
+        })
+
+    return {"items": items}
+
+def _get_item_stock_uom(item_code):
+    if not item_code:
+        return ""
+    return frappe.db.get_value("Item", item_code, "stock_uom") or ""
+
+
+def _aggregate_items(items):
+    grouped = {}
+
+    for row in (items or []):
+        item_code = _norm_txt(row.get("item_code"))
+        if not item_code:
+            continue
+
+        if item_code not in grouped:
+            grouped[item_code] = {
+                "item_code": item_code,
+                "item_name": row.get("item_name") or _get_item_name(item_code),
+                "qty": 0.0,
+                "uom": row.get("uom") or _get_item_stock_uom(item_code),
+            }
+
+        grouped[item_code]["qty"] = flt(grouped[item_code]["qty"]) + flt(row.get("qty") or 0)
+
+    return list(grouped.values())
+
+@frappe.whitelist()
+def get_raw_materials_from_job_card(job_card, selected_rows=None):
+    jc = frappe.get_doc("Job Card", job_card)
+
+    if not jc.work_order:
+        frappe.throw("Job Card does not have a linked Work Order.")
+
+    work_order_doc = frappe.get_doc("Work Order", jc.work_order)
+
+    selected_item_filters = _get_selected_required_item_filters(
+        work_order_doc,
+        _as_list(selected_rows),
+    )
+
+    # المسار الأول: استخدم منطق الملصقات الحالي إذا نجح
+    try:
+        labels = _build_all_labels(
+            work_order_doc,
+            selected_item_filters=selected_item_filters,
+            source_job_card=jc.name,
+        )
+        items = _aggregate_labels_by_item(labels)
+        if items:
+            return {"items": items}
+    except Exception:
+        pass
+
+    # fallback: تجاهل merge/source resolution بالكامل
+    # وارجع required_items بالكميات الكاملة الحالية
+    selected_lookup = _build_selected_lookup(selected_item_filters or [])
+    direct_rows = []
+
+    for row in (work_order_doc.get(WORK_ORDER_REQUIRED_ITEMS_FIELD) or []):
+        if not _is_row_selected(row, selected_lookup):
+            continue
+
+        item_code = _norm_txt(_row_value(row, "item_code"))
+        if not item_code:
+            continue
+
+        qty = flt(_row_value(row, "required_qty") or _row_value(row, "qty") or 0)
+        if qty <= 0:
+            continue
+
+        direct_rows.append({
+            "item_code": item_code,
+            "item_name": _row_value(row, "item_name") or _get_item_name(item_code),
+            "qty": qty,
+            "uom": _get_item_stock_uom(item_code),
+        })
+
+    return {"items": _aggregate_items(direct_rows)}

@@ -105,15 +105,18 @@
 			<div class="code">{{ lbl.item_code }}</div>
 		{% endif %}
 
-		<div class="row" style="margin-top:0.6mm;">
+		<div class="row" style="margin-top:0.6mm; {% if not lbl.show_ep %}justify-content:flex-start;{% endif %}">
 			<div>
 				<span class="k">Used:</span>
 				<span class="v">{{ lbl.planned_txt }}</span>
 			</div>
-			<div>
-				<span class="k">EP :</span>
-				<span class="v">{{ lbl.ep_txt }}</span>
-			</div>
+
+			{% if lbl.show_ep %}
+				<div>
+					<span class="k">EP :</span>
+					<span class="v">{{ lbl.ep_txt }}</span>
+				</div>
+			{% endif %}
 		</div>
 
 		<div class="hr"></div>
