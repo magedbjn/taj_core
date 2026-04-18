@@ -1,0 +1,49 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"pzb8J-WM-C\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Checklist</span>\",\"col\":12}},{\"id\":\"0w6g8TEVLv\",\"type\":\"card\",\"data\":{\"card_name\":\"Production\",\"col\":4}}]",
+ "creation": "2026-04-18 02:33:55.820758",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "check",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Checklist",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Production",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Production Checklist",
+   "link_count": 0,
+   "link_to": "Production Checklist",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-04-18 02:35:50.711007",
+ "modified_by": "Administrator",
+ "module": "Company Documents",
+ "name": "Checklist",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Taj",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 40.0,
+ "shortcuts": [],
+ "title": "Checklist"
+}

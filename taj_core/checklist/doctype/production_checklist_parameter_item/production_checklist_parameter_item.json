@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-18 01:18:02.152080",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "paramteter",
+  "numeric",
+  "min_value",
+  "max_value"
+ ],
+ "fields": [
+  {
+   "fieldname": "paramteter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Paramteter",
+   "options": "Production Checklist Parameter",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "numeric",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Numeric"
+  },
+  {
+   "fieldname": "min_value",
+   "fieldtype": "Float",
+   "label": "Min Value",
+   "read_only_depends_on": "eval:!doc.numeric"
+  },
+  {
+   "fieldname": "max_value",
+   "fieldtype": "Float",
+   "label": "Max Value",
+   "read_only_depends_on": "eval:!doc.numeric"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-18 02:32:50.388442",
+ "modified_by": "Administrator",
+ "module": "Checklist",
+ "name": "Production Checklist Parameter Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
