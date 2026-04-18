@@ -177,6 +177,28 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     return payload;
   }
 
+  async function get_start_requirements(job_card) {
+    if (!job_card) {
+      return {
+        enabled: 0,
+        needs_metal_detector: 0,
+        values: {},
+      };
+    }
+
+    const r = await frappe.call({
+      method: "taj_core.taj_core.page.job_card_board.job_card_board.get_start_requirements",
+      args: { job_card },
+      freeze: false,
+    });
+
+    return r.message || {
+      enabled: 0,
+      needs_metal_detector: 0,
+      values: {},
+    };
+  }
+
   function show_operation_spec_popup(data) {
     const op = data?.operation || "-";
     const wo = data?.work_order || "-";
@@ -1377,54 +1399,285 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
       .then((r) => r.message);
 
     const existing = (doc.employee || []).map((r) => r.employee).filter(Boolean);
+    const company = doc?.company || null;
+    const req = await get_start_requirements(name);
+    const needsDialog =
+      cint(req?.enabled) === 1 &&
+      String(req?.plant_floor || "").trim() === "Filling Area" &&
+      cint(req?.needs_metal_detector) === 1;
+    const showLiquidFields = cint(req?.show_liquid_fields || 0) === 1;
+    const currentValues = req?.values || {};
 
-    const do_start = async (emp_ids) => {
+    const employeeField = {
+      fieldtype: "MultiSelectList",
+      fieldname: "employees",
+      label: __("Select Employees"),
+      reqd: 1,
+      get_data: function (txt) {
+        const filters = { status: "Active" };
+        if (company) filters.company = company;
+
+        return frappe
+          .call({
+            method: "frappe.desk.search.search_link",
+            args: {
+              doctype: "Employee",
+              txt: txt || "",
+              filters,
+              page_length: 20,
+            },
+          })
+          .then((r) => r.message || []);
+      },
+    };
+
+    const requiredFieldLabels = () => {
+      const labels = [
+        ["taj_check_weight_1", __("Check Weight #1")],
+        ["taj_anritus_weight_1", __("Anritus Weight #1")],
+        ["taj_check_weight_2", __("Check Weight #2")],
+        ["taj_anritus_weight_2", __("Anritus Weight #2")],
+      ];
+
+      if (showLiquidFields) {
+        labels.push(
+          ["taj_ferrous_detection", __("Ferrous Detection 2mm")],
+          ["taj_non_ferrous_detection", __("Non Ferrous Detection 2mm")],
+          ["taj_sus_detection", __("SUS Detection 2mm")],
+          ["taj_threshold_set_point", __("Threshold set point")],
+          ["taj_gain_set_point", __("Gain Set point")]
+        );
+      }
+
+      return labels;
+    };
+
+    const getMissingRequiredLabels = (values = {}) => {
+      const missing = [];
+
+      for (const [fieldname, label] of requiredFieldLabels()) {
+        if (
+          fieldname === "taj_ferrous_detection" ||
+          fieldname === "taj_non_ferrous_detection" ||
+          fieldname === "taj_sus_detection"
+        ) {
+          if (!cint(values[fieldname] || 0)) missing.push(label);
+        } else {
+          if (flt(values[fieldname] || 0) === 0) missing.push(label);
+        }
+      }
+
+      return missing;
+    };
+
+    const baseArgsFromValues = (values = {}) => ({
+      job_card: name,
+      taj_check_weight_1: values.taj_check_weight_1,
+      taj_anritus_weight_1: values.taj_anritus_weight_1,
+      taj_check_weight_2: values.taj_check_weight_2,
+      taj_anritus_weight_2: values.taj_anritus_weight_2,
+      taj_ferrous_detection: values.taj_ferrous_detection,
+      taj_non_ferrous_detection: values.taj_non_ferrous_detection,
+      taj_sus_detection: values.taj_sus_detection,
+      taj_threshold_set_point: values.taj_threshold_set_point,
+      taj_gain_set_point: values.taj_gain_set_point,
+    });
+
+    const saveChecks = async (values = {}, hideAlert = false) => {
+      const r = await frappe.call({
+        method: "taj_core.taj_core.page.job_card_board.job_card_board.save_metal_detector_checks",
+        args: baseArgsFromValues(values),
+        freeze: true,
+        freeze_message: __("Saving checks..."),
+      });
+
+      if (!hideAlert) {
+        frappe.show_alert({
+          message: __("Checks saved"),
+          indicator: "green",
+        });
+      }
+
+      return r.message || {};
+    };
+
+    const do_start = async (emp_ids, values = {}) => {
       const employees = (emp_ids || []).map((emp) => ({ employee: emp }));
       if (!employees.length) {
         frappe.msgprint({
           message: __("Please select at least one employee."),
           indicator: "orange",
         });
-        return;
+        return false;
       }
-      const r = await call_api("board_start_job", { job_card: name, employees });
+
+      const r = await call_api("board_start_job", {
+        ...baseArgsFromValues(values),
+        job_card: name,
+        employees,
+      });
+
       if (r.message?.card) update_single_card(r.message.card);
       else markDirty(name);
+
+      return true;
     };
 
-    if (existing.length) return do_start(existing);
+    if (existing.length && !needsDialog) {
+      return do_start(existing);
+    }
 
-    const company = doc?.company || null;
-
-    frappe.prompt(
-      [
-        {
-          fieldtype: "MultiSelectList",
-          fieldname: "employees",
-          label: __("Select Employees"),
-          reqd: 1,
-          get_data: function (txt) {
-            const filters = { status: "Active" };
-            if (company) filters.company = company;
-
-            return frappe
-              .call({
-                method: "frappe.desk.search.search_link",
-                args: {
-                  doctype: "Employee",
-                  txt: txt || "",
-                  filters,
-                  page_length: 20,
-                },
-              })
-              .then((r) => r.message || []);
-          },
+    if (!needsDialog) {
+      return frappe.prompt(
+        [employeeField],
+        async (d) => {
+          await do_start(d.employees || []);
         },
-      ],
-      async (d) => do_start(d.employees || []),
-      __("Assign Job to Employee"),
-      __("Start Job")
+        __("Assign Job to Employee"),
+        __("Start Job")
+      );
+    }
+
+    const fields = [];
+
+    if (!existing.length) {
+      fields.push(employeeField);
+    }
+
+    fields.push({
+      fieldtype: "HTML",
+      fieldname: "metal_detector_note",
+      options: `
+        <div style="margin-bottom:8px; font-size:12px; color:#6b7280; line-height:1.7;">
+          ${__("Filling Area checks. Save partial values any time. Start will continue only after the required fields are complete.")}
+        </div>
+      `,
+    });
+
+    fields.push({
+      fieldtype: "Section Break",
+      fieldname: "always_fields_section",
+      label: __("Always Visible Fields"),
+    });
+
+    fields.push(
+      {
+        fieldtype: "Int",
+        fieldname: "taj_check_weight_1",
+        label: __("Check Weight #1"),
+        default: cint(currentValues.taj_check_weight_1 || 0),
+      },
+      {
+        fieldtype: "Float",
+        fieldname: "taj_anritus_weight_1",
+        label: __("Anritus Weight #1"),
+        default: flt(currentValues.taj_anritus_weight_1 || 0),
+      },
+      {
+        fieldtype: "Column Break",
+        fieldname: "md_col_break_1",
+      },
+      {
+        fieldtype: "Int",
+        fieldname: "taj_check_weight_2",
+        label: __("Check Weight #2"),
+        default: cint(currentValues.taj_check_weight_2 || 0),
+      },
+      {
+        fieldtype: "Int",
+        fieldname: "taj_anritus_weight_2",
+        label: __("Anritus Weight #2"),
+        default: cint(currentValues.taj_anritus_weight_2 || 0),
+      }
     );
+
+    if (showLiquidFields) {
+      fields.push(
+        {
+          fieldtype: "Section Break",
+          fieldname: "liquid_fields_section",
+          label: __("Liquid Fields"),
+        },
+        {
+          fieldtype: "Check",
+          fieldname: "taj_ferrous_detection",
+          label: __("Ferrous Detection 2mm"),
+          default: cint(currentValues.taj_ferrous_detection || 0),
+        },
+        {
+          fieldtype: "Check",
+          fieldname: "taj_non_ferrous_detection",
+          label: __("Non Ferrous Detection 2mm"),
+          default: cint(currentValues.taj_non_ferrous_detection || 0),
+        },
+        {
+          fieldtype: "Check",
+          fieldname: "taj_sus_detection",
+          label: __("SUS Detection 2mm"),
+          default: cint(currentValues.taj_sus_detection || 0),
+        },
+        {
+          fieldtype: "Column Break",
+          fieldname: "md_col_break_2",
+        },
+        {
+          fieldtype: "Float",
+          fieldname: "taj_threshold_set_point",
+          label: __("Threshold set point"),
+          default: flt(currentValues.taj_threshold_set_point || 0),
+        },
+        {
+          fieldtype: "Float",
+          fieldname: "taj_gain_set_point",
+          label: __("Gain Set point"),
+          default: flt(currentValues.taj_gain_set_point || 0),
+        }
+      );
+    }
+
+    fields.push({
+      fieldtype: "Button",
+      fieldname: "save_only",
+      label: __("Save"),
+    });
+
+    const dialog = new frappe.ui.Dialog({
+      title: __("Filling Start Check"),
+      fields,
+      primary_action_label: __("Start Job"),
+      primary_action: async () => {
+        const values = dialog.get_values() || {};
+        const empIds = existing.length ? existing : (values.employees || []);
+
+        await saveChecks(values, true);
+
+        const missing = getMissingRequiredLabels(values);
+        if (missing.length) {
+          frappe.msgprint({
+            title: __("Metal Detector Check"),
+            message: __("Saved current values. Still required before Start: {0}", [missing.join(", ")]),
+            indicator: "orange",
+          });
+          return;
+        }
+
+        const ok = await do_start(empIds, values);
+        if (ok) dialog.hide();
+      },
+    });
+
+    dialog.show();
+
+    const saveBtn =
+      dialog.fields_dict.save_only?.$input || dialog.fields_dict.save_only?.input;
+
+    if (saveBtn) {
+      $(saveBtn).off("click").on("click", async () => {
+        const values = dialog.get_values() || {};
+        await saveChecks(values, false);
+        dialog.hide();
+      });
+    }
   }
 
   async function pause_job(name) {

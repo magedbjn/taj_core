@@ -612,15 +612,16 @@ def _get_filling_details_from_bom(bom_no: str):
     rows = []
 
     liquid_filling = str(bom.get("taj_liquid_filling") or "").strip()
+    liquid_weight = flt(bom.get("taj_liquid_weight") or 0)
     solid_filling_1 = str(bom.get("taj_solid_filling_1") or "").strip()
     solid_filling_2 = str(bom.get("taj_solid_filling_2") or "").strip()
 
-    if liquid_filling and liquid_filling not in ("0", "0.0"):
+    if liquid_weight > 0:
         rows.append({
             "type": "Liquid Filling",
             "value": liquid_filling,
             "viscosity_or_size": bom.get("taj_liquid_viscosity") or "",
-            "weight": bom.get("taj_liquid_weight") or 0,
+            "weight": liquid_weight,
             "under_weight": bom.get("taj_liquid_under_weight") or 0,
             "over_weight": bom.get("taj_liquid_over_weight") or 0,
         })
@@ -1272,8 +1273,350 @@ def _ensure_employee_table(doc, employees: List[str]):
             existing.add(emp)
 
 
+
+def _metal_detector_guard_enabled() -> int:
+    return 1
+
+
+def _metal_detector_check_fields() -> List[str]:
+    return [
+        "taj_ferrous_detection",
+        "taj_non_ferrous_detection",
+        "taj_sus_detection",
+    ]
+
+
+def _metal_detector_numeric_fields() -> Dict[str, str]:
+    return {
+        "taj_threshold_set_point": "float",
+        "taj_gain_set_point": "float",
+        "taj_check_weight_1": "int",
+        "taj_anritus_weight_1": "float",
+        "taj_check_weight_2": "int",
+        "taj_anritus_weight_2": "int",
+    }
+
+
+def _metal_detector_all_fields() -> List[str]:
+    return _metal_detector_check_fields() + list(_metal_detector_numeric_fields().keys())
+
+
+def _metal_detector_always_fields() -> List[str]:
+    return [
+        "taj_check_weight_1",
+        "taj_anritus_weight_1",
+        "taj_check_weight_2",
+        "taj_anritus_weight_2",
+    ]
+
+
+def _metal_detector_liquid_fields() -> List[str]:
+    return [
+        "taj_ferrous_detection",
+        "taj_non_ferrous_detection",
+        "taj_sus_detection",
+        "taj_threshold_set_point",
+        "taj_gain_set_point",
+    ]
+
+
+def _metal_detector_required_fields(liquid_weight: float) -> List[str]:
+    fields = list(_metal_detector_always_fields())
+    if flt(liquid_weight) > 0:
+        fields.extend(_metal_detector_liquid_fields())
+    return fields
+
+
+def _metal_detector_field_labels() -> Dict[str, str]:
+    return {
+        "taj_ferrous_detection": "Ferrous Detection 2mm",
+        "taj_non_ferrous_detection": "Non Ferrous Detection 2mm",
+        "taj_sus_detection": "SUS Detection 2mm",
+        "taj_threshold_set_point": "Threshold set point",
+        "taj_gain_set_point": "Gain Set point",
+        "taj_check_weight_1": "Check Weight #1",
+        "taj_anritus_weight_1": "Anritus Weight #1",
+        "taj_check_weight_2": "Check Weight #2",
+        "taj_anritus_weight_2": "Anritus Weight #2",
+    }
+
+
+def _metal_detector_db_field_map() -> Dict[str, str]:
+    out = {
+        "taj_ferrous_detection": "taj_ferrous_detection",
+        "taj_non_ferrous_detection": "taj_non_ferrous_detection",
+        "taj_sus_detection": "taj_sus_detection",
+        "taj_threshold_set_point": "taj_threshold_set_point",
+        "taj_check_weight_1": "taj_check_weight_1",
+        "taj_anritus_weight_1": "taj_anritus_weight_1",
+        "taj_check_weight_2": "taj_check_weight_2",
+        "taj_anritus_weight_2": "taj_anritus_weight_2",
+    }
+
+    if _has_col("Work Order", "taj_gain_set_point"):
+        out["taj_gain_set_point"] = "taj_gain_set_point"
+    elif _has_col("Work Order", "taj_gain_set_point_"):
+        out["taj_gain_set_point"] = "taj_gain_set_point_"
+    else:
+        out["taj_gain_set_point"] = "taj_gain_set_point"
+
+    return out
+
+
+def _get_metal_detector_values(work_order: str) -> Dict[str, Any]:
+    defaults: Dict[str, Any] = {
+        "taj_ferrous_detection": 0,
+        "taj_non_ferrous_detection": 0,
+        "taj_sus_detection": 0,
+        "taj_threshold_set_point": 0,
+        "taj_gain_set_point": 0,
+        "taj_check_weight_1": 0,
+        "taj_anritus_weight_1": 0,
+        "taj_check_weight_2": 0,
+        "taj_anritus_weight_2": 0,
+    }
+
+    if not work_order:
+        return defaults
+
+    field_map = _metal_detector_db_field_map()
+    db_fields = sorted({dbf for dbf in field_map.values() if _has_col("Work Order", dbf)})
+    if not db_fields:
+        return defaults
+
+    raw = frappe.db.get_value("Work Order", work_order, db_fields, as_dict=True) or {}
+
+    out = dict(defaults)
+
+    for logical in _metal_detector_check_fields():
+        dbf = field_map.get(logical)
+        out[logical] = cint(raw.get(dbf or logical) or 0)
+
+    for logical, kind in _metal_detector_numeric_fields().items():
+        dbf = field_map.get(logical)
+        raw_val = raw.get(dbf or logical)
+        if kind == "int":
+            out[logical] = cint(raw_val or 0)
+        else:
+            out[logical] = flt(raw_val or 0)
+
+    return out
+
+
+def _normalize_metal_detector_save_values(data: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    data = data or {}
+    out: Dict[str, Any] = {}
+
+    for f in _metal_detector_check_fields():
+        if f in data:
+            out[f] = cint(data.get(f))
+
+    for f, kind in _metal_detector_numeric_fields().items():
+        raw = data.get(f)
+
+        if f == "taj_gain_set_point" and raw is None and "taj_gain_set_point_" in data:
+            raw = data.get("taj_gain_set_point_")
+
+        if raw is None:
+            continue
+
+        if isinstance(raw, str):
+            raw = raw.strip()
+
+        if raw == "":
+            out[f] = None
+        elif kind == "int":
+            out[f] = cint(raw)
+        else:
+            out[f] = flt(raw)
+
+    return out
+
+
+def _save_metal_detector_values(work_order: str, data: Dict[str, Any] | None = None):
+    if not work_order or not data:
+        return
+
+    normalized = _normalize_metal_detector_save_values(data)
+    if not normalized:
+        return
+
+    field_map = _metal_detector_db_field_map()
+    values = {}
+    for logical, val in normalized.items():
+        dbf = field_map.get(logical)
+        if dbf and _has_col("Work Order", dbf):
+            values[dbf] = val
+
+    if values:
+        frappe.db.set_value("Work Order", work_order, values, update_modified=True)
+
+
+def _metal_detector_field_is_filled(fieldname: str, value: Any) -> bool:
+    if fieldname in _metal_detector_check_fields():
+        return cint(value or 0) != 0
+    return flt(value or 0) != 0
+
+
+def _is_metal_detector_dialog_completed(wo_vals: Dict[str, Any], liquid_weight: float) -> bool:
+    for fieldname in _metal_detector_required_fields(liquid_weight):
+        if not _metal_detector_field_is_filled(fieldname, wo_vals.get(fieldname)):
+            return False
+    return True
+
+
+def _get_job_card_metal_detector_context(doc) -> Dict[str, Any]:
+    plant_floor = _effective_pf_for_doc(doc)
+    work_order = (doc.get("work_order") or "").strip()
+
+    ctx = {
+        "plant_floor": plant_floor,
+        "work_order": work_order,
+        "filling_details": {
+            "bom_no": "",
+            "rows": [],
+            "totals": {"weight": 0, "under_weight": 0, "over_weight": 0},
+            "pouch_size": "",
+        },
+        "liquid_weight": 0.0,
+        "show_dialog": False,
+        "show_liquid_fields": False,
+    }
+
+    if not cint(_metal_detector_guard_enabled()):
+        return ctx
+
+    if plant_floor != "Filling Area":
+        return ctx
+
+    if not work_order:
+        ctx["show_dialog"] = True
+        return ctx
+
+    bom_no = _get_filling_bom_no(doc.name, work_order)
+    filling = _get_filling_details_from_bom(bom_no)
+    ctx["filling_details"] = filling
+
+    for row in (filling.get("rows") or []):
+        if (row.get("type") or "").strip() == "Liquid Filling":
+            ctx["liquid_weight"] = flt(row.get("weight") or 0)
+            break
+
+    ctx["show_liquid_fields"] = bool(ctx["liquid_weight"] > 0)
+
+    wo_vals = _get_metal_detector_values(work_order)
+    ctx["show_dialog"] = not _is_metal_detector_dialog_completed(wo_vals, ctx["liquid_weight"])
+    return ctx
+
+
+def _job_card_needs_metal_detector(doc) -> bool:
+    return bool(_get_job_card_metal_detector_context(doc).get("show_dialog"))
+
+
+def _validate_metal_detector_before_start(doc):
+    ctx = _get_job_card_metal_detector_context(doc)
+    if not ctx.get("show_dialog"):
+        return
+
+    wo = (ctx.get("work_order") or "").strip()
+    if not wo:
+        frappe.throw("Work Order is required.")
+
+    vals = _get_metal_detector_values(wo)
+    labels = _metal_detector_field_labels()
+    missing = []
+
+    for fieldname in _metal_detector_required_fields(ctx.get("liquid_weight") or 0):
+        if not _metal_detector_field_is_filled(fieldname, vals.get(fieldname)):
+            missing.append(labels.get(fieldname, fieldname))
+
+    if missing:
+        frappe.throw(
+            "Please complete Metal Detector checks before starting: " + ", ".join(missing)
+        )
+
+
 @frappe.whitelist()
-def board_start_job(job_card: str, employees=None, start_time=None):
+def get_start_requirements(job_card: str):
+    _assert_user_can_access_job_card_pf(job_card)
+
+    doc = frappe.get_doc("Job Card", job_card)
+    doc.check_permission("read")
+
+    ctx = _get_job_card_metal_detector_context(doc)
+    work_order = (doc.get("work_order") or "").strip()
+
+    return {
+        "enabled": cint(_metal_detector_guard_enabled()),
+        "needs_metal_detector": cint(ctx.get("show_dialog")),
+        "show_liquid_fields": cint(ctx.get("show_liquid_fields")),
+        "liquid_weight": flt(ctx.get("liquid_weight") or 0),
+        "plant_floor": ctx.get("plant_floor") or "",
+        "work_order": work_order,
+        "values": _get_metal_detector_values(work_order),
+    }
+
+
+@frappe.whitelist()
+def save_metal_detector_checks(
+    job_card: str,
+    taj_ferrous_detection=None,
+    taj_non_ferrous_detection=None,
+    taj_sus_detection=None,
+    taj_threshold_set_point=None,
+    taj_gain_set_point=None,
+    taj_gain_set_point_=None,
+    taj_check_weight_1=None,
+    taj_anritus_weight_1=None,
+    taj_check_weight_2=None,
+    taj_anritus_weight_2=None,
+):
+    _assert_user_can_access_job_card_pf(job_card)
+
+    doc = frappe.get_doc("Job Card", job_card)
+    doc.check_permission("write")
+
+    _save_metal_detector_values(
+        (doc.get("work_order") or "").strip(),
+        {
+            "taj_ferrous_detection": taj_ferrous_detection,
+            "taj_non_ferrous_detection": taj_non_ferrous_detection,
+            "taj_sus_detection": taj_sus_detection,
+            "taj_threshold_set_point": taj_threshold_set_point,
+            "taj_gain_set_point": taj_gain_set_point if taj_gain_set_point is not None else taj_gain_set_point_,
+            "taj_check_weight_1": taj_check_weight_1,
+            "taj_anritus_weight_1": taj_anritus_weight_1,
+            "taj_check_weight_2": taj_check_weight_2,
+            "taj_anritus_weight_2": taj_anritus_weight_2,
+        },
+    )
+
+    ctx = _get_job_card_metal_detector_context(doc)
+
+    return {
+        "ok": True,
+        "show_liquid_fields": cint(ctx.get("show_liquid_fields")),
+        "liquid_weight": flt(ctx.get("liquid_weight") or 0),
+        "values": _get_metal_detector_values((doc.get("work_order") or "").strip()),
+    }
+
+
+@frappe.whitelist()
+def board_start_job(
+    job_card: str,
+    employees=None,
+    start_time=None,
+    taj_ferrous_detection=None,
+    taj_non_ferrous_detection=None,
+    taj_sus_detection=None,
+    taj_threshold_set_point=None,
+    taj_gain_set_point=None,
+    taj_gain_set_point_=None,
+    taj_check_weight_1=None,
+    taj_anritus_weight_1=None,
+    taj_check_weight_2=None,
+    taj_anritus_weight_2=None,
+):
     _assert_user_can_access_job_card_pf(job_card)
 
     doc = frappe.get_doc("Job Card", job_card)
@@ -1296,6 +1639,23 @@ def board_start_job(job_card: str, employees=None, start_time=None):
 
     start_time = get_datetime(start_time) if start_time else _safe_now()
 
+    if cint(_metal_detector_guard_enabled()):
+        _save_metal_detector_values(
+            (doc.get("work_order") or "").strip(),
+            {
+                "taj_ferrous_detection": taj_ferrous_detection,
+                "taj_non_ferrous_detection": taj_non_ferrous_detection,
+                "taj_sus_detection": taj_sus_detection,
+                "taj_threshold_set_point": taj_threshold_set_point,
+                "taj_gain_set_point": taj_gain_set_point if taj_gain_set_point is not None else taj_gain_set_point_,
+                "taj_check_weight_1": taj_check_weight_1,
+                "taj_anritus_weight_1": taj_anritus_weight_1,
+                "taj_check_weight_2": taj_check_weight_2,
+                "taj_anritus_weight_2": taj_anritus_weight_2,
+            },
+        )
+        _validate_metal_detector_before_start(doc)
+
     _ensure_employee_table(doc, emp_list)
 
     if _is_running_now(job_card) and (doc.get("status") or "") != "On Hold" and not int(doc.get("is_paused") or 0):
@@ -1314,6 +1674,7 @@ def board_start_job(job_card: str, employees=None, start_time=None):
 
 @frappe.whitelist()
 def board_pause_job(job_card: str, end_time=None):
+
     _assert_user_can_access_job_card_pf(job_card)
 
     doc = frappe.get_doc("Job Card", job_card)
@@ -1480,6 +1841,44 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
 
     doc.save()
     return {"ok": True, "card": get_card_payload(job_card)}
+
+
+def _doc_has_open_time_logs(doc) -> bool:
+    if not doc:
+        return False
+    return bool(_open_time_log_rows(doc))
+
+
+def _is_job_card_start_transition(doc) -> bool:
+    if not doc or int(doc.get("docstatus") or 0) != 0:
+        return False
+
+    before = doc.get_doc_before_save() if hasattr(doc, "get_doc_before_save") else None
+    new_status = (doc.get("status") or "").strip()
+    old_status = (before.get("status") or "").strip() if before else ""
+
+    new_started = not _is_empty_time(doc.get("started_time"))
+    old_started = (not _is_empty_time(before.get("started_time"))) if before else False
+
+    new_running = _doc_has_open_time_logs(doc)
+    old_running = _doc_has_open_time_logs(before) if before else False
+
+    if new_status == "Work In Progress" and old_status != "Work In Progress":
+        return True
+    if new_started and not old_started:
+        return True
+    if new_running and not old_running:
+        return True
+    return False
+
+
+def job_card_validate_metal_detector_guard(doc, method=None):
+    if not cint(_metal_detector_guard_enabled()):
+        return
+    if not _is_job_card_start_transition(doc):
+        return
+    _assert_work_order_not_closed(doc)
+    _validate_metal_detector_before_start(doc)
 
 
 def _effective_pf_for_doc(doc) -> str:

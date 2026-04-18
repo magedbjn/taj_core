@@ -113,7 +113,8 @@ doc_events = {
     # ============================================================
     "Job Card": {
         "on_update": "taj_core.taj_core.page.job_card_board.job_card_board.job_card_changed",
-        "on_trash": "taj_core.taj_core.page.job_card_board.job_card_board.job_card_changed"
+        "on_trash": "taj_core.taj_core.page.job_card_board.job_card_board.job_card_changed",
+        "validate": "taj_core.taj_core.page.job_card_board.job_card_board.job_card_validate_metal_detector_guard"
     },
 }
 
