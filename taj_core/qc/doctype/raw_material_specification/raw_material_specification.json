@@ -21,12 +21,17 @@
   "localer",
   "halal",
   "fumigation_cart",
-  "shelf_lifes",
+  "column_break_tnia",
+  "requires_receiving_temperature",
+  "min_temperature",
+  "max_temperature",
   "specification_column",
   "packing",
   "handling_storage",
   "expiry_date",
   "general",
+  "section_break_ferh",
+  "shelf_lifes",
   "physical_attributes_tab",
   "section_break_mwcm",
   "physical_attributes",
@@ -397,10 +402,36 @@
    "fieldname": "coliform",
    "fieldtype": "Data",
    "label": "Coliform"
+  },
+  {
+   "fieldname": "section_break_ferh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_tnia",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_receiving_temperature",
+   "fieldtype": "Check",
+   "label": "Requires Receiving Temperature"
+  },
+  {
+   "depends_on": "eval:doc.requires_receiving_temperature",
+   "fieldname": "min_temperature",
+   "fieldtype": "Float",
+   "label": "Min Temperature (\u00b0C)"
+  },
+  {
+   "depends_on": "eval:doc.requires_receiving_temperature",
+   "fieldname": "max_temperature",
+   "fieldtype": "Float",
+   "label": "Max Temperature (\u00b0C)"
   }
  ],
  "links": [],
- "modified": "2026-03-31 15:09:49.435010",
+ "modified": "2026-04-21 14:26:34.251252",
  "modified_by": "Administrator",
  "module": "QC",
  "name": "Raw Material Specification",
