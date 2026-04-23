@@ -1,4 +1,3 @@
-# file : /taj_core/checklist/scheduler.py
 import frappe
 from frappe.utils import nowdate
 from taj_core.checklist.doctype.checklist_answer.checklist_answer import (
@@ -30,3 +29,8 @@ def create_due_checklist_answers():
                 title=f"Checklist scheduler failed for template {template_name}",
                 message=frappe.get_traceback(),
             )
+
+
+def daily_checklist_scheduler():
+    """Backward-compatible scheduler entry used by hooks.py."""
+    create_due_checklist_answers()

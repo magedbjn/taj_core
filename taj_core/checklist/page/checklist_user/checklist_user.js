@@ -31,6 +31,9 @@ class ChecklistUserPage {
         this.is_saving = false;
         this.is_submitting = false;
         this.last_save_promise = Promise.resolve();
+        this.is_hydrating_controls = false;
+        this.last_save_failed = false;
+        this.last_save_error_key = "";
 
         this.dashboardData = null;
         this.selectedDocname = null;
@@ -164,7 +167,6 @@ class ChecklistUserPage {
         this.$progress = $(this.page.body).find(".selected-doc-progress");
         this.$body = $(this.page.body).find(".selected-doc-body");
         this.$actions = $(this.page.body).find(".selected-doc-actions");
-        this.$selectedWrapper = $(this.page.body).find(".selected-doc-wrapper");
 
         this.$drawer = $(this.page.body).find(".checklist-drawer");
         this.$drawerBackdrop = $(this.page.body).find(".checklist-drawer-backdrop");
@@ -282,7 +284,7 @@ class ChecklistUserPage {
     }
 
     get_view_title(viewName) {
-        if (viewName === "my-new") return __("My New Tasks");
+        if (viewName === "my-new") return __("My New Tasks (Today)");
         if (viewName === "my-open") return __("My Open Tasks");
         if (viewName === "team") return __("Team Open Tasks");
         if (viewName === "search") return __("Search Results");
@@ -290,7 +292,7 @@ class ChecklistUserPage {
     }
 
     get_empty_text(viewName) {
-        if (viewName === "my-new") return __("No new tasks.");
+        if (viewName === "my-new") return __("No new tasks for today.");
         if (viewName === "my-open") return __("No open tasks.");
         if (viewName === "team") return __("No team open tasks.");
         if (viewName === "search") return __("No results for selected date.");
@@ -365,6 +367,10 @@ class ChecklistUserPage {
                 </span>
             `;
 
+            const previousOpenBadge = doc.is_previous_cycle_open
+                ? `<span class="status-pill status-expired">${__("Previous Open")}</span>`
+                : "";
+
             const $item = $(`
                 <div class="checklist-list-item status-card-${statusSlug} ${activeClass}">
                     <div class="checklist-list-top">
@@ -376,6 +382,7 @@ class ChecklistUserPage {
                         <div class="checklist-list-side">
                             ${questionBadge}
                             ${statusBadge}
+                            ${previousOpenBadge}
                         </div>
                     </div>
 
@@ -384,6 +391,7 @@ class ChecklistUserPage {
                         <div class="checklist-list-meta-item"><strong>${__("Department")}:</strong> ${this.escape(doc.department || "-")}</div>
                         <div class="checklist-list-meta-item"><strong>${__("Assigned User")}:</strong> ${this.escape(doc.assigned_user || "-")}</div>
                         <div class="checklist-list-meta-item"><strong>${__("Result")}:</strong> ${this.escape(doc.result_status || "Normal")}</div>
+                        ${doc.is_previous_cycle_open ? `<div class="checklist-list-meta-item"><strong>${__("Open From")}:</strong> ${this.escape(doc.open_from_date || doc.posting_date || "-")}</div>` : ""}
                     </div>
                 </div>
             `);
@@ -395,6 +403,15 @@ class ChecklistUserPage {
 
     async load_doc(docname) {
         try {
+            if (this.save_timer) {
+                clearTimeout(this.save_timer);
+                this.save_timer = null;
+            }
+            this.pending_changes = {};
+            this.last_save_failed = false;
+            this.last_save_error_key = "";
+            this.set_save_state("");
+
             const r = await frappe.call({
                 method: "taj_core.checklist.api.get_checklist_answer",
                 args: { docname }
@@ -420,6 +437,7 @@ class ChecklistUserPage {
         if (!this.doc) return;
 
         this.page.set_indicator(this.doc.status || "Draft", this.get_indicator_color(this.doc.status));
+        this.set_save_state("");
 
         this.$drawerTitle.text(this.doc.template || __("Checklist Details"));
         this.$drawerSubtitle.text(this.doc.name || __("Questions and answers"));
@@ -545,6 +563,8 @@ class ChecklistUserPage {
             return;
         }
 
+        this.is_hydrating_controls = true;
+
         questions.forEach((row, index) => {
             const $card = $(`
                 <div class="checklist-question-card">
@@ -568,6 +588,8 @@ class ChecklistUserPage {
             control.set_value(row.answer || "");
             this.row_controls[row.row_name] = control;
         });
+
+        this.is_hydrating_controls = false;
     }
 
     render_actions() {
@@ -596,6 +618,10 @@ class ChecklistUserPage {
             fieldname: `answer_${row.row_name}`,
             reqd: 1,
             change: () => {
+                if (this.is_hydrating_controls) {
+                    return;
+                }
+
                 const control = this.row_controls[row.row_name];
                 const value = control ? control.get_value() : "";
                 this.schedule_save(row.row_name, value);
@@ -628,6 +654,7 @@ class ChecklistUserPage {
     schedule_save(row_name, answer) {
         if (!this.doc?.name || !this.doc.is_editable) return;
 
+        this.last_save_failed = false;
         this.pending_changes[row_name] = answer;
         this.set_save_state(__("Pending changes..."));
 
@@ -646,13 +673,14 @@ class ChecklistUserPage {
 
         const entries = Object.entries(this.pending_changes);
         if (!entries.length) {
-            if (!this.is_submitting) {
+            if (!this.is_submitting && !this.last_save_failed) {
                 this.set_save_state(__("All changes saved."));
             }
             return;
         }
 
         this.is_saving = true;
+        this.last_save_failed = false;
         this.set_save_state(__("Saving..."));
 
         const payload = entries.map(([row_name, answer]) => ({ row_name, answer }));
@@ -668,24 +696,32 @@ class ChecklistUserPage {
             });
 
             this.doc = r.message;
+            this.last_save_error_key = "";
             this.set_save_state(__("All changes saved."));
         } catch (e) {
             payload.forEach(item => {
                 this.pending_changes[item.row_name] = item.answer;
             });
 
+            this.last_save_failed = true;
             this.set_save_state(__("Save failed."));
-            frappe.show_alert({
-                message: __("Auto save failed. Please try again."),
-                indicator: "red"
-            });
+
+            const error_key = String((e && (e.message || e.exc_type || e.statusText)) || "save_failed");
+            if (this.last_save_error_key !== error_key) {
+                this.last_save_error_key = error_key;
+                frappe.show_alert({
+                    message: __("Auto save failed. Please try again."),
+                    indicator: "red"
+                });
+            }
+
             console.error(e);
         } finally {
             this.is_saving = false;
             this.render_progress();
         }
 
-        if (Object.keys(this.pending_changes).length) {
+        if (!this.last_save_failed && Object.keys(this.pending_changes).length) {
             await this.flush_pending_saves();
         }
     }
@@ -730,6 +766,10 @@ class ChecklistUserPage {
 
             await this.last_save_promise;
             await this.flush_pending_saves();
+
+            if (this.last_save_failed) {
+                frappe.throw(__("Please fix save errors before submit."));
+            }
 
             const r = await frappe.call({
                 method: "taj_core.checklist.api.submit_checklist_answer",

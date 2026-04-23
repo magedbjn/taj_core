@@ -68,7 +68,6 @@ class ChecklistAnswerManagerPage {
 
         $(document).off(".checklist_admin_drawer");
         $(this.page.body).off(".checklist_mgr");
-
         $("body").removeClass("checklist-drawer-open");
         $("body").removeClass("checklist-fullscreen-mode");
 
@@ -155,6 +154,7 @@ class ChecklistAnswerManagerPage {
                                 <div class="filter-control filter-status"></div>
                                 <div class="filter-control filter-issue"></div>
                                 <button class="btn btn-primary btn-search">${__("Search")}</button>
+                                <button class="btn btn-success btn-create-checklist">${__("Create Checklist")}</button>
                             </div>
                         </div>
                     </div>
@@ -240,21 +240,6 @@ class ChecklistAnswerManagerPage {
                             </div>
                         </div>
                     </div>
-
-                    <div class="summary-card summary-card-clickable is-secondary prev-open-card d-none" data-group="prev_open" role="button" tabindex="0" aria-label="${__("Prev Open")}">
-                        <div class="summary-card-inner">
-                            <div class="summary-icon-wrap is-secondary">
-                                <svg class="summary-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M12 6V12L16 14"></path>
-                                    <circle cx="12" cy="12" r="7.5"></circle>
-                                </svg>
-                            </div>
-                            <div class="summary-content">
-                                <div class="summary-label">${__("Prev Open")}</div>
-                                <div class="summary-value prev-open">0</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="card shadow-sm border-0 mgr-panel">
@@ -283,6 +268,7 @@ class ChecklistAnswerManagerPage {
                         <div class="selected-doc-meta"></div>
                         <div class="selected-doc-progress"></div>
                         <div class="selected-doc-body"></div>
+                        <div class="selected-doc-actions mt-3"></div>
                     </div>
                 </aside>
             </div>
@@ -293,8 +279,6 @@ class ChecklistAnswerManagerPage {
         this.$todayCompleted = $(this.page.body).find(".today-completed");
         this.$todayRemaining = $(this.page.body).find(".today-remaining");
         this.$todayHasIssue = $(this.page.body).find(".today-has-issue");
-        this.$prevOpen = $(this.page.body).find(".prev-open");
-        this.$prevOpenCard = $(this.page.body).find(".prev-open-card");
 
         this.$summaryCards = $(this.page.body).find(".summary-card-clickable");
         this.$cardsListPanel = $(this.page.body).find(".cards-list-panel");
@@ -308,10 +292,12 @@ class ChecklistAnswerManagerPage {
         this.$meta = $(this.page.body).find(".selected-doc-meta");
         this.$progress = $(this.page.body).find(".selected-doc-progress");
         this.$body = $(this.page.body).find(".selected-doc-body");
+        this.$actions = $(this.page.body).find(".selected-doc-actions");
 
         this.$mobileFiltersBtn = $(this.page.body).find(".btn-mobile-filters");
         this.$filters = $(this.page.body).find(".mgr-filters");
         this.$btnSearch = $(this.page.body).find(".btn-search");
+        this.$btnCreateChecklist = $(this.page.body).find(".btn-create-checklist");
         this.$autoRefreshSelect = $(this.page.body).find(".auto-refresh-select");
 
         this.template_control = frappe.ui.form.make_control({
@@ -364,7 +350,7 @@ class ChecklistAnswerManagerPage {
                 label: __("Status"),
                 fieldname: "status",
                 fieldtype: "Select",
-                options: "\nAll\nOpen\nDraft\nIn Progress\nCompleted\nExpired\nAuto Closed"
+                options: "\nAll\nOpen\nDraft\nIn Progress\nExpired\nCompleted\nAuto Closed"
             },
             render_input: true
         });
@@ -397,6 +383,10 @@ class ChecklistAnswerManagerPage {
         this.$btnSearch.on("click.checklist_mgr", async () => {
             this.activeGroup = "search";
             await this.load_dashboard(true);
+        });
+
+        this.$btnCreateChecklist.on("click.checklist_mgr", async () => {
+            await this.create_from_template();
         });
 
         this.$summaryCards.on("click.checklist_mgr", (e) => {
@@ -434,6 +424,50 @@ class ChecklistAnswerManagerPage {
                     this.close_drawer();
                 }
             });
+    }
+
+    async create_from_template() {
+        const template = this.template_control.get_value();
+        if (!template) {
+            frappe.msgprint({
+                title: __("Template Required"),
+                indicator: "orange",
+                message: __("Please select a template first.")
+            });
+            return;
+        }
+
+        const r = await frappe.call({
+            method: "taj_core.checklist.api.create_checklist_answer",
+            args: { template_name: template },
+            freeze: true,
+            freeze_message: __("Creating checklist...")
+        });
+
+        const message = r.message || {};
+        if (message.doc) {
+            this.doc = message.doc;
+            this.selectedDocname = message.doc.name;
+            await this.load_dashboard(false);
+            this.render_doc();
+            this.open_drawer();
+
+            frappe.show_alert({
+                message: message.notice || __("Checklist created successfully."),
+                indicator: message.reused_existing ? "orange" : "green"
+            });
+
+            if (message.reused_existing && message.open_reference) {
+                frappe.msgprint({
+                    title: __("Open Checklist Reused"),
+                    indicator: "orange",
+                    message: __(
+                        "An open checklist already exists for this template without answers. The same document was reused for the new cycle.<br><br><strong>Document:</strong> {0}<br><strong>Date:</strong> {1}",
+                        [message.open_reference.name || "-", message.open_reference.posting_date || "-"]
+                    )
+                });
+            }
+        }
     }
 
     start_auto_refresh() {
@@ -511,18 +545,6 @@ class ChecklistAnswerManagerPage {
             this.$todayRemaining.text(summary.today_remaining || 0);
             this.$todayHasIssue.text(summary.today_has_issue || 0);
 
-            const prevOpenCount = summary.prev_open || 0;
-            this.$prevOpen.text(prevOpenCount);
-
-            if (prevOpenCount > 0) {
-                this.$prevOpenCard.removeClass("d-none");
-            } else {
-                this.$prevOpenCard.addClass("d-none");
-                if (this.activeGroup === "prev_open") {
-                    this.activeGroup = "today_open";
-                }
-            }
-
             this.render_active_group();
         } catch (e) {
             frappe.msgprint({
@@ -553,7 +575,6 @@ class ChecklistAnswerManagerPage {
             today_completed: () => this.lastData?.today_completed || [],
             today_remaining: () => this.lastData?.today_remaining_docs || [],
             today_has_issue: () => this.lastData?.today_has_issue_docs || [],
-            prev_open: () => this.lastData?.prev_open_docs || [],
             search: () => this.lastData?.search_results || []
         };
     }
@@ -571,7 +592,6 @@ class ChecklistAnswerManagerPage {
             today_completed: __("Today Completed Cards"),
             today_remaining: __("Today Remaining Cards"),
             today_has_issue: __("Today Has Issue Cards"),
-            prev_open: __("Prev Open Cards"),
             search: __("Search Result Cards")
         };
         return titles[this.activeGroup] || __("Checklist Cards");
@@ -584,10 +604,32 @@ class ChecklistAnswerManagerPage {
             today_completed: __("No completed tasks today."),
             today_remaining: __("No remaining tasks today."),
             today_has_issue: __("No issue tasks today."),
-            prev_open: __("No previous open tasks."),
             search: __("No search results found.")
         };
         return emptyMap[this.activeGroup] || __("No records found.");
+    }
+
+    get_status_badge_html(status) {
+        const safeStatus = this.escape(status || "-");
+        const value = String(status || "").trim().toLowerCase();
+
+        let badgeClass = "badge badge-pill badge-light";
+
+        if (value === "completed") {
+            badgeClass = "badge badge-pill badge-success";
+        } else if (value === "draft") {
+            badgeClass = "badge badge-pill badge-secondary";
+        } else if (value === "in progress") {
+            badgeClass = "badge badge-pill badge-warning";
+        } else if (value === "auto closed") {
+            badgeClass = "badge badge-pill badge-dark";
+        } else if (value === "expired") {
+            badgeClass = "badge badge-pill badge-danger";
+        } else {
+            badgeClass = "badge badge-pill badge-info";
+        }
+
+        return `<span class="${badgeClass}">${safeStatus}</span>`;
     }
 
     render_active_group() {
@@ -612,12 +654,19 @@ class ChecklistAnswerManagerPage {
 
         const fragment = document.createDocumentFragment();
 
-        docs.forEach((doc, index) => {
+        docs.forEach((doc) => {
             const activeClass = this.selectedDocname === doc.name ? "is-active" : "";
             const issueClass = doc.has_issue ? "has-issue" : "";
             const overdueClass = doc.time_status === "Overdue" ? "is-overdue" : "";
             const timeStatus = this.escape(doc.time_status || "-");
             const delayMinutes = doc.delay_minutes != null ? doc.delay_minutes : 0;
+            const statusBadge = this.get_status_badge_html(doc.status);
+            const issueBadge = doc.has_issue
+                ? `<span class="issue-badge is-issue">${__("Has Issue")}</span>`
+                : "";
+            const previousOpenBadge = doc.is_previous_cycle_open
+                ? `<span class="issue-badge is-issue">${__("Previous Open")}</span>`
+                : "";
 
             const card = document.createElement("div");
             card.className = `checklist-list-item ${activeClass} ${issueClass} ${overdueClass}`;
@@ -632,18 +681,16 @@ class ChecklistAnswerManagerPage {
                         <div class="checklist-list-docname">${this.escape(doc.name || "-")}</div>
                     </div>
                     <div class="checklist-list-side">
-                        <span class="issue-badge ${doc.has_issue ? "is-issue" : "is-normal"}">
-                            ${doc.has_issue ? __("Has Issue") : __("Normal")}
-                        </span>
+                        ${statusBadge}
+                        ${issueBadge}
+                        ${previousOpenBadge}
                     </div>
                 </div>
 
                 <div class="checklist-list-meta">
-                    <div><strong>${__("No.")}:</strong> ${index + 1}</div>
-                    <div><strong>${__("Status")}:</strong> ${this.escape(doc.status || "-")}</div>
                     <div><strong>${__("Department")}:</strong> ${this.escape(doc.department || "-")}</div>
                     <div><strong>${__("Assigned User")}:</strong> ${this.escape(doc.assigned_user || "-")}</div>
-                    <div><strong>${__("Result")}:</strong> ${this.escape(doc.result_status || "Normal")}</div>
+                    <div><strong>${__("Taken By")}:</strong> ${this.escape(doc.taken_by || "-")}</div>
                     <div><strong>${__("Time Status")}:</strong> ${timeStatus}</div>
                     <div><strong>${__("Delay")}:</strong> ${delayMinutes} ${__("min")}</div>
                 </div>
@@ -716,8 +763,11 @@ class ChecklistAnswerManagerPage {
                         <div class="meta-line"><strong>${__("Template")}:</strong> ${this.escape(this.doc.template || "-")}</div>
                         <div class="meta-line"><strong>${__("Document")}:</strong> ${this.escape(this.doc.name || "-")}</div>
                         <div class="meta-line"><strong>${__("Posting Date")}:</strong> ${this.escape(this.doc.posting_date || "-")}</div>
+                        ${this.doc.is_previous_cycle_open ? `<div class="meta-line"><strong>${__("Open From")}:</strong> ${this.escape(this.doc.open_from_date || this.doc.posting_date || "-")}</div>` : ""}
                         <div class="meta-line"><strong>${__("Department")}:</strong> ${this.escape(this.doc.department || "-")}</div>
                         <div class="meta-line"><strong>${__("Assigned User")}:</strong> ${this.escape(this.doc.assigned_user || "-")}</div>
+                        <div class="meta-line"><strong>${__("Assignment Type")}:</strong> ${this.escape(this.doc.assignment_type || "-")}</div>
+                        <div class="meta-line"><strong>${__("Taken By")}:</strong> ${this.escape(this.doc.taken_by || "-")}</div>
                         <div class="meta-line"><strong>${__("Status")}:</strong> ${this.escape(this.doc.status || "-")}</div>
                         <div class="meta-line"><strong>${__("Result")}:</strong> ${this.escape(this.doc.result_status || "Normal")}</div>
                         <div class="meta-line"><strong>${__("Scheduled Start At")}:</strong> ${this.escape(this.doc.scheduled_start_at || "-")}</div>
@@ -789,7 +839,85 @@ class ChecklistAnswerManagerPage {
         });
 
         this.$body.append(fragment);
+        this.render_actions();
     }
+
+    render_actions() {
+        this.$actions.empty();
+
+        if (!this.doc || !this.doc.can_reassign) {
+            return;
+        }
+
+        this.$actions.html(`
+            <div class="d-flex justify-content-end flex-wrap">
+                <button class="btn btn-link text-warning btn-reassign-user">${__("Reassign User")}</button>
+                <button class="btn btn-link text-info btn-assign-team">${__("Assign To Team")}</button>
+            </div>
+        `);
+
+        this.$actions.find(".btn-reassign-user").on("click", async () => {
+            frappe.prompt(
+                [{
+                    label: __("User"),
+                    fieldname: "new_user",
+                    fieldtype: "Link",
+                    options: "User",
+                    reqd: 1,
+                    get_query: () => ({
+                        query: "taj_core.checklist.api.get_reassign_users",
+                        filters: {
+                            department: this.doc?.department || ""
+                        }
+                    })
+                }],
+                async (values) => {
+                    if (!values || !values.new_user) return;
+
+                    const r = await frappe.call({
+                        method: "taj_core.checklist.api.reassign_checklist_answer",
+                        args: {
+                            docname: this.doc.name,
+                            new_user: values.new_user
+                        },
+                        freeze: true
+                    });
+
+                    this.doc = r.message;
+                    await this.load_dashboard(false);
+                    this.render_doc();
+                    frappe.show_alert({ message: __("Checklist reassigned."), indicator: "green" });
+                },
+                __("Reassign User"),
+                __("Apply")
+            );
+        });
+
+        this.$actions.find(".btn-assign-team").on("click", async () => {
+            const r = await frappe.call({
+                method: "taj_core.checklist.api.assign_checklist_answer_to_team",
+                args: { docname: this.doc.name },
+                freeze: true
+            });
+
+            this.doc = r.message;
+            await this.load_dashboard(false);
+            this.render_doc();
+            frappe.show_alert({ message: __("Checklist assigned to team."), indicator: "green" });
+        });
+    }
+
+    get_status_badge_class(status) {
+        const value = String(status || "").trim().toLowerCase();
+
+        if (value === "completed") return "status-completed";
+        if (value === "draft") return "status-open";
+        if (value === "in progress") return "status-in-progress";
+        if (value === "auto closed") return "status-auto-closed";
+        if (value === "expired") return "status-expired";
+        return "status-default";
+    }
+
 
     get_indicator_color(status) {
         const colorMap = {
