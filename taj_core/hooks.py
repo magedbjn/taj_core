@@ -14,10 +14,19 @@ doctype_js = {
     "Job Card": "public/js/job_card.js",
 }
 
+permission_query_conditions = {
+    "Checklist Answer": "taj_core.checklist.permissions.checklist_answer_query_conditions",
+}
+
+has_permission = {
+    "Checklist Answer": "taj_core.checklist.permissions.checklist_answer_has_permission",
+}
+
 scheduler_events = {
 	"daily": [
 		"taj_core.company_documents.doctype.license.license.scheduled_status_update",
-        "taj_core.qc.doctype.supplier_qualification.supplier_qualification.update_certificate_statuses"
+        "taj_core.qc.doctype.supplier_qualification.supplier_qualification.update_certificate_statuses",
+        "taj_core.checklist.scheduler.daily_checklist_scheduler",
 	],
 }
 
