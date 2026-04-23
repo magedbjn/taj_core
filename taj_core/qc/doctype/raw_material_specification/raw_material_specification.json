@@ -298,7 +298,7 @@
    "label": "Localer"
   },
   {
-   "description": "Less than xx days",
+   "description": "The minimum acceptable remaining shelf life of the raw material at the time of receipt.",
    "fieldname": "expiry_date",
    "fieldtype": "Int",
    "label": "Expiry Date Upon Receiving In Days"
@@ -431,7 +431,7 @@
   }
  ],
  "links": [],
- "modified": "2026-04-21 14:26:34.251252",
+ "modified": "2026-04-23 11:37:50.675352",
  "modified_by": "Administrator",
  "module": "QC",
  "name": "Raw Material Specification",
