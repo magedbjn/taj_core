@@ -556,18 +556,18 @@ def _get_filling_bom_no(job_card: str, work_order: str) -> str:
         actual_pp_item = _resolve_pp_item_reference(production_plan, pp_item_ref)
         if actual_pp_item:
             bom_no = (frappe.db.get_value("Production Plan Item", actual_pp_item, "bom_no") or "").strip()
-            frappe.log_error(
-                title="Filling Area Debug",
-                message=f"job_card={job_card}\nwork_order={work_order}\nsource=Production Plan Item\nproduction_plan_item={actual_pp_item}\nbom_no={bom_no}",
-            )
+            # frappe.log_error(
+            #     title="Filling Area Debug",
+            #     message=f"job_card={job_card}\nwork_order={work_order}\nsource=Production Plan Item\nproduction_plan_item={actual_pp_item}\nbom_no={bom_no}",
+            # )
             if bom_no:
                 return bom_no
 
     bom_no = (frappe.db.get_value("Work Order", work_order, "bom_no") or "").strip()
-    frappe.log_error(
-        title="Filling Area Debug",
-        message=f"job_card={job_card}\nwork_order={work_order}\nsource=Work Order fallback\nbom_no={bom_no}",
-    )
+    # frappe.log_error(
+    #     title="Filling Area Debug",
+    #     message=f"job_card={job_card}\nwork_order={work_order}\nsource=Work Order fallback\nbom_no={bom_no}",
+    # )
     return bom_no
 
 
