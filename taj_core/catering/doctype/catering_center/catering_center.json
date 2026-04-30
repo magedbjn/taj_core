@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-04-30 11:01:19.004196",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "disabled",
+  "center_name",
+  "catering_menu",
+  "person_qty",
+  "buffet"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CTG-CC-.YY.-.##"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "center_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Center Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "catering_menu",
+   "fieldtype": "Link",
+   "label": "Catering Menu",
+   "options": "Catering Menu"
+  },
+  {
+   "fieldname": "person_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Person Qty",
+   "reqd": 1
+  },
+  {
+   "fieldname": "buffet",
+   "fieldtype": "Table",
+   "label": "Buffet",
+   "options": "Catering Center Buffet"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-30 11:03:20.220609",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Center",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

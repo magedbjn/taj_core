@@ -1,0 +1,69 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-30 10:58:59.600795",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_uy4t",
+  "amended_from",
+  "buffet",
+  "buffet_comapny",
+  "person_qty",
+  "is_closed"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_uy4t",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Catering Center Buffet",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "buffet",
+   "fieldtype": "Select",
+   "label": "Buffet",
+   "options": "Buffet 1\nBuffet 2\nBuffet 3\nBuffet 4\nBuffet 5\nBuffet 6\nBuffet 7\nBuffet 8\nBuffet 9\nBuffet 10"
+  },
+  {
+   "fieldname": "buffet_comapny",
+   "fieldtype": "Link",
+   "label": "Buffet Comapny",
+   "options": "Catering Buffet Company"
+  },
+  {
+   "fieldname": "person_qty",
+   "fieldtype": "Int",
+   "label": "Person Qty"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_closed",
+   "fieldtype": "Check",
+   "label": "Is Closed"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-30 11:03:08.799604",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Center Buffet",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

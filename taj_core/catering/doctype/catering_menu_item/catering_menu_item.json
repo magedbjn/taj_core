@@ -1,0 +1,159 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-30 10:36:05.548289",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "service_period",
+  "meal_type",
+  "row_type",
+  "section",
+  "row_id",
+  "parent_row_id",
+  "parent_row_label",
+  "item_code",
+  "item_name",
+  "item_name_arabic",
+  "new_item_name",
+  "new_item_name_arabic",
+  "qty",
+  "uom"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "meal_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Meal Type",
+   "options": "Breakfast\nLunch\nDinner",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "row_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Row Type",
+   "options": "Section\nNew Item\nItem\nSub Item",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "depends_on": "eval:doc.row_type=='Section'",
+   "fieldname": "section",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Section",
+   "mandatory_depends_on": "eval:doc.row_type=='Section'",
+   "options": "Catering Menu Section"
+  },
+  {
+   "fieldname": "row_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Row ID",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.row_type=='Sub Item'",
+   "fieldname": "parent_row_id",
+   "fieldtype": "Data",
+   "label": "Parent Row ID"
+  },
+  {
+   "fieldname": "parent_row_label",
+   "fieldtype": "Data",
+   "label": "Parent Row Label",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "depends_on": "eval:doc.row_type=='Item' || doc.row_type=='Sub Item'",
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "mandatory_depends_on": "eval:doc.row_type=='Item' || doc.row_type=='Sub Item'",
+   "options": "Item"
+  },
+  {
+   "columns": 2,
+   "depends_on": "eval:doc.row_type!='Section'",
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "item_code.item_name_arabic",
+   "fieldname": "item_name_arabic",
+   "fieldtype": "Data",
+   "label": "Item Name Arabic",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "depends_on": "eval:doc.row_type=='New Item'",
+   "fieldname": "new_item_name",
+   "fieldtype": "Data",
+   "label": "New Item Name",
+   "mandatory_depends_on": "eval:doc.row_type=='New Item'"
+  },
+  {
+   "columns": 1,
+   "depends_on": "eval:doc.row_type=='New Item'",
+   "fieldname": "new_item_name_arabic",
+   "fieldtype": "Data",
+   "label": "New Item Name Arabic",
+   "mandatory_depends_on": "eval:doc.row_type=='New Item'"
+  },
+  {
+   "columns": 1,
+   "depends_on": "eval:doc.row_type!='Section'",
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "QTY",
+   "mandatory_depends_on": "eval:doc.row_type!='Section'"
+  },
+  {
+   "columns": 1,
+   "depends_on": "eval:doc.row_type!='Section'",
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "mandatory_depends_on": "eval:doc.row_type!='Section'",
+   "options": "UOM"
+  },
+  {
+   "columns": 1,
+   "fieldname": "service_period",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Service Period",
+   "options": "Catering Service Period",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-30 12:56:16.351262",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Menu Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
