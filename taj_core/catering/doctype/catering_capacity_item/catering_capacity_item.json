@@ -9,55 +9,86 @@
   "item_code",
   "item_name",
   "item_name_arabic",
+  "column_break_bjdo",
   "workstation",
-  "capacity_person_qty",
+  "workstation_load_qty",
+  "column_break_dgie",
   "capacity_qty",
   "capacity_uom"
  ],
  "fields": [
   {
+   "columns": 1,
    "fieldname": "item_code",
    "fieldtype": "Data",
-   "label": "Item Code"
+   "in_list_view": 1,
+   "label": "Item Code",
+   "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "item_name",
    "fieldtype": "Data",
-   "label": "Item Name"
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "item_name_arabic",
    "fieldtype": "Data",
-   "label": "Item Name Arabic"
+   "in_list_view": 1,
+   "label": "Item Name Arabic",
+   "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "workstation",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Workstation",
-   "options": "Workstation"
+   "options": "Workstation",
+   "reqd": 1
   },
   {
-   "fieldname": "capacity_person_qty",
-   "fieldtype": "Int",
-   "label": "Capacity Person Qty"
-  },
-  {
+   "columns": 1,
+   "description": "Quantity contained in the selected Capacity UOM",
    "fieldname": "capacity_qty",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Capacity Qty"
   },
   {
+   "columns": 1,
    "fieldname": "capacity_uom",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Capacity UOM",
    "options": "UOM"
+  },
+  {
+   "fieldname": "column_break_dgie",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "description": "Reference quantity that this workstation can handle for this item.",
+   "fieldname": "workstation_load_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Workstation Load Qty",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_bjdo",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-30 11:05:00.322182",
+ "modified": "2026-04-30 16:09:23.835603",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Capacity Item",

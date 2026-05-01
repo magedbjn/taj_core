@@ -5,7 +5,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section"
+  "section",
+  "sort_order"
  ],
  "fields": [
   {
@@ -15,12 +16,19 @@
    "label": "Section",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sort Order",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-30 10:32:47.684357",
+ "modified": "2026-05-01 15:41:49.052143",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu Section",
@@ -42,7 +50,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "sort_field": "modified",
- "sort_order": "DESC",
+ "sort_field": "sort_order",
+ "sort_order": "ASC",
  "states": []
 }

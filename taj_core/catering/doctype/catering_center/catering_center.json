@@ -6,8 +6,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "naming_series",
   "disabled",
+  "naming_series",
+  "posting_date",
   "center_name",
   "catering_menu",
   "person_qty",
@@ -51,15 +52,22 @@
    "fieldtype": "Table",
    "label": "Buffet",
    "options": "Catering Center Buffet"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-30 11:03:20.220609",
+ "modified": "2026-04-30 22:30:42.066228",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Center",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

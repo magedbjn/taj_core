@@ -1,4 +1,13 @@
 frappe.ui.form.on("Catering Menu", {
+  setup: function (frm) {
+    // ترتيب Section عند الاختيار إذا كان عندك sort_order في Catering Menu Section
+    frm.set_query("section", "items", function () {
+      return {
+        order_by: "sort_order asc, section asc"
+      };
+    });
+  },
+
   onload: function (frm) {
     ensure_row_ids(frm);
   },
@@ -10,29 +19,18 @@ frappe.ui.form.on("Catering Menu", {
   before_save: function (frm) {
     ensure_row_ids(frm);
     auto_link_sub_items(frm);
-  },
-
-  items_add: function (frm, cdt, cdn) {
-    setTimeout(function () {
-      const row = locals[cdt][cdn];
-
-      if (!row) return;
-
-      if (!row.row_id) {
-        frappe.model.set_value(cdt, cdn, "row_id", make_row_id());
-      }
-
-      copy_previous_row_values(frm, cdt, cdn);
-
-      if (row.row_type === "Sub Item") {
-        set_parent_from_previous_item(frm, cdt, cdn);
-      }
-    }, 100);
+    validate_catering_menu_items(frm);
   }
 });
 
 
 frappe.ui.form.on("Catering Menu Item", {
+  items_add: function (frm, cdt, cdn) {
+    setTimeout(function () {
+      prepare_new_menu_row(frm, cdt, cdn);
+    }, 250);
+  },
+
   item_code: function (frm, cdt, cdn) {
     set_item_details_and_uom(frm, cdt, cdn);
   },
@@ -46,12 +44,16 @@ frappe.ui.form.on("Catering Menu Item", {
       frappe.model.set_value(cdt, cdn, "row_id", make_row_id());
     }
 
+    clear_fields_by_row_type(frm, cdt, cdn);
+
     if (row.row_type === "Sub Item") {
       set_parent_from_previous_item(frm, cdt, cdn);
     } else {
       frappe.model.set_value(cdt, cdn, "parent_row_id", "");
       frappe.model.set_value(cdt, cdn, "parent_row_label", "");
     }
+
+    focus_by_row_type(frm, cdt, cdn);
   },
 
   service_period: function (frm, cdt, cdn) {
@@ -70,6 +72,83 @@ frappe.ui.form.on("Catering Menu Item", {
     }
   }
 });
+
+
+function prepare_new_menu_row(frm, cdt, cdn) {
+  const row = locals[cdt][cdn];
+
+  if (!row) return;
+
+  if (!row.row_id) {
+    frappe.model.set_value(cdt, cdn, "row_id", make_row_id());
+  }
+
+  copy_previous_row_values_force(frm, cdt, cdn);
+
+  setTimeout(function () {
+    const updated_row = locals[cdt][cdn];
+
+    if (updated_row && updated_row.row_type === "Sub Item") {
+      set_parent_from_previous_item(frm, cdt, cdn);
+    }
+
+    focus_by_row_type(frm, cdt, cdn);
+  }, 500);
+}
+
+
+function copy_previous_row_values_force(frm, cdt, cdn) {
+  const current_row = locals[cdt][cdn];
+
+  if (!current_row) return;
+
+  const previous_row = get_previous_row_by_idx(frm, current_row);
+
+  if (!previous_row) return;
+
+  // ينسخ دائمًا من السطر السابق حتى لو السطر الجديد فيه قيم افتراضية
+  frappe.model.set_value(cdt, cdn, "service_period", previous_row.service_period || "");
+  frappe.model.set_value(cdt, cdn, "meal_type", previous_row.meal_type || "");
+  frappe.model.set_value(cdt, cdn, "row_type", previous_row.row_type || "");
+
+  // إذا السطر السابق Sub Item، السطر الجديد يكون تابع لنفس الأب
+  if (previous_row.row_type === "Sub Item") {
+    frappe.model.set_value(cdt, cdn, "parent_row_id", previous_row.parent_row_id || "");
+    frappe.model.set_value(cdt, cdn, "parent_row_label", previous_row.parent_row_label || "");
+  } else {
+    frappe.model.set_value(cdt, cdn, "parent_row_id", "");
+    frappe.model.set_value(cdt, cdn, "parent_row_label", "");
+  }
+
+  // لا ننسخ بيانات الصنف نفسه
+  frappe.model.set_value(cdt, cdn, "section", "");
+  frappe.model.set_value(cdt, cdn, "item_code", "");
+  frappe.model.set_value(cdt, cdn, "item_name", "");
+  frappe.model.set_value(cdt, cdn, "item_name_arabic", "");
+  frappe.model.set_value(cdt, cdn, "new_item_name", "");
+  frappe.model.set_value(cdt, cdn, "new_item_name_arabic", "");
+  frappe.model.set_value(cdt, cdn, "qty", "");
+  frappe.model.set_value(cdt, cdn, "uom", "");
+
+  frm.refresh_field("items");
+}
+
+
+function get_previous_row_by_idx(frm, current_row) {
+  const rows = (frm.doc.items || [])
+    .slice()
+    .sort(function (a, b) {
+      return a.idx - b.idx;
+    });
+
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].name === current_row.name && i > 0) {
+      return rows[i - 1];
+    }
+  }
+
+  return null;
+}
 
 
 function set_item_details_and_uom(frm, cdt, cdn) {
@@ -100,47 +179,35 @@ function set_item_details_and_uom(frm, cdt, cdn) {
 }
 
 
-function copy_previous_row_values(frm, cdt, cdn) {
-  const current_row = locals[cdt][cdn];
+function clear_fields_by_row_type(frm, cdt, cdn) {
+  const row = locals[cdt][cdn];
 
-  if (!current_row || !frm.doc.items || frm.doc.items.length <= 1) {
-    return;
+  if (!row) return;
+
+  if (row.row_type === "Section") {
+    frappe.model.set_value(cdt, cdn, "item_code", "");
+    frappe.model.set_value(cdt, cdn, "item_name", "");
+    frappe.model.set_value(cdt, cdn, "item_name_arabic", "");
+    frappe.model.set_value(cdt, cdn, "new_item_name", "");
+    frappe.model.set_value(cdt, cdn, "new_item_name_arabic", "");
+    frappe.model.set_value(cdt, cdn, "qty", "");
+    frappe.model.set_value(cdt, cdn, "uom", "");
+    frappe.model.set_value(cdt, cdn, "parent_row_id", "");
+    frappe.model.set_value(cdt, cdn, "parent_row_label", "");
   }
 
-  const previous_row = frm.doc.items.find(function (row) {
-    return row.idx === current_row.idx - 1;
-  });
-
-  if (!previous_row) return;
-
-  const fields_to_copy = [
-    "service_period",
-    "meal_type",
-    "row_type"
-  ];
-
-  fields_to_copy.forEach(function (fieldname) {
-    if (previous_row[fieldname]) {
-      frappe.model.set_value(cdt, cdn, fieldname, previous_row[fieldname]);
-    }
-  });
-
-  // إذا السطر السابق Sub Item، السطر الجديد يكون تابع لنفس الأب
-  if (previous_row.row_type === "Sub Item") {
-    frappe.model.set_value(cdt, cdn, "parent_row_id", previous_row.parent_row_id || "");
-    frappe.model.set_value(cdt, cdn, "parent_row_label", previous_row.parent_row_label || "");
+  if (row.row_type === "Item" || row.row_type === "Sub Item") {
+    frappe.model.set_value(cdt, cdn, "section", "");
+    frappe.model.set_value(cdt, cdn, "new_item_name", "");
+    frappe.model.set_value(cdt, cdn, "new_item_name_arabic", "");
   }
 
-  // لا تنسخ بيانات الصنف نفسه
-  frappe.model.set_value(cdt, cdn, "item_code", "");
-  frappe.model.set_value(cdt, cdn, "item_name", "");
-  frappe.model.set_value(cdt, cdn, "item_name_arabic", "");
-  frappe.model.set_value(cdt, cdn, "new_item_name", "");
-  frappe.model.set_value(cdt, cdn, "new_item_name_arabic", "");
-  frappe.model.set_value(cdt, cdn, "qty", "");
-  frappe.model.set_value(cdt, cdn, "uom", "");
-
-  frm.refresh_field("items");
+  if (row.row_type === "New Item") {
+    frappe.model.set_value(cdt, cdn, "section", "");
+    frappe.model.set_value(cdt, cdn, "item_code", "");
+    frappe.model.set_value(cdt, cdn, "item_name", "");
+    frappe.model.set_value(cdt, cdn, "item_name_arabic", "");
+  }
 }
 
 
@@ -198,6 +265,7 @@ function set_parent_from_previous_item(frm, cdt, cdn) {
       break;
     }
 
+    // لا يربط Sub Item مع صنف فوق Section مختلف داخل نفس الفترة والوجبة
     if (same_period && same_meal && row.row_type === "Section") {
       break;
     }
@@ -237,6 +305,153 @@ function auto_link_sub_items(frm) {
   (frm.doc.items || []).forEach(function (row) {
     if (row.row_type === "Sub Item" && !row.parent_row_id) {
       set_parent_from_previous_item(frm, row.doctype, row.name);
+    }
+  });
+}
+
+
+function focus_by_row_type(frm, cdt, cdn) {
+  const row = locals[cdt][cdn];
+
+  if (!row) return;
+
+  let fieldname = "";
+
+  if (row.row_type === "Section") {
+    fieldname = "section";
+  } else if (row.row_type === "Item" || row.row_type === "Sub Item") {
+    fieldname = "item_code";
+  } else if (row.row_type === "New Item") {
+    fieldname = "new_item_name";
+  }
+
+  if (!fieldname) return;
+
+  focus_child_table_field(frm, "items", cdn, fieldname);
+}
+
+
+function focus_child_table_field(frm, table_fieldname, cdn, fieldname) {
+  setTimeout(function () {
+    const grid = frm.fields_dict[table_fieldname] && frm.fields_dict[table_fieldname].grid;
+
+    if (!grid) return;
+
+    const grid_row = grid.grid_rows_by_docname[cdn];
+
+    if (!grid_row) return;
+
+    // تحديث الصف حتى تظهر الحقول حسب depends_on بعد تغيير Row Type
+    if (grid_row.refresh) {
+      grid_row.refresh();
+    }
+
+    setTimeout(function () {
+      let focused = false;
+
+      // الطريقة الأولى: Editable Grid Columns
+      if (
+        grid_row.columns &&
+        grid_row.columns[fieldname] &&
+        grid_row.columns[fieldname].field &&
+        grid_row.columns[fieldname].field.$input
+      ) {
+        const $input = grid_row.columns[fieldname].field.$input;
+
+        if ($input && $input.length) {
+          $input.focus();
+          if ($input.select) {
+            $input.select();
+          }
+          focused = true;
+        }
+      }
+
+      if (focused) return;
+
+      // الطريقة الثانية: البحث داخل DOM للصف
+      if (grid_row.row) {
+        const $cell = grid_row.row.find('[data-fieldname="' + fieldname + '"]');
+        const $input = $cell.find("input:visible, textarea:visible, select:visible").first();
+
+        if ($input && $input.length) {
+          $input.focus();
+          if ($input.select) {
+            $input.select();
+          }
+          focused = true;
+        }
+      }
+
+      if (focused) return;
+
+      // الطريقة الثالثة: فتح Grid Form والتركيز على الحقل
+      if (grid_row.toggle_view) {
+        grid_row.toggle_view(true);
+
+        setTimeout(function () {
+          if (
+            grid_row.grid_form &&
+            grid_row.grid_form.fields_dict &&
+            grid_row.grid_form.fields_dict[fieldname]
+          ) {
+            const field = grid_row.grid_form.fields_dict[fieldname];
+
+            if (field.$input && field.$input.length) {
+              field.$input.focus();
+
+              if (field.$input.select) {
+                field.$input.select();
+              }
+            }
+          }
+        }, 200);
+      }
+    }, 200);
+  }, 250);
+}
+
+
+function validate_catering_menu_items(frm) {
+  (frm.doc.items || []).forEach(function (row) {
+    if (!row.service_period) {
+      frappe.throw(__("Row #{0}: Service Period is required.", [row.idx]));
+    }
+
+    if (!row.meal_type) {
+      frappe.throw(__("Row #{0}: Meal Type is required.", [row.idx]));
+    }
+
+    if (!row.row_type) {
+      frappe.throw(__("Row #{0}: Row Type is required.", [row.idx]));
+    }
+
+    if (row.row_type === "Section" && !row.section) {
+      frappe.throw(__("Row #{0}: Section is required.", [row.idx]));
+    }
+
+    if ((row.row_type === "Item" || row.row_type === "Sub Item") && !row.item_code) {
+      frappe.throw(__("Row #{0}: Item Code is required for {1}.", [row.idx, row.row_type]));
+    }
+
+    if (row.row_type === "New Item") {
+      if (!row.new_item_name || !row.new_item_name_arabic) {
+        frappe.throw(__("Row #{0}: New Item Name and New Item Name Arabic are required.", [row.idx]));
+      }
+    }
+
+    if (row.row_type !== "Section") {
+      if (!row.qty) {
+        frappe.throw(__("Row #{0}: QTY is required.", [row.idx]));
+      }
+
+      if (!row.uom) {
+        frappe.throw(__("Row #{0}: UOM is required.", [row.idx]));
+      }
+    }
+
+    if (row.row_type === "Sub Item" && !row.parent_row_id) {
+      frappe.throw(__("Row #{0}: Sub Item must be linked to a parent Item or New Item.", [row.idx]));
     }
   });
 }

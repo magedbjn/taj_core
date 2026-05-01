@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "posting_date",
   "items",
   "total_person_qty"
  ],
@@ -27,12 +28,18 @@
    "fieldname": "total_person_qty",
    "fieldtype": "Int",
    "label": "Total Person Qty"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-30 12:31:54.151302",
+ "modified": "2026-04-30 22:32:01.688166",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Buffet Requirement",
