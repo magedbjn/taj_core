@@ -19,7 +19,8 @@
   "new_item_name",
   "new_item_name_arabic",
   "qty",
-  "uom"
+  "uom",
+  "is_show_print"
  ],
  "fields": [
   {
@@ -28,7 +29,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Meal Type",
-   "options": "Breakfast\nLunch\nDinner",
+   "options": "Breakfast\nLunch\nDinner\nDisposable",
    "reqd": 1
   },
   {
@@ -139,13 +140,19 @@
    "label": "Service Period",
    "options": "Catering Service Period",
    "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_show_print",
+   "fieldtype": "Check",
+   "label": "Is Show Print"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-30 12:56:16.351262",
+ "modified": "2026-05-02 16:23:33.605291",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu Item",
