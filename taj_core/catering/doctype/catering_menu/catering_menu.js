@@ -1,13 +1,4 @@
 frappe.ui.form.on("Catering Menu", {
-  setup: function (frm) {
-    // ترتيب Section عند الاختيار إذا كان عندك sort_order في Catering Menu Section
-    frm.set_query("section", "items", function () {
-      return {
-        order_by: "sort_order asc, section asc"
-      };
-    });
-  },
-
   onload: function (frm) {
     ensure_row_ids(frm);
   },
@@ -106,12 +97,10 @@ function copy_previous_row_values_force(frm, cdt, cdn) {
 
   if (!previous_row) return;
 
-  // ينسخ دائمًا من السطر السابق حتى لو السطر الجديد فيه قيم افتراضية
   frappe.model.set_value(cdt, cdn, "service_period", previous_row.service_period || "");
   frappe.model.set_value(cdt, cdn, "meal_type", previous_row.meal_type || "");
   frappe.model.set_value(cdt, cdn, "row_type", previous_row.row_type || "");
 
-  // إذا السطر السابق Sub Item، السطر الجديد يكون تابع لنفس الأب
   if (previous_row.row_type === "Sub Item") {
     frappe.model.set_value(cdt, cdn, "parent_row_id", previous_row.parent_row_id || "");
     frappe.model.set_value(cdt, cdn, "parent_row_label", previous_row.parent_row_label || "");
@@ -120,7 +109,6 @@ function copy_previous_row_values_force(frm, cdt, cdn) {
     frappe.model.set_value(cdt, cdn, "parent_row_label", "");
   }
 
-  // لا ننسخ بيانات الصنف نفسه
   frappe.model.set_value(cdt, cdn, "section", "");
   frappe.model.set_value(cdt, cdn, "item_code", "");
   frappe.model.set_value(cdt, cdn, "item_name", "");
@@ -129,6 +117,10 @@ function copy_previous_row_values_force(frm, cdt, cdn) {
   frappe.model.set_value(cdt, cdn, "new_item_name_arabic", "");
   frappe.model.set_value(cdt, cdn, "qty", "");
   frappe.model.set_value(cdt, cdn, "uom", "");
+
+  if (!current_row.is_show_print) {
+    frappe.model.set_value(cdt, cdn, "is_show_print", 1);
+  }
 
   frm.refresh_field("items");
 }
@@ -151,12 +143,39 @@ function get_previous_row_by_idx(frm, current_row) {
 }
 
 
+// function set_item_details_and_uom(frm, cdt, cdn) {
+//   const row = locals[cdt][cdn];
+
+//   if (!row || !row.item_code) {
+//     frappe.model.set_value(cdt, cdn, "item_name", "");
+//     frappe.model.set_value(cdt, cdn, "item_name_arabic", "");
+//     frappe.model.set_value(cdt, cdn, "uom", "");
+//     return;
+//   }
+
+//   frappe.db.get_value(
+//     "Item",
+//     row.item_code,
+//     ["item_name", "item_name_arabic", "stock_uom"]
+//   ).then(function (r) {
+//     const values = r.message || {};
+
+//     frappe.model.set_value(cdt, cdn, "item_name", values.item_name || "");
+//     frappe.model.set_value(cdt, cdn, "item_name_arabic", values.item_name_arabic || "");
+
+//     if (values.stock_uom) {
+//       frappe.model.set_value(cdt, cdn, "uom", values.stock_uom);
+//     }
+//   });
+// }
+
 function set_item_details_and_uom(frm, cdt, cdn) {
   const row = locals[cdt][cdn];
 
   if (!row || !row.item_code) {
     frappe.model.set_value(cdt, cdn, "item_name", "");
     frappe.model.set_value(cdt, cdn, "item_name_arabic", "");
+    frappe.model.set_value(cdt, cdn, "qty", "");
     frappe.model.set_value(cdt, cdn, "uom", "");
     return;
   }
@@ -164,20 +183,36 @@ function set_item_details_and_uom(frm, cdt, cdn) {
   frappe.db.get_value(
     "Item",
     row.item_code,
-    ["item_name", "item_name_arabic", "stock_uom"],
-    function (r) {
-      if (!r) return;
+    ["item_name", "item_name_arabic", "stock_uom"]
+  ).then(function (r) {
+    const item = r.message || {};
 
-      frappe.model.set_value(cdt, cdn, "item_name", r.item_name || "");
-      frappe.model.set_value(cdt, cdn, "item_name_arabic", r.item_name_arabic || "");
+    frappe.model.set_value(cdt, cdn, "item_name", item.item_name || "");
+    frappe.model.set_value(cdt, cdn, "item_name_arabic", item.item_name_arabic || "");
 
-      if (r.stock_uom) {
-        frappe.model.set_value(cdt, cdn, "uom", r.stock_uom);
-      }
+    if (item.stock_uom) {
+      frappe.model.set_value(cdt, cdn, "uom", item.stock_uom);
     }
-  );
-}
 
+    return frappe.db.get_value(
+      "Catering Items",
+      {
+        item_code: row.item_code
+      },
+      ["qty", "uom"]
+    );
+  }).then(function (r) {
+    const catering_item = r.message || {};
+
+    if (catering_item.qty) {
+      frappe.model.set_value(cdt, cdn, "qty", catering_item.qty);
+    }
+
+    if (catering_item.uom) {
+      frappe.model.set_value(cdt, cdn, "uom", catering_item.uom);
+    }
+  });
+}
 
 function clear_fields_by_row_type(frm, cdt, cdn) {
   const row = locals[cdt][cdn];
@@ -229,6 +264,11 @@ function ensure_row_ids(frm) {
       row.row_id = make_row_id();
       changed = true;
     }
+
+    if (row.is_show_print === undefined || row.is_show_print === null) {
+      row.is_show_print = 1;
+      changed = true;
+    }
   });
 
   if (changed) {
@@ -265,7 +305,6 @@ function set_parent_from_previous_item(frm, cdt, cdn) {
       break;
     }
 
-    // لا يربط Sub Item مع صنف فوق Section مختلف داخل نفس الفترة والوجبة
     if (same_period && same_meal && row.row_type === "Section") {
       break;
     }
@@ -341,7 +380,6 @@ function focus_child_table_field(frm, table_fieldname, cdn, fieldname) {
 
     if (!grid_row) return;
 
-    // تحديث الصف حتى تظهر الحقول حسب depends_on بعد تغيير Row Type
     if (grid_row.refresh) {
       grid_row.refresh();
     }
@@ -349,7 +387,6 @@ function focus_child_table_field(frm, table_fieldname, cdn, fieldname) {
     setTimeout(function () {
       let focused = false;
 
-      // الطريقة الأولى: Editable Grid Columns
       if (
         grid_row.columns &&
         grid_row.columns[fieldname] &&
@@ -360,32 +397,34 @@ function focus_child_table_field(frm, table_fieldname, cdn, fieldname) {
 
         if ($input && $input.length) {
           $input.focus();
+
           if ($input.select) {
             $input.select();
           }
+
           focused = true;
         }
       }
 
       if (focused) return;
 
-      // الطريقة الثانية: البحث داخل DOM للصف
       if (grid_row.row) {
         const $cell = grid_row.row.find('[data-fieldname="' + fieldname + '"]');
         const $input = $cell.find("input:visible, textarea:visible, select:visible").first();
 
         if ($input && $input.length) {
           $input.focus();
+
           if ($input.select) {
             $input.select();
           }
+
           focused = true;
         }
       }
 
       if (focused) return;
 
-      // الطريقة الثالثة: فتح Grid Form والتركيز على الحقل
       if (grid_row.toggle_view) {
         grid_row.toggle_view(true);
 

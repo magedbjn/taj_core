@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
  "creation": "2026-04-30 10:33:23.790867",
@@ -85,7 +86,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-04-30 13:12:03.712593",
+ "modified": "2026-05-03 10:22:19.738642",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu",

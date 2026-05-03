@@ -6,8 +6,9 @@ frappe.ui.form.on("Catering Capacity", {
   },
 
   before_save: function (frm) {
-    remove_zero_capacity_rows(frm);
+    remove_empty_capacity_rows(frm);
     validate_unique_capacity_items(frm);
+    validate_capacity_rows(frm);
   }
 });
 
@@ -24,11 +25,11 @@ function get_items_from_catering_menus(frm) {
         return;
       }
 
-      const table_fieldname = "items";
       const existing_keys = {};
 
-      (frm.doc[table_fieldname] || []).forEach(function (row) {
+      (frm.doc.items || []).forEach(function (row) {
         const key = get_capacity_item_key(row);
+
         if (key) {
           existing_keys[key] = true;
         }
@@ -37,26 +38,24 @@ function get_items_from_catering_menus(frm) {
       let added_count = 0;
       let skipped_count = 0;
 
-      r.message.forEach(function (source_row) {
+      (r.message || []).forEach(function (source_row) {
         const key = get_capacity_item_key(source_row);
 
-        if (!key) {
-          return;
-        }
+        if (!key) return;
 
         if (existing_keys[key]) {
           skipped_count++;
           return;
         }
 
-        const child = frm.add_child(table_fieldname);
+        const child = frm.add_child("items");
 
-        child.item = source_row.item || "";
+        child.item_code = source_row.item_code || "";
         child.item_name = source_row.item_name || "";
         child.item_name_arabic = source_row.item_name_arabic || "";
 
         child.workstation = "";
-        child.capacity_person_qty = 0;
+        child.workstation_load_qty = 0;
         child.capacity_qty = 0;
         child.capacity_uom = "Basket";
 
@@ -64,7 +63,7 @@ function get_items_from_catering_menus(frm) {
         added_count++;
       });
 
-      frm.refresh_field(table_fieldname);
+      frm.refresh_field("items");
 
       frappe.msgprint(
         __("Added {0} new item(s). Skipped {1} existing item(s).", [
@@ -78,8 +77,8 @@ function get_items_from_catering_menus(frm) {
 
 
 function get_capacity_item_key(row) {
-  if (row.item) {
-    return "ITEM::" + String(row.item).trim();
+  if (row.item_code) {
+    return "ITEM::" + String(row.item_code).trim();
   }
 
   if (row.item_name || row.item_name_arabic) {
@@ -95,7 +94,7 @@ function get_capacity_item_key(row) {
 }
 
 
-function remove_zero_capacity_rows(frm) {
+function remove_empty_capacity_rows(frm) {
   if (!frm.doc.items || !frm.doc.items.length) {
     return;
   }
@@ -104,8 +103,10 @@ function remove_zero_capacity_rows(frm) {
 
   frm.doc.items = frm.doc.items.filter(function (row) {
     return (
-      Number(row.capacity_person_qty || 0) > 0 &&
-      Number(row.capacity_qty || 0) > 0
+      Number(row.workstation_load_qty || 0) > 0 ||
+      Number(row.capacity_qty || 0) > 0 ||
+      row.workstation ||
+      row.capacity_uom
     );
   });
 
@@ -119,7 +120,7 @@ function remove_zero_capacity_rows(frm) {
     frm.refresh_field("items");
 
     frappe.show_alert({
-      message: __("Removed {0} row(s) with empty capacity.", [removed_count]),
+      message: __("Removed {0} empty capacity row(s).", [removed_count]),
       indicator: "orange"
     });
   }
@@ -132,19 +133,42 @@ function validate_unique_capacity_items(frm) {
   (frm.doc.items || []).forEach(function (row) {
     const key = get_capacity_item_key(row);
 
-    if (!key) {
-      return;
-    }
+    if (!key) return;
 
     if (seen[key]) {
       frappe.throw(
         __("Duplicate item in Catering Capacity at row #{0}: {1}", [
           row.idx,
-          row.item_name || row.item_name_arabic || row.item
+          row.item_name || row.item_name_arabic || row.item_code
         ])
       );
     }
 
     seen[key] = true;
+  });
+}
+
+
+function validate_capacity_rows(frm) {
+  (frm.doc.items || []).forEach(function (row) {
+    const has_item = row.item_code || row.item_name || row.item_name_arabic;
+
+    if (!has_item) return;
+
+    if (!row.workstation) {
+      frappe.throw(__("Row #{0}: Workstation is required.", [row.idx]));
+    }
+
+    if (Number(row.workstation_load_qty || 0) <= 0) {
+      frappe.throw(__("Row #{0}: Workstation Load Qty must be greater than zero.", [row.idx]));
+    }
+
+    if (Number(row.capacity_qty || 0) <= 0) {
+      frappe.throw(__("Row #{0}: Capacity Qty must be greater than zero.", [row.idx]));
+    }
+
+    if (!row.capacity_uom) {
+      frappe.throw(__("Row #{0}: Capacity UOM is required.", [row.idx]));
+    }
   });
 }

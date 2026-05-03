@@ -8,15 +8,27 @@
  "field_order": [
   "naming_series",
   "posting_date",
-  "items",
-  "total_person_qty"
+  "total_person_qty",
+  "section_break_buqn",
+  "buffets",
+  "section_break_ighd",
+  "filter_service_period",
+  "filter_meal_type",
+  "column_break_qqwf",
+  "filter_buffet",
+  "get_filtered_requirements",
+  "section_break_wdjp",
+  "items"
  ],
  "fields": [
   {
+   "default": "CTG-BR-.YY.-.##",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Naming Series",
-   "options": "CTG-BR-.YY.-.##"
+   "options": "CTG-BR-.YY.-.##",
+   "reqd": 1
   },
   {
    "fieldname": "items",
@@ -34,12 +46,60 @@
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_buqn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_ighd",
+   "fieldtype": "Section Break",
+   "label": "Filter Section"
+  },
+  {
+   "fieldname": "buffets",
+   "fieldtype": "Table",
+   "label": "Buffets",
+   "options": "Catering Buffet Requirement Buffet"
+  },
+  {
+   "fieldname": "filter_service_period",
+   "fieldtype": "Link",
+   "label": "Filter Service Period",
+   "options": "Catering Service Period"
+  },
+  {
+   "fieldname": "filter_meal_type",
+   "fieldtype": "Select",
+   "label": "Filter Meal Type",
+   "options": "\nBreakfast\nLunch\nDinner"
+  },
+  {
+   "fieldname": "column_break_qqwf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "filter_buffet",
+   "fieldtype": "Select",
+   "label": "Buffet",
+   "options": "\nBuffet 1\nBuffet 2\nBuffet 3\nBuffet 4\nBuffet 5\nBuffet 6\nBuffet 7\nBuffet 8\nBuffet 9\nBuffet 10"
+  },
+  {
+   "fieldname": "get_filtered_requirements",
+   "fieldtype": "Button",
+   "label": "Get Filtered Requirements"
+  },
+  {
+   "fieldname": "section_break_wdjp",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-30 22:32:01.688166",
+ "modified": "2026-05-03 11:10:24.457412",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Buffet Requirement",

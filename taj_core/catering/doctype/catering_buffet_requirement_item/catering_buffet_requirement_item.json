@@ -30,7 +30,7 @@
   "uom",
   "is_closed",
   "workstation",
-  "capacity_person_qty",
+  "workstation_load_qty",
   "cooking_runs",
   "capacity_qty",
   "capacity_uom",
@@ -54,17 +54,18 @@
   {
    "fieldname": "catering_menu",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Catering Menu",
    "options": "Catering Menu"
   },
   {
+   "columns": 1,
    "fieldname": "buffet",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Buffet"
   },
   {
+   "columns": 1,
    "fieldname": "buffet_company",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -72,6 +73,7 @@
    "options": "Catering Buffet Company"
   },
   {
+   "columns": 1,
    "fieldname": "person_qty",
    "fieldtype": "Float",
    "label": "Person Qty"
@@ -167,11 +169,6 @@
    "options": "Workstation"
   },
   {
-   "fieldname": "capacity_person_qty",
-   "fieldtype": "Int",
-   "label": "Capacity Person Qty"
-  },
-  {
    "fieldname": "cooking_runs",
    "fieldtype": "Int",
    "label": "Cooking Runs"
@@ -202,13 +199,18 @@
    "fieldtype": "Link",
    "label": "Service Period",
    "options": "Catering Service Period"
+  },
+  {
+   "fieldname": "workstation_load_qty",
+   "fieldtype": "Int",
+   "label": "Workstation Load Qty"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-30 22:32:38.250697",
+ "modified": "2026-05-03 10:25:00.166916",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Buffet Requirement Item",

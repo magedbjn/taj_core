@@ -20,10 +20,10 @@
   {
    "columns": 1,
    "fieldname": "item_code",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Item Code",
-   "read_only": 1
+   "options": "Item"
   },
   {
    "columns": 2,
@@ -47,8 +47,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Workstation",
-   "options": "Workstation",
-   "reqd": 1
+   "options": "Workstation"
   },
   {
    "columns": 1,
@@ -88,7 +87,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-30 16:09:23.835603",
+ "modified": "2026-05-03 10:51:34.018161",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Capacity Item",

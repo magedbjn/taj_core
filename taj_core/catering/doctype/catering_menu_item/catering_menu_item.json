@@ -29,7 +29,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Meal Type",
-   "options": "Breakfast\nLunch\nDinner\nDisposable",
+   "options": "Breakfast\nLunch\nDinner",
    "reqd": 1
   },
   {
@@ -142,6 +142,7 @@
    "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "default": "1",
    "fieldname": "is_show_print",
    "fieldtype": "Check",
@@ -152,7 +153,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-02 16:23:33.605291",
+ "modified": "2026-05-03 09:49:53.811590",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu Item",
