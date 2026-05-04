@@ -4,19 +4,7 @@ frappe.ui.form.on("Catering Buffet Requirement", {
   },
 
   refresh: function (frm) {
-    frm.add_custom_button(__("Get Buffet Plan"), function () {
-      do_get_buffet_plan(frm);
-    });
-
-    frm.add_custom_button(__("Get Filtered Requirements"), function () {
-      do_get_filtered_requirements(frm);
-    });
-
-    frm.add_custom_button(__("Get All Requirements"), function () {
-      clear_requirement_filters(frm);
-      do_get_filtered_requirements(frm);
-    });
-
+    add_catering_action_buttons(frm);
     calculate_total_person_qty(frm);
   },
 
@@ -24,44 +12,136 @@ frappe.ui.form.on("Catering Buffet Requirement", {
     calculate_total_person_qty(frm);
   },
 
-  // إذا عندك Button Field اسمه get_buffet_plan
+  // Button Field: get_buffet_plan
   get_buffet_plan: function (frm) {
     do_get_buffet_plan(frm);
   },
 
-  // إذا عندك Button Field اسمه get_filtered_requirements
+  // Button Field: get_filtered_requirements
   get_filtered_requirements: function (frm) {
     do_get_filtered_requirements(frm);
   },
 
-  // إذا عندك Button Field اسمه get_buffet_requirements
+  // Button Field: get_buffet_requirements
   get_buffet_requirements: function (frm) {
     do_get_filtered_requirements(frm);
-  }
+  },
+
+  filter_service_period: function (frm) {
+    show_filter_summary(frm);
+  },
+
+  filter_meal_type: function (frm) {
+    show_filter_summary(frm);
+  },
+
+  filter_buffet: function (frm) {
+    show_filter_summary(frm);
+  },
+
+  filter_catering_center: function (frm) {
+    show_filter_summary(frm);
+  },
 });
 
 
 frappe.ui.form.on("Catering Buffet Requirement Buffet", {
-  person_qty: function (frm, cdt, cdn) {
+  person_qty: function (frm) {
     calculate_total_person_qty(frm);
   },
 
-  is_closed: function (frm, cdt, cdn) {
+  is_closed: function (frm) {
+    calculate_total_person_qty(frm);
+  },
+
+  buffets_add: function (frm) {
+    calculate_total_person_qty(frm);
+  },
+
+  buffets_remove: function (frm) {
     calculate_total_person_qty(frm);
   }
 });
 
 
+function add_catering_action_buttons(frm) {
+  const service_plan_group = __("Service Plan");
+  const requirements_group = __("Requirements");
+
+  frm.add_custom_button(__("Get Service Plan"), function () {
+    do_get_buffet_plan(frm);
+  }, service_plan_group);
+
+  frm.add_custom_button(__("Clear Service Plan"), function () {
+    clear_service_plan(frm);
+  }, service_plan_group);
+
+  frm.add_custom_button(__("Get Filtered Requirements"), function () {
+    do_get_filtered_requirements(frm);
+  }, requirements_group);
+
+  frm.add_custom_button(__("Get All Requirements"), function () {
+    clear_requirement_filters(frm);
+    do_get_filtered_requirements(frm);
+  }, requirements_group);
+
+  frm.add_custom_button(__("Clear Items"), function () {
+    clear_items(frm);
+  }, requirements_group);
+
+  if (frm.page && frm.page.set_inner_btn_group_as_primary) {
+    frm.page.set_inner_btn_group_as_primary(service_plan_group);
+  }
+}
+
+
 function calculate_total_person_qty(frm) {
-  let total_person_qty = 0;
+  /*
+    Total Person Qty يجب أن يحسب عدد المركز مرة واحدة فقط.
+    لا يجمع كل Service Period ولا كل Meal Type.
+  */
+
+  const center_map = {};
 
   (frm.doc.buffets || []).forEach(function (row) {
-    if (!row.is_closed) {
-      total_person_qty += Number(row.person_qty || 0);
+    if (row.is_closed) return;
+
+    if (row.catering_center) {
+      center_map[row.catering_center] = true;
     }
   });
 
-  frm.set_value("total_person_qty", total_person_qty);
+  const centers = Object.keys(center_map);
+
+  if (!centers.length) {
+    frm.set_value("total_person_qty", 0);
+    return;
+  }
+
+  let request_id = Date.now();
+  frm.__total_person_qty_request_id = request_id;
+
+  let total = 0;
+  let completed = 0;
+
+  centers.forEach(function (center_name) {
+    frappe.db.get_value("Catering Center", center_name, "person_qty")
+      .then(function (r) {
+        if (frm.__total_person_qty_request_id !== request_id) return;
+
+        const value = r.message ? Number(r.message.person_qty || 0) : 0;
+        total += value;
+      })
+      .finally(function () {
+        if (frm.__total_person_qty_request_id !== request_id) return;
+
+        completed++;
+
+        if (completed === centers.length) {
+          frm.set_value("total_person_qty", total);
+        }
+      });
+  });
 }
 
 
@@ -70,27 +150,34 @@ function do_get_buffet_plan(frm) {
     method:
       "taj_core.catering.doctype.catering_buffet_requirement.catering_buffet_requirement.get_buffet_plan",
     freeze: true,
-    freeze_message: __("Getting buffet plan..."),
+    freeze_message: __("Getting service plan..."),
     callback: function (r) {
       if (!r.message) {
         frappe.msgprint(__("No response from server."));
         return;
       }
 
-      if (!r.message.length) {
-        frappe.msgprint(__("No buffet plan found. Please check Catering Centers and Menus."));
+      const rows = Array.isArray(r.message) ? r.message : (r.message.rows || []);
+      const total_person_qty = Array.isArray(r.message)
+        ? 0
+        : Number(r.message.total_person_qty || 0);
+
+      if (!rows.length) {
+        frappe.msgprint(__("No service plan found. Please check Catering Centers and Menus."));
         return;
       }
 
-      const existing_map = get_existing_buffet_map(frm);
+      const existing_map = get_existing_service_plan_map(frm);
 
       frm.clear_table("buffets");
 
-      (r.message || []).forEach(function (source_row) {
-        const key = get_buffet_key(source_row);
+      rows.forEach(function (source_row) {
+        const key = get_service_plan_key(source_row);
         const existing = existing_map[key] || {};
 
         const child = frm.add_child("buffets");
+
+        set_child_value(child, "plan_type", source_row.plan_type || "");
 
         child.service_period = source_row.service_period || "";
         child.meal_type = source_row.meal_type || "";
@@ -103,23 +190,25 @@ function do_get_buffet_plan(frm) {
         child.person_qty =
           existing.person_qty !== undefined && existing.person_qty !== null
             ? existing.person_qty
-            : source_row.person_qty || 0;
+            : Number(source_row.person_qty || 0);
 
         child.is_closed =
           existing.is_closed !== undefined && existing.is_closed !== null
             ? existing.is_closed
-            : source_row.is_closed || 0;
+            : Number(source_row.is_closed || 0);
       });
 
+      frm.set_value("total_person_qty", total_person_qty);
       frm.refresh_field("buffets");
-      calculate_total_person_qty(frm);
 
-      frappe.msgprint(
-        __("Buffet plan updated. Rows generated: {0}", [r.message.length])
-      );
+      frappe.msgprint({
+        title: __("Service Plan Updated"),
+        message: __("Rows generated: {0}", [rows.length]),
+        indicator: "green"
+      });
     },
     error: function () {
-      frappe.msgprint(__("Error while getting buffet plan. Please check server logs."));
+      frappe.msgprint(__("Error while getting service plan. Please check server logs."));
     }
   });
 }
@@ -127,7 +216,7 @@ function do_get_buffet_plan(frm) {
 
 function do_get_filtered_requirements(frm) {
   if (!frm.doc.buffets || !frm.doc.buffets.length) {
-    frappe.msgprint(__("Please click Get Buffet Plan first. Buffets table is empty."));
+    frappe.msgprint(__("Please click Get Service Plan first. Service Plan table is empty."));
     return;
   }
 
@@ -135,12 +224,13 @@ function do_get_filtered_requirements(frm) {
 
   if (!filtered_buffets.length) {
     frappe.msgprint({
-      title: __("No Matching Buffets"),
+      title: __("No Matching Service Plan Rows"),
       message: __(
-        "No rows matched the selected filters.<br><br>Service Period: {0}<br>Meal Type: {1}<br>Buffet: {2}",
+        "No rows matched the selected filters.<br><br>Service Period: {0}<br>Meal Type: {1}<br>Center: {2}<br>Buffet: {2}",
         [
           frm.doc.filter_service_period || "All",
           frm.doc.filter_meal_type || "All",
+          frm.doc.filter_catering_center || "All",
           frm.doc.filter_buffet || "All"
         ]
       ),
@@ -156,7 +246,7 @@ function do_get_filtered_requirements(frm) {
       buffets: JSON.stringify(filtered_buffets)
     },
     freeze: true,
-    freeze_message: __("Calculating filtered requirements..."),
+    freeze_message: __("Calculating requirements..."),
     callback: function (r) {
       if (!r.message) {
         frappe.msgprint(__("No response from server."));
@@ -168,13 +258,13 @@ function do_get_filtered_requirements(frm) {
       frm.clear_table("items");
 
       if (!returned_items.length) {
-        frm.set_value("total_person_qty", r.message.total_person_qty || 0);
+        frm.set_value("total_person_qty", Number(r.message.total_person_qty || 0));
         frm.refresh_field("items");
 
         frappe.msgprint({
           title: __("No Items Generated"),
           message: __(
-            "Matched Buffet Rows: {0}<br>Total Person Qty: {1}<br><br>No items were generated. Check Catering Menu rows for the selected Service Period and Meal Type.",
+            "Matched Service Plan Rows: {0}<br>Total Person Qty: {1}<br><br>No items were generated. Check Catering Menu rows for the selected Service Period and Meal Type.",
             [
               filtered_buffets.length,
               r.message.total_person_qty || 0
@@ -188,6 +278,8 @@ function do_get_filtered_requirements(frm) {
 
       returned_items.forEach(function (source_row) {
         const child = frm.add_child("items");
+
+        set_child_value(child, "plan_type", source_row.plan_type);
 
         set_child_value(child, "catering_center", source_row.catering_center);
         set_child_value(child, "center_name", source_row.center_name);
@@ -227,13 +319,13 @@ function do_get_filtered_requirements(frm) {
         set_child_value(child, "extra_person_qty", source_row.extra_person_qty);
       });
 
-      frm.set_value("total_person_qty", r.message.total_person_qty || 0);
+      frm.set_value("total_person_qty", Number(r.message.total_person_qty || 0));
       frm.refresh_field("items");
 
       frappe.msgprint({
-        title: __("Filtered Requirements Generated"),
+        title: __("Requirements Generated"),
         message: __(
-          "Matched Buffet Rows: {0}<br>Generated Item Rows: {1}<br>Total Person Qty: {2}",
+          "Matched Service Plan Rows: {0}<br>Generated Item Rows: {1}<br>Total Person Qty: {2}",
           [
             filtered_buffets.length,
             returned_items.length,
@@ -253,6 +345,7 @@ function do_get_filtered_requirements(frm) {
 function get_filtered_buffets(frm) {
   const filter_service_period = frm.doc.filter_service_period || "";
   const filter_meal_type = frm.doc.filter_meal_type || "";
+  const filter_catering_center = frm.doc.filter_catering_center || "";
   const filter_buffet = frm.doc.filter_buffet || "";
 
   return (frm.doc.buffets || [])
@@ -265,6 +358,10 @@ function get_filtered_buffets(frm) {
         return false;
       }
 
+      if (filter_catering_center && row.catering_center !== filter_catering_center) {
+        return false;
+      }
+
       if (filter_buffet && row.buffet !== filter_buffet) {
         return false;
       }
@@ -273,6 +370,8 @@ function get_filtered_buffets(frm) {
     })
     .map(function (row) {
       return {
+        plan_type: row.plan_type || "",
+
         service_period: row.service_period || "",
         meal_type: row.meal_type || "",
         catering_center: row.catering_center || "",
@@ -280,25 +379,64 @@ function get_filtered_buffets(frm) {
         catering_menu: row.catering_menu || "",
         buffet: row.buffet || "",
         buffet_company: row.buffet_company || "",
-        person_qty: row.person_qty || 0,
-        is_closed: row.is_closed || 0
+        person_qty: Number(row.person_qty || 0),
+        is_closed: Number(row.is_closed || 0)
       };
     });
 }
 
-
 function clear_requirement_filters(frm) {
-  frm.set_value("filter_service_period", "");
-  frm.set_value("filter_meal_type", "");
-  frm.set_value("filter_buffet", "");
+  if (frappe.meta.has_field(frm.doctype, "filter_service_period")) {
+    frm.set_value("filter_service_period", "");
+  }
+
+  if (frappe.meta.has_field(frm.doctype, "filter_meal_type")) {
+    frm.set_value("filter_meal_type", "");
+  }
+
+  if (frappe.meta.has_field(frm.doctype, "filter_catering_center")) {
+    frm.set_value("filter_catering_center", "");
+  }
+
+  if (frappe.meta.has_field(frm.doctype, "filter_buffet")) {
+    frm.set_value("filter_buffet", "");
+  }
+}
+
+function clear_items(frm) {
+  frappe.confirm(__("Clear all generated Items?"), function () {
+    frm.clear_table("items");
+    frm.refresh_field("items");
+
+    frappe.show_alert({
+      message: __("Items cleared."),
+      indicator: "orange"
+    });
+  });
 }
 
 
-function get_existing_buffet_map(frm) {
+function clear_service_plan(frm) {
+  frappe.confirm(__("Clear Service Plan and Items?"), function () {
+    frm.clear_table("buffets");
+    frm.clear_table("items");
+    frm.set_value("total_person_qty", 0);
+    frm.refresh_field("buffets");
+    frm.refresh_field("items");
+
+    frappe.show_alert({
+      message: __("Service Plan and Items cleared."),
+      indicator: "orange"
+    });
+  });
+}
+
+
+function get_existing_service_plan_map(frm) {
   const existing_map = {};
 
   (frm.doc.buffets || []).forEach(function (row) {
-    const key = get_buffet_key(row);
+    const key = get_service_plan_key(row);
 
     if (key) {
       existing_map[key] = {
@@ -312,8 +450,9 @@ function get_existing_buffet_map(frm) {
 }
 
 
-function get_buffet_key(row) {
+function get_service_plan_key(row) {
   return [
+    row.plan_type || "",
     row.service_period || "",
     row.meal_type || "",
     row.catering_center || "",
@@ -327,4 +466,17 @@ function set_child_value(child, fieldname, value) {
   if (frappe.meta.has_field(child.doctype, fieldname)) {
     child[fieldname] = value;
   }
+}
+
+
+function show_filter_summary(frm) {
+  const parts = [];
+
+  parts.push(__("Service Period: {0}", [frm.doc.filter_service_period || "All"]));
+  parts.push(__("Meal Type: {0}", [frm.doc.filter_meal_type || "All"]));
+  parts.push(__("Center: {0}", [frm.doc.filter_catering_center || "All"]));
+  parts.push(__("Buffet: {0}", [frm.doc.filter_buffet || "All"]));
+
+  frm.dashboard.clear_headline();
+  frm.dashboard.set_headline(parts.join(" | "));
 }

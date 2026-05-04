@@ -6,13 +6,19 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "disabled",
   "naming_series",
   "posting_date",
   "center_name",
+  "column_break_dqjv",
+  "disabled",
   "catering_menu",
   "person_qty",
-  "buffet"
+  "section_break_pdst",
+  "buffet",
+  "section_break_rwwp",
+  "total_buffet_person_qty",
+  "column_break_litj",
+  "person_qty_difference"
  ],
  "fields": [
   {
@@ -58,12 +64,40 @@
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
+  },
+  {
+   "fieldname": "column_break_dqjv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_pdst",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_rwwp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_buffet_person_qty",
+   "fieldtype": "Int",
+   "label": "Total Buffet Person Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_litj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "person_qty_difference",
+   "fieldtype": "Int",
+   "label": "Person Qty Difference",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-30 22:30:42.066228",
+ "modified": "2026-05-04 10:19:09.460055",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Center",
@@ -85,6 +119,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "center_name",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

@@ -136,6 +136,15 @@ def get_menu_service_meals(menu_doc):
 
 
 def get_effective_requirement_items(menu_doc):
+    """
+    إذا Item / New Item تحته Sub Item:
+        لا يحسب الأب
+        يحسب Sub Items
+
+    إذا Item / New Item لا يوجد تحته Sub Item:
+        يحسب نفسه
+    """
+
     rows = list(menu_doc.items or [])
 
     prepared_rows = []
@@ -203,6 +212,21 @@ def get_effective_requirement_items(menu_doc):
 
 @frappe.whitelist()
 def get_buffet_plan():
+    """
+    يولد Service Plan من Catering Center.
+
+    الحالة 1:
+    المركز فيه Buffet rows:
+        يولد سطر لكل Buffet لكل Service Period + Meal Type
+
+    الحالة 2:
+    المركز لا يوجد فيه Buffet rows:
+        يولد سطر واحد للمركز كامل لكل Service Period + Meal Type
+        plan_type = Center
+        buffet فارغ
+        buffet_company فارغ
+    """
+
     center_filters = {}
 
     if frappe.get_meta("Catering Center").has_field("disabled"):
@@ -233,21 +257,47 @@ def get_buffet_plan():
             continue
 
         center_doc = frappe.get_doc("Catering Center", center.name)
+        buffet_rows = list(center_doc.get("buffet") or [])
 
-        for buffet in center_doc.buffet:
-            buffet_name = buffet.get("buffet") or ""
-            buffet_company = buffet.get("buffet_company") or ""
-            person_qty = flt(buffet.get("person_qty") or 0)
-            is_closed = 1 if buffet.get("is_closed") else 0
+        # الحالة الأولى: يوجد Buffets
+        if buffet_rows:
+            for buffet in buffet_rows:
+                buffet_name = buffet.get("buffet") or ""
+                buffet_company = buffet.get("buffet_company") or ""
+                person_qty = flt(buffet.get("person_qty") or 0)
+                is_closed = 1 if buffet.get("is_closed") else 0
 
-            if is_closed:
-                continue
+                if person_qty <= 0:
+                    continue
 
-            if not buffet_name and not buffet_company:
+                for sm in service_meals:
+                    result.append({
+                        "plan_type": "Buffet",
+
+                        "service_period": sm.get("service_period"),
+                        "meal_type": sm.get("meal_type"),
+
+                        "catering_center": center.name,
+                        "center_name": center.center_name,
+                        "catering_menu": center.catering_menu,
+
+                        "buffet": buffet_name,
+                        "buffet_company": buffet_company,
+                        "person_qty": person_qty,
+                        "is_closed": is_closed,
+                    })
+
+        # الحالة الثانية: لا يوجد Buffets
+        else:
+            center_person_qty = flt(center.person_qty or 0)
+
+            if center_person_qty <= 0:
                 continue
 
             for sm in service_meals:
                 result.append({
+                    "plan_type": "Center",
+
                     "service_period": sm.get("service_period"),
                     "meal_type": sm.get("meal_type"),
 
@@ -255,17 +305,27 @@ def get_buffet_plan():
                     "center_name": center.center_name,
                     "catering_menu": center.catering_menu,
 
-                    "buffet": buffet_name,
-                    "buffet_company": buffet_company,
-                    "person_qty": person_qty,
-                    "is_closed": is_closed,
+                    "buffet": "",
+                    "buffet_company": "",
+                    "person_qty": center_person_qty,
+                    "is_closed": 0,
                 })
 
-    return result
+    result = sort_service_plan_rows(result)
+
+    return {
+        "rows": result,
+        "total_person_qty": get_total_center_person_qty(result),
+    }
 
 
 @frappe.whitelist()
 def get_buffet_requirements(buffets=None):
+    """
+    يحسب الأصناف بناءً على جدول Service Plan / buffets المرسل من الواجهة.
+    لا يعتمد مباشرة على Catering Center هنا.
+    """
+
     if isinstance(buffets, str):
         buffets = frappe.parse_json(buffets)
 
@@ -286,6 +346,9 @@ def get_buffet_requirements(buffets=None):
         person_qty = flt(buffet.get("person_qty") or 0)
         is_closed = 1 if buffet.get("is_closed") else 0
 
+        if is_closed:
+            continue
+
         if not service_period or not meal_type or not catering_menu:
             continue
 
@@ -302,7 +365,7 @@ def get_buffet_requirements(buffets=None):
             continue
 
         person_ratio = person_qty / menu_person_qty
-        total_person_qty += person_qty
+        # total_person_qty += person_qty
 
         effective_items = get_effective_requirement_items(menu_doc)
 
@@ -346,16 +409,14 @@ def get_buffet_requirements(buffets=None):
             required_capacity_qty = 0
             extra_person_qty = 0
 
-            if (
-                not is_closed
-                and workstation_load_qty > 0
-                and capacity_qty > 0
-            ):
+            if workstation_load_qty > 0 and capacity_qty > 0:
                 cooking_runs = int(math.ceil(person_qty / workstation_load_qty))
                 required_capacity_qty = cooking_runs * capacity_qty
                 extra_person_qty = (cooking_runs * workstation_load_qty) - person_qty
 
             result.append({
+                "plan_type": buffet.get("plan_type") or "",
+
                 "catering_center": catering_center,
                 "center_name": buffet.get("center_name") or "",
                 "catering_menu": catering_menu,
@@ -394,7 +455,65 @@ def get_buffet_requirements(buffets=None):
                 "extra_person_qty": extra_person_qty,
             })
 
+    result = sort_service_plan_rows(result)
+
     return {
         "items": result,
-        "total_person_qty": total_person_qty,
+        "total_person_qty": get_total_center_person_qty(buffets),
     }
+
+def get_service_period_sort_map():
+    period_sort_map = {}
+
+    periods = frappe.get_all(
+        "Catering Service Period",
+        fields=["name", "sort_order"],
+    )
+
+    for period in periods:
+        period_sort_map[period.name] = cint(period.sort_order)
+
+    return period_sort_map
+
+
+def sort_service_plan_rows(rows):
+    period_sort_map = get_service_period_sort_map()
+
+    return sorted(
+        rows,
+        key=lambda d: (
+            period_sort_map.get(d.get("service_period"), 9999),
+            d.get("service_period") or "",
+            MEAL_ORDER.get(d.get("meal_type"), 9999),
+            d.get("meal_type") or "",
+            d.get("center_name") or "",
+            d.get("plan_type") or "",
+            d.get("buffet") or "",
+            d.get("buffet_company") or "",
+        ),
+    )
+
+
+def get_total_center_person_qty(service_plan_rows):
+    """
+    يحسب عدد الأشخاص حسب المركز مرة واحدة فقط.
+    لا يجمع كل Service Period ولا كل Meal Type.
+    """
+
+    center_names = set()
+
+    for row in service_plan_rows or []:
+        if row.get("is_closed"):
+            continue
+
+        if row.get("catering_center"):
+            center_names.add(row.get("catering_center"))
+
+    total = 0
+
+    for center_name in center_names:
+        total += flt(
+            frappe.db.get_value("Catering Center", center_name, "person_qty") or 0
+        )
+
+    return total

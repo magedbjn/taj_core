@@ -16,6 +16,7 @@
   "filter_meal_type",
   "column_break_qqwf",
   "filter_buffet",
+  "filter_catering_center",
   "get_filtered_requirements",
   "section_break_wdjp",
   "items"
@@ -61,7 +62,7 @@
   {
    "fieldname": "buffets",
    "fieldtype": "Table",
-   "label": "Buffets",
+   "label": "Service Plan",
    "options": "Catering Buffet Requirement Buffet"
   },
   {
@@ -94,12 +95,18 @@
   {
    "fieldname": "section_break_wdjp",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "filter_catering_center",
+   "fieldtype": "Link",
+   "label": "Filter Catering Center",
+   "options": "Catering Center"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-03 11:10:24.457412",
+ "modified": "2026-05-04 10:18:16.803189",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Buffet Requirement",

@@ -5,6 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "plan_type",
   "service_period",
   "meal_type",
   "catering_center",
@@ -90,13 +91,19 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Is Closed"
+  },
+  {
+   "fieldname": "plan_type",
+   "fieldtype": "Select",
+   "label": "Plan Type",
+   "options": "Center\nBuffet\nUnassigned"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-02 20:24:48.333068",
+ "modified": "2026-05-04 09:48:32.740748",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Buffet Requirement Buffet",

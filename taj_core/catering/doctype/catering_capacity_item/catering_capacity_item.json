@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_rename": 1,
  "creation": "2026-04-30 11:03:55.369237",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -75,8 +74,7 @@
    "fieldname": "workstation_load_qty",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Workstation Load Qty",
-   "reqd": 1
+   "label": "Workstation Load Qty"
   },
   {
    "fieldname": "column_break_bjdo",
@@ -87,7 +85,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-03 10:51:34.018161",
+ "modified": "2026-05-04 10:31:58.561487",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Capacity Item",
