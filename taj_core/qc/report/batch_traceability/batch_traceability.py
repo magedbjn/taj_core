@@ -25,6 +25,7 @@ def execute(filters=None):
 
     if not produced_roots:
         msg = f"NO PRODUCTION FOUND FOR FINAL BATCH: {batch}"
+
         if view_mode == "Tree (Expandable)":
             return get_columns(tree_mode=True, include_sales=False), [{
                 "name": f"ROOT::{batch}",
@@ -50,6 +51,7 @@ def execute(filters=None):
                 "is_batch_line": 0,
                 "is_bundle_sibling": 0
             }]
+
         return get_columns(tree_mode=False, include_sales=False), [{
             "level": 0,
             "path": "",
@@ -93,13 +95,9 @@ def execute(filters=None):
 
         uom_final = get_item_uom(final_item)
 
-        # ✅ per-root bundle qty map ONLY (prevents mixing bundles)
         qty_map = get_bundle_batch_qty_map_for_bundle(bundle_name, final_item) if (include_bundle and bundle_name) else {}
-
-        # ✅ final qty = qty of selected batch inside the SAME bundle (if exists)
         final_qty = abs(float(qty_map.get(batch) or root.get("qty") or 0))
 
-        # Final row
         data.append({
             "level": 0,
             "path": "0",
@@ -122,9 +120,9 @@ def execute(filters=None):
             "is_bundle_sibling": 0
         })
 
-        # ✅ Yellow sibling rows (QTY + UOM + Batch) from SAME bundle only
         if include_bundle and bundle_name and qty_map:
             siblings = sorted([b for b in qty_map.keys() if b and b != batch])
+
             for sib in siblings:
                 data.append({
                     "level": 0,
@@ -150,6 +148,7 @@ def execute(filters=None):
 
         wo = frappe.get_doc("Work Order", wo_name) if wo_name else None
         bom = (getattr(wo, "bom_no", None) if wo else None) or get_default_bom(final_item)
+
         if not bom:
             continue
 
@@ -182,11 +181,8 @@ def get_columns(tree_mode=False, include_sales=False):
         {"label": "UOM", "fieldname": "uom", "fieldtype": "Data", "width": 70},
         {"label": "Batch", "fieldname": "batch_no", "fieldtype": "Link", "options": "Batch", "width": 140},
         {"label": "Supplier", "fieldname": "supplier", "fieldtype": "Link", "options": "Supplier", "width": 160},
-
-        # ✅ Always visible supplier source
         {"label": "Source DocType", "fieldname": "source_doctype", "fieldtype": "Data", "width": 140},
         {"label": "Source DocNo", "fieldname": "source_docname", "fieldtype": "Dynamic Link", "options": "source_doctype", "width": 170},
-
         {"label": "Stock Entry", "fieldname": "stock_entry", "fieldtype": "Link", "options": "Stock Entry", "width": 160},
         {"label": "Work Order", "fieldname": "work_order", "fieldtype": "Link", "options": "Work Order", "width": 160},
     ]
@@ -208,17 +204,72 @@ def get_columns(tree_mode=False, include_sales=False):
     return base
 
 
+def get_sold_columns():
+    return [
+        {"label": "Item Code", "fieldname": "item_code", "fieldtype": "Link", "options": "Item", "width": 200},
+        {"label": "Item Name", "fieldname": "item_name", "fieldtype": "Data", "width": 320},
+        {"label": "QTY", "fieldname": "qty", "fieldtype": "Float", "width": 110},
+        {"label": "UOM", "fieldname": "uom", "fieldtype": "Data", "width": 70},
+        {"label": "Batch", "fieldname": "batch_no", "fieldtype": "Link", "options": "Batch", "width": 140},
+        {"label": "Customer", "fieldname": "customer", "fieldtype": "Link", "options": "Customer", "width": 180},
+        {"label": "Sales DocType", "fieldname": "sales_doctype", "fieldtype": "Data", "width": 160},
+        {"label": "Sales DocNo", "fieldname": "sales_docname", "fieldtype": "Dynamic Link", "options": "sales_doctype", "width": 180},
+    ]
+
+
 # ---------------- SOLD trace ----------------
 
 def build_sold_trace(final_batch: str):
+    """
+    Sold trace supports:
+    1. Direct batch in Stock Ledger Entry.
+    2. Batch inside Serial and Batch Bundle.
+    """
+
     if not final_batch:
-        return get_columns(tree_mode=False, include_sales=True), []
+        return get_sold_columns(), []
 
     batch_doc = frappe.get_doc("Batch", final_batch)
     item_code = batch_doc.item
     item_name = batch_doc.item_name
-    uom = batch_doc.stock_uom
+    uom = getattr(batch_doc, "stock_uom", None) or get_item_uom(item_code)
 
+    sold_map = {}
+
+    def add_sold(voucher_type, voucher_no, qty, row_uom=None, customer=None):
+        if not voucher_type or not voucher_no:
+            return
+
+        key = (voucher_type, voucher_no)
+
+        if key not in sold_map:
+            sold_map[key] = {
+                "item_code": item_code,
+                "item_name": item_name,
+                "qty": 0,
+                "uom": row_uom or uom,
+                "batch_no": final_batch,
+                "customer": customer or get_customer_from_voucher(voucher_type, voucher_no),
+                "sales_doctype": voucher_type,
+                "sales_docname": voucher_no,
+
+                # kept for formatter compatibility only
+                "level": "",
+                "path": "",
+                "item_type": "",
+                "supplier": "",
+                "source_doctype": "",
+                "source_docname": "",
+                "stock_entry": "",
+                "work_order": "",
+                "is_section_row": 0,
+                "is_batch_line": 0,
+                "is_bundle_sibling": 0
+            }
+
+        sold_map[key]["qty"] += abs(float(qty or 0))
+
+    # 1) Direct / old style: SLE has batch_no
     sle_rows = frappe.db.get_all(
         "Stock Ledger Entry",
         filters={
@@ -231,50 +282,152 @@ def build_sold_trace(final_batch: str):
         order_by="posting_date asc, posting_time asc"
     )
 
-    data = []
     for sle in sle_rows:
-        customer = get_customer_from_voucher(sle.get("voucher_type"), sle.get("voucher_no"))
+        add_sold(
+            sle.get("voucher_type"),
+            sle.get("voucher_no"),
+            sle.get("actual_qty"),
+            uom
+        )
+
+    # 2) Bundle style: Delivery Note Item has Serial and Batch Bundle
+    dn_rows = frappe.db.sql("""
+        SELECT
+            'Delivery Note' AS voucher_type,
+            dn.name AS voucher_no,
+            dn.customer AS customer,
+            dni.uom AS uom,
+            dni.item_code AS item_code,
+            dni.serial_and_batch_bundle AS bundle_name,
+            ABS(COALESCE(SUM(sbe.qty), 0)) AS batch_qty
+        FROM `tabSerial and Batch Entry` sbe
+        INNER JOIN `tabDelivery Note Item` dni
+            ON dni.serial_and_batch_bundle = sbe.parent
+        INNER JOIN `tabDelivery Note` dn
+            ON dn.name = dni.parent
+        WHERE
+            sbe.batch_no = %(batch_no)s
+            AND dn.docstatus = 1
+            AND dni.item_code = %(item_code)s
+        GROUP BY
+            dn.name,
+            dn.customer,
+            dni.uom,
+            dni.item_code,
+            dni.serial_and_batch_bundle
+        ORDER BY
+            dn.posting_date ASC,
+            dn.posting_time ASC,
+            dn.creation ASC
+    """, {
+        "batch_no": final_batch,
+        "item_code": item_code
+    }, as_dict=True)
+
+    for row in dn_rows or []:
+        add_sold(
+            row.get("voucher_type"),
+            row.get("voucher_no"),
+            row.get("batch_qty"),
+            row.get("uom") or uom,
+            row.get("customer")
+        )
+
+    # 3) Bundle style: Sales Invoice Item has Serial and Batch Bundle
+    # Mainly for direct Sales Invoice with Update Stock.
+    # If invoice is made from Delivery Note, skip to avoid duplicate rows.
+    si_rows = frappe.db.sql("""
+        SELECT
+            'Sales Invoice' AS voucher_type,
+            si.name AS voucher_no,
+            si.customer AS customer,
+            sii.uom AS uom,
+            sii.item_code AS item_code,
+            sii.serial_and_batch_bundle AS bundle_name,
+            ABS(COALESCE(SUM(sbe.qty), 0)) AS batch_qty
+        FROM `tabSerial and Batch Entry` sbe
+        INNER JOIN `tabSales Invoice Item` sii
+            ON sii.serial_and_batch_bundle = sbe.parent
+        INNER JOIN `tabSales Invoice` si
+            ON si.name = sii.parent
+        WHERE
+            sbe.batch_no = %(batch_no)s
+            AND si.docstatus = 1
+            AND si.update_stock = 1
+            AND IFNULL(sii.delivery_note, '') = ''
+            AND sii.item_code = %(item_code)s
+        GROUP BY
+            si.name,
+            si.customer,
+            sii.uom,
+            sii.item_code,
+            sii.serial_and_batch_bundle
+        ORDER BY
+            si.posting_date ASC,
+            si.posting_time ASC,
+            si.creation ASC
+    """, {
+        "batch_no": final_batch,
+        "item_code": item_code
+    }, as_dict=True)
+
+    for row in si_rows or []:
+        add_sold(
+            row.get("voucher_type"),
+            row.get("voucher_no"),
+            row.get("batch_qty"),
+            row.get("uom") or uom,
+            row.get("customer")
+        )
+
+    data = list(sold_map.values())
+
+    if not data:
         data.append({
-            "level": 1,
-            "path": "",
             "item_code": item_code,
-            "item_name": item_name,
-            "item_type": "",
-            "qty": abs(float(sle.get("actual_qty") or 0)),
+            "item_name": f"NO SOLD DOCUMENT FOUND FOR BATCH: {final_batch}",
+            "qty": None,
             "uom": uom,
             "batch_no": final_batch,
+            "customer": "",
+            "sales_doctype": "",
+            "sales_docname": "",
+
+            # kept for formatter compatibility only
+            "level": "",
+            "path": "",
+            "item_type": "",
             "supplier": "",
             "source_doctype": "",
             "source_docname": "",
             "stock_entry": "",
             "work_order": "",
-            "customer": customer,
-            "sales_doctype": sle.get("voucher_type"),
-            "sales_docname": sle.get("voucher_no"),
-            "is_section_row": 0,
+            "is_section_row": 1,
             "is_batch_line": 0,
             "is_bundle_sibling": 0
         })
 
-    return get_columns(tree_mode=False, include_sales=True), data
+    return get_sold_columns(), data
 
 
 def get_customer_from_voucher(voucher_type: str, voucher_no: str):
     if not voucher_type or not voucher_no:
         return None
+
     try:
         return frappe.db.get_value(voucher_type, voucher_no, "customer")
     except Exception:
         return None
 
 
-# ---------------- Bundle qty map (ONE bundle only) ----------------
+# ---------------- Bundle qty map, ONE bundle only ----------------
 
 def get_bundle_batch_qty_map_for_bundle(bundle_name: str, item_code: str = None):
     """
     Returns {batch_no: qty} from ONE Serial and Batch Bundle only.
     Prevents mixing multiple bundles for the same batch across time.
     """
+
     if not bundle_name:
         return {}
 
@@ -285,7 +438,6 @@ def get_bundle_batch_qty_map_for_bundle(bundle_name: str, item_code: str = None)
     """
     params = {"parent": bundle_name}
 
-    # Optional filter by item_code if column exists
     if item_code:
         try:
             frappe.db.sql("SELECT item_code FROM `tabSerial and Batch Entry` LIMIT 1")
@@ -295,13 +447,17 @@ def get_bundle_batch_qty_map_for_bundle(bundle_name: str, item_code: str = None)
             pass
 
     sql += " GROUP BY batch_no"
+
     rows = frappe.db.sql(sql, params, as_dict=True)
 
     out = {}
+
     for r in rows or []:
         bn = (r.get("batch_no") or "").strip()
+
         if not bn:
             continue
+
         out[bn] = float(r.get("qty") or 0)
 
     return out
@@ -312,15 +468,20 @@ def get_bundle_batch_qty_map_for_bundle(bundle_name: str, item_code: str = None)
 def get_production_roots_by_final_batch(final_batch: str):
     roots = []
 
-    # 1) Direct produced rows (batch_no filled)
     rows = frappe.db.get_all(
         "Stock Entry Detail",
-        filters={"batch_no": final_batch, "docstatus": 1, "t_warehouse": ["!=", ""]},
+        filters={
+            "batch_no": final_batch,
+            "docstatus": 1,
+            "t_warehouse": ["!=", ""]
+        },
         fields=["parent as stock_entry", "item_code", "qty", "serial_and_batch_bundle"],
     )
+
     for r in rows:
         se_name = r.get("stock_entry")
         wo = frappe.db.get_value("Stock Entry", se_name, "work_order")
+
         roots.append({
             "item_code": r.get("item_code"),
             "qty": r.get("qty") or 0,
@@ -329,7 +490,6 @@ def get_production_roots_by_final_batch(final_batch: str):
             "bundle_name": r.get("serial_and_batch_bundle") or ""
         })
 
-    # 2) Bundle produced rows (batch_no might be empty on SED)
     bundle_names = frappe.db.get_all(
         "Serial and Batch Entry",
         filters={"batch_no": final_batch},
@@ -352,7 +512,6 @@ def get_production_roots_by_final_batch(final_batch: str):
             wo = frappe.db.get_value("Stock Entry", se_name, "work_order")
             bundle = r.get("serial_and_batch_bundle") or ""
 
-            # ✅ exact qty for THIS batch from THIS bundle only
             qty_map = get_bundle_batch_qty_map_for_bundle(bundle, r.get("item_code"))
             exact_qty = qty_map.get(final_batch)
 
@@ -364,19 +523,28 @@ def get_production_roots_by_final_batch(final_batch: str):
                 "bundle_name": bundle
             })
 
-    # de-dup
     uniq = {}
+
     for x in roots:
-        key = (x.get("stock_entry"), x.get("item_code"), final_batch, x.get("bundle_name") or "")
+        key = (
+            x.get("stock_entry"),
+            x.get("item_code"),
+            final_batch,
+            x.get("bundle_name") or ""
+        )
+
         if key not in uniq:
             uniq[key] = x
         else:
-            uniq[key]["qty"] = max(float(uniq[key].get("qty") or 0), float(x.get("qty") or 0))
+            uniq[key]["qty"] = max(
+                float(uniq[key].get("qty") or 0),
+                float(x.get("qty") or 0)
+            )
 
     return list(uniq.values())
 
 
-# ---------------- Tree View (Manufacturing) ----------------
+# ---------------- Tree View, Manufacturing ----------------
 
 def build_tree_view_for_batch(final_batch: str, produced_roots: list, max_depth: int, include_bundle: bool = False):
     data = []
@@ -419,6 +587,7 @@ def build_tree_view_for_batch(final_batch: str, produced_roots: list, max_depth:
         root_qty = abs(float(root.get("qty") or 0))
 
         wo_node = f"WO::{final_batch}::{i}::{wo_name or 'NO-WO'}::{se_name}"
+
         data.append({
             "name": wo_node,
             "parent": root_id,
@@ -444,11 +613,11 @@ def build_tree_view_for_batch(final_batch: str, produced_roots: list, max_depth:
             "is_bundle_sibling": 0
         })
 
-        # ✅ per-root bundle qty map
         qty_map = get_bundle_batch_qty_map_for_bundle(bundle_name, final_item) if (include_bundle and bundle_name) else {}
         final_qty = abs(float(qty_map.get(final_batch) or root_qty or 0))
 
         final_node = f"FINAL::{final_batch}::{i}::{final_item}"
+
         data.append({
             "name": final_node,
             "parent": wo_node,
@@ -474,11 +643,12 @@ def build_tree_view_for_batch(final_batch: str, produced_roots: list, max_depth:
             "is_bundle_sibling": 0
         })
 
-        # ✅ siblings from same bundle
         if include_bundle and bundle_name and qty_map:
             siblings = sorted([b for b in qty_map.keys() if b and b != final_batch])
+
             for si, sib in enumerate(siblings, start=1):
                 sib_id = f"SIB::{final_batch}::{i}::{si}::{sib}"
+
                 data.append({
                     "name": sib_id,
                     "parent": final_node,
@@ -506,6 +676,7 @@ def build_tree_view_for_batch(final_batch: str, produced_roots: list, max_depth:
 
         wo = frappe.get_doc("Work Order", wo_name) if wo_name else None
         bom = (getattr(wo, "bom_no", None) if wo else None) or get_default_bom(final_item)
+
         if not bom:
             continue
 
@@ -528,7 +699,7 @@ def build_tree_view_for_batch(final_batch: str, produced_roots: list, max_depth:
     return data
 
 
-# ---------------- explode (Tree) ----------------
+# ---------------- explode, Tree ----------------
 
 def explode_bom_tree(
     bom: str,
@@ -547,6 +718,7 @@ def explode_bom_tree(
 
     if bom in visited:
         wid = f"WARN::{bom}::{parent_row_id}"
+
         data.append({
             "name": wid,
             "parent": parent_row_id,
@@ -577,6 +749,7 @@ def explode_bom_tree(
     bom_doc = frappe.get_doc("BOM", bom)
 
     idx = 0
+
     for it in bom_doc.items:
         idx += 1
         path = f"{idx}" if not parent_path else f"{parent_path}.{idx}"
@@ -585,6 +758,7 @@ def explode_bom_tree(
         uom = it.uom
 
         item_type = classify_item(item_code)
+
         if (item_code or "").upper().startswith("RAW-"):
             item_type = "Raw Material"
 
@@ -612,6 +786,7 @@ def explode_bom_tree(
                 src_dt_val, src_dn_val = get_batch_source(batch_no_val)
 
         item_id = f"ITEM::{wo_name}::{level}::{path}::{item_code}"
+
         data.append({
             "name": item_id,
             "parent": parent_row_id,
@@ -642,11 +817,13 @@ def explode_bom_tree(
                 bn = b.get("batch_no") or ""
                 supplier2 = ""
                 src_dt2, src_dn2 = ("", "")
+
                 if bn and is_raw_material_leaf(item_code, item_type, is_leaf):
                     supplier2 = get_supplier_for_batch(bn)
                     src_dt2, src_dn2 = get_batch_source(bn)
 
                 extra_id = f"ITEMB::{wo_name}::{level}::{path}::{item_code}::{bi}::{bn}"
+
                 data.append({
                     "name": extra_id,
                     "parent": item_id,
@@ -677,6 +854,7 @@ def explode_bom_tree(
                 for cb in batches:
                     cb_batch = cb.get("batch_no")
                     sub_map = get_consumed_map_for_producing_wo(item_code, cb_batch)
+
                     explode_bom_tree(
                         bom=child_bom,
                         wo_name=wo_name,
@@ -704,7 +882,7 @@ def explode_bom_tree(
                 )
 
 
-# ---------------- explode (Table) ----------------
+# ---------------- explode, Table ----------------
 
 def explode_bom_level_order(
     bom: str,
@@ -754,6 +932,7 @@ def explode_bom_level_order(
 
         item_code = it.item_code
         item_type = classify_item(item_code)
+
         if (item_code or "").upper().startswith("RAW-"):
             item_type = "Raw Material"
 
@@ -762,12 +941,14 @@ def explode_bom_level_order(
         is_leaf = not bool(child_bom)
 
         batches = consumed_map.get(item_code) or []
+
         if batches:
             first = batches[0]
             bn = first.get("batch_no") or ""
 
             supplier = ""
             src_dt, src_dn = ("", "")
+
             if bn and is_raw_material_leaf(item_code, item_type, is_leaf):
                 supplier = get_supplier_for_batch(bn)
                 src_dt, src_dn = get_batch_source(bn)
@@ -798,6 +979,7 @@ def explode_bom_level_order(
                 bn2 = b.get("batch_no") or ""
                 supplier2 = ""
                 src_dt2, src_dn2 = ("", "")
+
                 if bn2 and is_raw_material_leaf(item_code, item_type, is_leaf):
                     supplier2 = get_supplier_for_batch(bn2)
                     src_dt2, src_dn2 = get_batch_source(bn2)
@@ -849,12 +1031,14 @@ def explode_bom_level_order(
         if child_bom:
             children_to_expand.append((item_code, child_bom, path))
 
-    for (child_item_code, child_bom, child_path) in children_to_expand:
+    for child_item_code, child_bom, child_path in children_to_expand:
         child_batches = consumed_map.get(child_item_code) or []
+
         if child_batches:
             for cb in child_batches:
                 cb_batch = cb.get("batch_no")
                 sub_consumed_map = get_consumed_map_for_producing_wo(child_item_code, cb_batch)
+
                 explode_bom_level_order(
                     bom=child_bom,
                     parent_path=child_path,
@@ -881,18 +1065,22 @@ def explode_bom_level_order(
 def is_raw_material_leaf(item_code: str, item_type: str, is_leaf: bool) -> bool:
     if not is_leaf:
         return False
+
     if (item_code or "").upper().startswith("RAW-"):
         return True
-    return (item_type == "Raw Material")
+
+    return item_type == "Raw Material"
 
 
 def get_consumed_map_for_producing_wo(item_code: str, batch_no: str):
     cache = getattr(frappe.local, "_haccp_wo_cache", {})
     key = (item_code, batch_no)
+
     if key in cache:
         return cache[key]
 
     wo = get_work_order_that_produced_item_batch(item_code, batch_no)
+
     if not wo:
         cache[key] = {}
         frappe.local._haccp_wo_cache = cache
@@ -900,6 +1088,7 @@ def get_consumed_map_for_producing_wo(item_code: str, batch_no: str):
 
     cache[key] = get_consumed_batches_from_work_order(wo)
     frappe.local._haccp_wo_cache = cache
+
     return cache[key]
 
 
@@ -909,9 +1098,15 @@ def get_work_order_that_produced_item_batch(item_code: str, batch_no: str):
 
     parent_se = frappe.db.get_value(
         "Stock Entry Detail",
-        {"item_code": item_code, "batch_no": batch_no, "t_warehouse": ["!=", ""], "docstatus": 1},
+        {
+            "item_code": item_code,
+            "batch_no": batch_no,
+            "t_warehouse": ["!=", ""],
+            "docstatus": 1
+        },
         "parent"
     )
+
     if parent_se:
         return frappe.db.get_value("Stock Entry", parent_se, "work_order")
 
@@ -920,14 +1115,21 @@ def get_work_order_that_produced_item_batch(item_code: str, batch_no: str):
         filters={"batch_no": batch_no},
         pluck="parent"
     ) or []
+
     if not bundle_names:
         return None
 
     sed_parent = frappe.db.get_value(
         "Stock Entry Detail",
-        {"serial_and_batch_bundle": ["in", bundle_names], "item_code": item_code, "t_warehouse": ["!=", ""], "docstatus": 1},
+        {
+            "serial_and_batch_bundle": ["in", bundle_names],
+            "item_code": item_code,
+            "t_warehouse": ["!=", ""],
+            "docstatus": 1
+        },
         "parent"
     )
+
     if not sed_parent:
         return None
 
@@ -936,12 +1138,16 @@ def get_work_order_that_produced_item_batch(item_code: str, batch_no: str):
 
 def get_consumed_batches_from_work_order(work_order: str):
     mp = {}
+
     if not work_order:
         return mp
 
     se_names = frappe.get_all(
         "Stock Entry",
-        filters={"work_order": work_order, "docstatus": 1},
+        filters={
+            "work_order": work_order,
+            "docstatus": 1
+        },
         pluck="name"
     )
 
@@ -949,29 +1155,32 @@ def get_consumed_batches_from_work_order(work_order: str):
         se = frappe.get_doc("Stock Entry", se_name)
 
         for row in se.items:
-            # consumed only
             if not row.s_warehouse:
                 continue
 
             item_code = row.item_code
+
             if not item_code:
                 continue
 
             bundle = getattr(row, "serial_and_batch_bundle", None) or getattr(row, "serial_and_batch_bundle_no", None)
+
             if bundle:
                 for b in read_bundle_batches(bundle, item_code=item_code):
                     bn = b.get("batch_no")
+
                     if not bn:
                         continue
+
                     mp.setdefault(item_code, []).append({
                         "batch_no": bn,
                         "qty": abs(float(b.get("qty") or 0)),
                         "stock_entry": se_name,
                         "work_order": work_order
                     })
+
                 continue
 
-            # ✅ NEW: if item has a batch, keep it
             if row.batch_no:
                 mp.setdefault(item_code, []).append({
                     "batch_no": row.batch_no,
@@ -980,29 +1189,32 @@ def get_consumed_batches_from_work_order(work_order: str):
                     "work_order": work_order
                 })
             else:
-                # ✅ NEW: items WITHOUT batch (like Packaging) — use actual qty from Stock Entry
                 mp.setdefault(item_code, []).append({
-                    "batch_no": "",  # important: keep empty to show blank batch
+                    "batch_no": "",
                     "qty": abs(float(row.qty or 0)),
                     "stock_entry": se_name,
                     "work_order": work_order
                 })
 
-    # ✅ Merge duplicates (same item + same batch_no), to avoid multiple blank-batch lines
     for item_code in list(mp.keys()):
         merged = {}
+
         for r in mp[item_code]:
-            key = (r.get("batch_no") or "")
+            key = r.get("batch_no") or ""
+
             if key not in merged:
                 merged[key] = dict(r)
             else:
                 merged[key]["qty"] = float(merged[key].get("qty") or 0) + float(r.get("qty") or 0)
-                # keep latest stock entry reference
                 merged[key]["stock_entry"] = r.get("stock_entry") or merged[key].get("stock_entry")
 
-        mp[item_code] = sorted(merged.values(), key=lambda x: (x.get("batch_no") or "", x.get("stock_entry") or ""))
+        mp[item_code] = sorted(
+            merged.values(),
+            key=lambda x: (x.get("batch_no") or "", x.get("stock_entry") or "")
+        )
 
     return mp
+
 
 def get_batch_source(batch_no: str):
     if not batch_no:
@@ -1015,7 +1227,10 @@ def get_batch_source(batch_no: str):
         as_dict=True
     ) or {}
 
-    return (row.get("reference_doctype") or "", row.get("reference_name") or "")
+    return (
+        row.get("reference_doctype") or "",
+        row.get("reference_name") or ""
+    )
 
 
 def get_supplier_for_batch(batch_no: str):
@@ -1023,10 +1238,12 @@ def get_supplier_for_batch(batch_no: str):
         return ""
 
     direct = frappe.db.get_value("Batch", batch_no, "supplier")
+
     if direct:
         return direct
 
     src_dt, src_dn = get_batch_source(batch_no)
+
     if src_dt and src_dn and src_dt in ("Purchase Receipt", "Purchase Invoice"):
         return frappe.db.get_value(src_dt, src_dn, "supplier") or ""
 
@@ -1042,18 +1259,25 @@ def get_supplier_for_batch(batch_no: str):
         order_by="posting_date desc, posting_time desc, creation desc",
         limit=1
     )
+
     if not sle:
         return ""
 
     vtype = sle[0]["voucher_type"]
     vno = sle[0]["voucher_no"]
+
     return frappe.db.get_value(vtype, vno, "supplier") or ""
 
 
 def get_default_bom(item_code: str):
     return frappe.db.get_value(
         "BOM",
-        {"item": item_code, "is_default": 1, "is_active": 1, "docstatus": 1},
+        {
+            "item": item_code,
+            "is_default": 1,
+            "is_active": 1,
+            "docstatus": 1
+        },
         "name"
     )
 
@@ -1072,9 +1296,15 @@ def classify_item(item_code: str) -> str:
 
     has_bom = frappe.db.get_value(
         "BOM",
-        {"item": item_code, "is_default": 1, "is_active": 1, "docstatus": 1},
+        {
+            "item": item_code,
+            "is_default": 1,
+            "is_active": 1,
+            "docstatus": 1
+        },
         "name"
     )
+
     if has_bom:
         return "Sub BOM"
 
@@ -1100,25 +1330,31 @@ def read_bundle_batches(bundle_name: str, item_code: str = None):
     doc = frappe.get_doc("Serial and Batch Bundle", bundle_name)
 
     rows = []
+
     for attr in ("entries", "items", "serial_and_batch_entries"):
         if hasattr(doc, attr):
             val = getattr(doc, attr)
+
             if isinstance(val, list) and val:
                 rows = val
                 break
 
     if not rows:
         meta = frappe.get_meta("Serial and Batch Bundle")
+
         for df in meta.fields:
             if df.fieldtype == "Table" and hasattr(doc, df.fieldname):
                 val = getattr(doc, df.fieldname)
+
                 if isinstance(val, list) and val:
                     rows = val
                     break
 
     out = []
+
     for r in rows:
         r_item = getattr(r, "item_code", None) or getattr(r, "item", None)
+
         if item_code and r_item and r_item != item_code:
             continue
 
@@ -1126,13 +1362,20 @@ def read_bundle_batches(bundle_name: str, item_code: str = None):
         qty = getattr(r, "qty", None) or getattr(r, "quantity", None) or 0
 
         if batch_no:
-            out.append({"batch_no": batch_no, "qty": abs(float(qty or 0))})
+            out.append({
+                "batch_no": batch_no,
+                "qty": abs(float(qty or 0))
+            })
 
     if item_code and not out:
         for r in rows:
             batch_no = getattr(r, "batch_no", None) or getattr(r, "batch", None)
             qty = getattr(r, "qty", None) or getattr(r, "quantity", None) or 0
+
             if batch_no:
-                out.append({"batch_no": batch_no, "qty": abs(float(qty or 0))})
+                out.append({
+                    "batch_no": batch_no,
+                    "qty": abs(float(qty or 0))
+                })
 
     return out
