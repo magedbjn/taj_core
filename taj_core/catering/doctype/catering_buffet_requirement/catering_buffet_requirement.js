@@ -1,28 +1,29 @@
 frappe.ui.form.on("Catering Buffet Requirement", {
-  onload: function (frm) {
-    calculate_total_person_qty(frm);
-  },
+  // onload: function (frm) {
+  //   calculate_total_person_qty(frm);
+  // },
 
+  // refresh: function (frm) {
+  //   add_catering_action_buttons(frm);
+  //   calculate_total_person_qty(frm);
+  // },
+
+  // before_save: function (frm) {
+  //   calculate_total_person_qty(frm);
+  // },
+  
   refresh: function (frm) {
     add_catering_action_buttons(frm);
-    calculate_total_person_qty(frm);
   },
 
-  before_save: function (frm) {
-    calculate_total_person_qty(frm);
-  },
-
-  // Button Field: get_buffet_plan
   get_buffet_plan: function (frm) {
-    do_get_buffet_plan(frm);
+    show_service_plan_dialog(frm);
   },
 
-  // Button Field: get_filtered_requirements
   get_filtered_requirements: function (frm) {
     do_get_filtered_requirements(frm);
   },
 
-  // Button Field: get_buffet_requirements
   get_buffet_requirements: function (frm) {
     do_get_filtered_requirements(frm);
   },
@@ -35,33 +36,33 @@ frappe.ui.form.on("Catering Buffet Requirement", {
     show_filter_summary(frm);
   },
 
-  filter_buffet: function (frm) {
-    show_filter_summary(frm);
-  },
-
   filter_catering_center: function (frm) {
     show_filter_summary(frm);
   },
-});
 
-
-frappe.ui.form.on("Catering Buffet Requirement Buffet", {
-  person_qty: function (frm) {
-    calculate_total_person_qty(frm);
-  },
-
-  is_closed: function (frm) {
-    calculate_total_person_qty(frm);
-  },
-
-  buffets_add: function (frm) {
-    calculate_total_person_qty(frm);
-  },
-
-  buffets_remove: function (frm) {
-    calculate_total_person_qty(frm);
+  filter_buffet: function (frm) {
+    show_filter_summary(frm);
   }
 });
+
+
+// frappe.ui.form.on("Catering Buffet Requirement Buffet", {
+//   person_qty: function (frm) {
+//     calculate_total_person_qty(frm);
+//   },
+
+//   is_closed: function (frm) {
+//     calculate_total_person_qty(frm);
+//   },
+
+//   buffets_add: function (frm) {
+//     calculate_total_person_qty(frm);
+//   },
+
+//   buffets_remove: function (frm) {
+//     calculate_total_person_qty(frm);
+//   }
+// });
 
 
 function add_catering_action_buttons(frm) {
@@ -69,7 +70,7 @@ function add_catering_action_buttons(frm) {
   const requirements_group = __("Requirements");
 
   frm.add_custom_button(__("Get Service Plan"), function () {
-    do_get_buffet_plan(frm);
+    show_service_plan_dialog(frm);
   }, service_plan_group);
 
   frm.add_custom_button(__("Clear Service Plan"), function () {
@@ -95,60 +96,254 @@ function add_catering_action_buttons(frm) {
 }
 
 
-function calculate_total_person_qty(frm) {
-  /*
-    Total Person Qty يجب أن يحسب عدد المركز مرة واحدة فقط.
-    لا يجمع كل Service Period ولا كل Meal Type.
-  */
+function get_current_year() {
+  const today = frappe.datetime.get_today();
+  return today ? today.substring(0, 4) : String(new Date().getFullYear());
+}
 
-  const center_map = {};
 
-  (frm.doc.buffets || []).forEach(function (row) {
-    if (row.is_closed) return;
+function show_service_plan_dialog(frm) {
+  const current_year = get_current_year();
 
-    if (row.catering_center) {
-      center_map[row.catering_center] = true;
+  const dialog = new frappe.ui.Dialog({
+    title: __("Get Service Plan"),
+    size: "large",
+    fields: [
+      {
+        fieldname: "catering_year",
+        fieldtype: "Data",
+        label: __("Year"),
+        default: current_year,
+        read_only: 1
+      },
+      {
+        fieldname: "section_break_centers",
+        fieldtype: "Section Break",
+        label: __("Catering Centers")
+      },
+      {
+        fieldname: "centers_html",
+        fieldtype: "HTML"
+      }
+    ],
+    primary_action_label: __("Get Service Plan"),
+    primary_action: function () {
+      const selected_centers = get_selected_centers_from_dialog(dialog);
+
+      if (!selected_centers.length) {
+        frappe.msgprint(__("Please select at least one Catering Center."));
+        return;
+      }
+
+      dialog.hide();
+
+      do_get_buffet_plan(frm, {
+        catering_year: current_year,
+        catering_centers: selected_centers
+      });
     }
   });
 
-  const centers = Object.keys(center_map);
+  dialog.show();
 
-  if (!centers.length) {
-    frm.set_value("total_person_qty", 0);
-    return;
-  }
+  load_centers_into_dialog(dialog, current_year);
+}
 
-  let request_id = Date.now();
-  frm.__total_person_qty_request_id = request_id;
 
-  let total = 0;
-  let completed = 0;
+function load_centers_into_dialog(dialog, catering_year) {
+  const wrapper = dialog.fields_dict.centers_html.$wrapper;
 
-  centers.forEach(function (center_name) {
-    frappe.db.get_value("Catering Center", center_name, "person_qty")
-      .then(function (r) {
-        if (frm.__total_person_qty_request_id !== request_id) return;
+  wrapper.html(
+    '<div class="text-muted" style="padding: 12px;">' +
+      __("Loading Catering Centers...") +
+    '</div>'
+  );
 
-        const value = r.message ? Number(r.message.person_qty || 0) : 0;
-        total += value;
-      })
-      .finally(function () {
-        if (frm.__total_person_qty_request_id !== request_id) return;
+  frappe.call({
+    method:
+      "taj_core.catering.doctype.catering_buffet_requirement.catering_buffet_requirement.get_catering_centers_for_year",
+    args: {
+      catering_year: catering_year
+    },
+    freeze: true,
+    freeze_message: __("Loading Catering Centers..."),
+    callback: function (r) {
+      const centers = r.message || [];
 
-        completed++;
+      if (!centers.length) {
+        wrapper.html(
+          '<div class="alert alert-warning">' +
+            __("No Catering Centers found for year {0}.", [catering_year]) +
+          '</div>'
+        );
+        return;
+      }
 
-        if (completed === centers.length) {
-          frm.set_value("total_person_qty", total);
-        }
-      });
+      render_centers_selection(wrapper, centers);
+    },
+    error: function () {
+      wrapper.html(
+        '<div class="alert alert-danger">' +
+          __("Error while loading Catering Centers.") +
+        '</div>'
+      );
+    }
   });
 }
 
 
-function do_get_buffet_plan(frm) {
+function render_centers_selection(wrapper, centers) {
+  let html = "";
+
+  html += '<div style="margin-bottom: 10px; display: flex; gap: 8px; align-items: center;">';
+  html += '  <input type="text" class="form-control center-search-input" placeholder="' + __("Search Center...") + '" style="max-width: 320px;">';
+  html += '  <button type="button" class="btn btn-xs btn-default select-all-centers">' + __("Select All") + '</button>';
+  html += '  <button type="button" class="btn btn-xs btn-default clear-all-centers">' + __("Clear") + '</button>';
+  html += '</div>';
+
+  html += '<div class="center-list-wrapper" style="max-height: 420px; overflow: auto; border: 1px solid #d1d8dd; border-radius: 6px;">';
+
+  html += '<table class="table table-bordered table-sm" style="margin: 0;">';
+  html += '  <thead>';
+  html += '    <tr>';
+  html += '      <th style="width: 40px; text-align:center;"></th>';
+  html += '      <th>' + __("Center") + '</th>';
+  html += '      <th style="width: 140px;">' + __("Menu") + '</th>';
+  html += '      <th style="width: 110px; text-align:right;">' + __("Person Qty") + '</th>';
+  html += '      <th style="width: 110px;">' + __("Posting Date") + '</th>';
+  html += '    </tr>';
+  html += '  </thead>';
+  html += '  <tbody>';
+
+  centers.forEach(function (center) {
+    const search_text = [
+      center.name || "",
+      center.center_name || "",
+      center.catering_menu || ""
+    ].join(" ").toLowerCase();
+
+    html += '<tr class="center-row" data-search="' + frappe.utils.escape_html(search_text) + '">';
+    html += '  <td class="text-center">';
+    html += '    <input type="checkbox" class="center-checkbox" value="' + frappe.utils.escape_html(center.name || "") + '">';
+    html += '  </td>';
+    html += '  <td>';
+    html += '    <strong>' + frappe.utils.escape_html(center.center_name || center.name || "") + '</strong>';
+    html += '    <div class="text-muted" style="font-size: 11px;">' + frappe.utils.escape_html(center.name || "") + '</div>';
+    html += '  </td>';
+    html += '  <td>' + frappe.utils.escape_html(center.catering_menu || "") + '</td>';
+    html += '  <td style="text-align:right;">' + Number(center.person_qty || 0) + '</td>';
+    html += '  <td>' + frappe.utils.escape_html(center.posting_date || "") + '</td>';
+    html += '</tr>';
+  });
+
+  html += '  </tbody>';
+  html += '</table>';
+  html += '</div>';
+
+  wrapper.html(html);
+
+  wrapper.find(".center-search-input").on("input", function () {
+    const query = String($(this).val() || "").toLowerCase();
+
+    wrapper.find(".center-row").each(function () {
+      const row = $(this);
+      const search_text = row.attr("data-search") || "";
+
+      if (!query || search_text.indexOf(query) !== -1) {
+        row.show();
+      } else {
+        row.hide();
+      }
+    });
+  });
+
+  wrapper.find(".select-all-centers").on("click", function () {
+    wrapper.find(".center-row:visible .center-checkbox").prop("checked", true);
+  });
+
+  wrapper.find(".clear-all-centers").on("click", function () {
+    wrapper.find(".center-checkbox").prop("checked", false);
+  });
+}
+
+
+function get_selected_centers_from_dialog(dialog) {
+  const selected = [];
+
+  dialog.fields_dict.centers_html.$wrapper
+    .find(".center-checkbox:checked")
+    .each(function () {
+      const value = $(this).val();
+
+      if (value) {
+        selected.push(value);
+      }
+    });
+
+  return selected;
+}
+
+
+// function calculate_total_person_qty(frm) {
+//   /*
+//     Total Person Qty يحسب عدد المركز مرة واحدة فقط.
+//     لا يجمع Service Period ولا Meal Type ولا Buffet.
+//   */
+
+//   const center_map = {};
+
+//   (frm.doc.buffets || []).forEach(function (row) {
+//     if (row.is_closed) return;
+
+//     if (row.catering_center) {
+//       center_map[row.catering_center] = true;
+//     }
+//   });
+
+//   const centers = Object.keys(center_map);
+
+//   if (!centers.length) {
+//     frm.set_value("total_person_qty", 0);
+//     return;
+//   }
+
+//   const request_id = Date.now();
+//   frm.__total_person_qty_request_id = request_id;
+
+//   let total = 0;
+//   let completed = 0;
+
+//   centers.forEach(function (center_name) {
+//     frappe.db.get_value("Catering Center", center_name, "person_qty")
+//       .then(function (r) {
+//         if (frm.__total_person_qty_request_id !== request_id) return;
+
+//         const value = r.message ? Number(r.message.person_qty || 0) : 0;
+//         total += value;
+//       })
+//       .finally(function () {
+//         if (frm.__total_person_qty_request_id !== request_id) return;
+
+//         completed++;
+
+//         if (completed === centers.length) {
+//           frm.set_value("total_person_qty", total);
+//         }
+//       });
+//   });
+// }
+
+
+function do_get_buffet_plan(frm, opts) {
+  opts = opts || {};
+
   frappe.call({
     method:
       "taj_core.catering.doctype.catering_buffet_requirement.catering_buffet_requirement.get_buffet_plan",
+    args: {
+      catering_year: opts.catering_year || get_current_year(),
+      catering_centers: JSON.stringify(opts.catering_centers || [])
+    },
     freeze: true,
     freeze_message: __("Getting service plan..."),
     callback: function (r) {
@@ -163,7 +358,7 @@ function do_get_buffet_plan(frm) {
         : Number(r.message.total_person_qty || 0);
 
       if (!rows.length) {
-        frappe.msgprint(__("No service plan found. Please check Catering Centers and Menus."));
+        frappe.msgprint(__("No service plan found for selected Catering Centers."));
         return;
       }
 
@@ -200,10 +395,10 @@ function do_get_buffet_plan(frm) {
 
       frm.set_value("total_person_qty", total_person_qty);
       frm.refresh_field("buffets");
+      frm.dirty();
 
-      frappe.msgprint({
-        title: __("Service Plan Updated"),
-        message: __("Rows generated: {0}", [rows.length]),
+      frappe.show_alert({
+        message: __("Service Plan updated."),
         indicator: "green"
       });
     },
@@ -226,7 +421,7 @@ function do_get_filtered_requirements(frm) {
     frappe.msgprint({
       title: __("No Matching Service Plan Rows"),
       message: __(
-        "No rows matched the selected filters.<br><br>Service Period: {0}<br>Meal Type: {1}<br>Center: {2}<br>Buffet: {2}",
+        "No rows matched the selected filters.<br><br>Service Period: {0}<br>Meal Type: {1}<br>Center: {2}<br>Buffet: {3}",
         [
           frm.doc.filter_service_period || "All",
           frm.doc.filter_meal_type || "All",
@@ -385,6 +580,7 @@ function get_filtered_buffets(frm) {
     });
 }
 
+
 function clear_requirement_filters(frm) {
   if (frappe.meta.has_field(frm.doctype, "filter_service_period")) {
     frm.set_value("filter_service_period", "");
@@ -403,10 +599,13 @@ function clear_requirement_filters(frm) {
   }
 }
 
+
 function clear_items(frm) {
   frappe.confirm(__("Clear all generated Items?"), function () {
     frm.clear_table("items");
     frm.refresh_field("items");
+
+    frm.dirty();
 
     frappe.show_alert({
       message: __("Items cleared."),

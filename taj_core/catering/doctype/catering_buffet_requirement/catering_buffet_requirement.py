@@ -2,20 +2,42 @@ import math
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import cint, flt
+from frappe.utils import cint, flt, getdate
 
 
 class CateringBuffetRequirement(Document):
-    pass
+    def validate(self):
+        self.total_person_qty = get_total_center_person_qty(
+            [row.as_dict() for row in self.get("buffets") or []]
+        )
 
 
 MEAL_ORDER = {
     "Breakfast": 1,
     "Lunch": 2,
     "Dinner": 3,
-    "Disposable": 4,
 }
 
+def get_year_date_range(catering_year=None):
+    """
+    يرجع بداية ونهاية السنة.
+    إذا كان catering_year موجود كـ Fiscal Year يستخدم تواريخه.
+    وإلا يستخدم 01-01 إلى 12-31.
+    """
+
+    year_text = str(catering_year or getdate().year)
+
+    fiscal_year = frappe.db.get_value(
+        "Fiscal Year",
+        year_text,
+        ["year_start_date", "year_end_date"],
+        as_dict=True,
+    )
+
+    if fiscal_year and fiscal_year.year_start_date and fiscal_year.year_end_date:
+        return fiscal_year.year_start_date, fiscal_year.year_end_date
+
+    return f"{year_text}-01-01", f"{year_text}-12-31"
 
 def get_capacity_key(item_code=None, item_name=None, item_name_arabic=None):
     if item_code:
@@ -134,6 +156,50 @@ def get_menu_service_meals(menu_doc):
         ),
     )
 
+@frappe.whitelist()
+def get_catering_centers_for_year(catering_year=None):
+    """
+    يرجع المراكز الموجودة خلال السنة المختارة.
+    يستخدم posting_date في Catering Center.
+    """
+
+    start_date, end_date = get_year_date_range(catering_year)
+
+    filters = {}
+
+    center_meta = frappe.get_meta("Catering Center")
+
+    if center_meta.has_field("disabled"):
+        filters["disabled"] = 0
+
+    if center_meta.has_field("posting_date"):
+        filters["posting_date"] = ["between", [start_date, end_date]]
+
+    centers = frappe.get_all(
+        "Catering Center",
+        filters=filters,
+        fields=[
+            "name",
+            "center_name",
+            "catering_menu",
+            "person_qty",
+            "posting_date",
+        ],
+        order_by="center_name asc, name asc",
+    )
+
+    result = []
+
+    for center in centers:
+        result.append({
+            "name": center.name,
+            "center_name": center.center_name or center.name,
+            "catering_menu": center.catering_menu or "",
+            "person_qty": flt(center.person_qty or 0),
+            "posting_date": center.posting_date,
+        })
+
+    return result
 
 def get_effective_requirement_items(menu_doc):
     """
@@ -211,26 +277,36 @@ def get_effective_requirement_items(menu_doc):
 
 
 @frappe.whitelist()
-def get_buffet_plan():
+def get_buffet_plan(catering_year=None, catering_centers=None):
     """
-    يولد Service Plan من Catering Center.
+    يولد Service Plan حسب المراكز المختارة من Dialog.
 
-    الحالة 1:
-    المركز فيه Buffet rows:
-        يولد سطر لكل Buffet لكل Service Period + Meal Type
+    إذا المركز فيه Buffet:
+        يولد صف لكل Buffet لكل Service Period + Meal Type
 
-    الحالة 2:
-    المركز لا يوجد فيه Buffet rows:
-        يولد سطر واحد للمركز كامل لكل Service Period + Meal Type
-        plan_type = Center
-        buffet فارغ
-        buffet_company فارغ
+    إذا المركز بدون Buffet:
+        يولد صف Center كامل لكل Service Period + Meal Type
     """
+
+    if isinstance(catering_centers, str):
+        catering_centers = frappe.parse_json(catering_centers)
+
+    catering_centers = catering_centers or []
 
     center_filters = {}
 
-    if frappe.get_meta("Catering Center").has_field("disabled"):
+    center_meta = frappe.get_meta("Catering Center")
+
+    if center_meta.has_field("disabled"):
         center_filters["disabled"] = 0
+
+    if catering_centers:
+        center_filters["name"] = ["in", catering_centers]
+    else:
+        start_date, end_date = get_year_date_range(catering_year)
+
+        if center_meta.has_field("posting_date"):
+            center_filters["posting_date"] = ["between", [start_date, end_date]]
 
     centers = frappe.get_all(
         "Catering Center",
@@ -259,7 +335,6 @@ def get_buffet_plan():
         center_doc = frappe.get_doc("Catering Center", center.name)
         buffet_rows = list(center_doc.get("buffet") or [])
 
-        # الحالة الأولى: يوجد Buffets
         if buffet_rows:
             for buffet in buffet_rows:
                 buffet_name = buffet.get("buffet") or ""
@@ -287,7 +362,6 @@ def get_buffet_plan():
                         "is_closed": is_closed,
                     })
 
-        # الحالة الثانية: لا يوجد Buffets
         else:
             center_person_qty = flt(center.person_qty or 0)
 
@@ -317,7 +391,6 @@ def get_buffet_plan():
         "rows": result,
         "total_person_qty": get_total_center_person_qty(result),
     }
-
 
 @frappe.whitelist()
 def get_buffet_requirements(buffets=None):
@@ -410,8 +483,9 @@ def get_buffet_requirements(buffets=None):
             extra_person_qty = 0
 
             if workstation_load_qty > 0 and capacity_qty > 0:
-                cooking_runs = int(math.ceil(person_qty / workstation_load_qty))
-                required_capacity_qty = cooking_runs * capacity_qty
+                # cooking_runs = int(math.ceil(person_qty / workstation_load_qty))
+                required_capacity_qty = math.ceil(required_item_qty / capacity_qty)
+                cooking_runs = math.ceil(required_capacity_qty / workstation_load_qty)
                 extra_person_qty = (cooking_runs * workstation_load_qty) - person_qty
 
             result.append({
@@ -475,7 +549,6 @@ def get_service_period_sort_map():
 
     return period_sort_map
 
-
 def sort_service_plan_rows(rows):
     period_sort_map = get_service_period_sort_map()
 
@@ -493,11 +566,10 @@ def sort_service_plan_rows(rows):
         ),
     )
 
-
 def get_total_center_person_qty(service_plan_rows):
     """
-    يحسب عدد الأشخاص حسب المركز مرة واحدة فقط.
-    لا يجمع كل Service Period ولا كل Meal Type.
+    Total Person Qty يحسب عدد المركز مرة واحدة فقط.
+    لا يجمع كل يوم ولا كل وجبة ولا كل بوفيه.
     """
 
     center_names = set()

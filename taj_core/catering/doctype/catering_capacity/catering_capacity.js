@@ -155,13 +155,13 @@ function validate_capacity_rows(frm) {
 
     if (!has_item) return;
 
-    if (!row.workstation) {
-      frappe.throw(__("Row #{0}: Workstation is required.", [row.idx]));
-    }
+    // if (!row.workstation) {
+    //   frappe.throw(__("Row #{0}: Workstation is required.", [row.idx]));
+    // }
 
-    if (Number(row.workstation_load_qty || 0) <= 0) {
-      frappe.throw(__("Row #{0}: Workstation Load Qty must be greater than zero.", [row.idx]));
-    }
+    // if (Number(row.workstation_load_qty || 0) <= 0) {
+    //   frappe.throw(__("Row #{0}: Workstation Load Qty must be greater than zero.", [row.idx]));
+    // }
 
     if (Number(row.capacity_qty || 0) <= 0) {
       frappe.throw(__("Row #{0}: Capacity Qty must be greater than zero.", [row.idx]));

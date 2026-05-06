@@ -52,10 +52,11 @@
    "options": "Catering Menu Section"
   },
   {
+   "depends_on": "eval:doc.row_type==\"New Item\"",
    "fieldname": "row_id",
    "fieldtype": "Data",
-   "hidden": 1,
    "label": "Row ID",
+   "mandatory_depends_on": "eval:doc.row_type==\"New Item\"",
    "read_only": 1
   },
   {
@@ -115,21 +116,21 @@
   },
   {
    "columns": 1,
-   "depends_on": "eval:doc.row_type!='Section'",
+   "depends_on": "eval:doc.row_type==\"Item\" || doc.row_type==\"Sub Item\"",
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "QTY",
-   "mandatory_depends_on": "eval:doc.row_type!='Section'"
+   "mandatory_depends_on": "eval:doc.row_type==\"Item\" || doc.row_type==\"Sub Item\""
   },
   {
    "columns": 1,
-   "depends_on": "eval:doc.row_type!='Section'",
+   "depends_on": "eval:doc.row_type==\"Item\" || doc.row_type==\"Sub Item\"",
    "fieldname": "uom",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "UOM",
-   "mandatory_depends_on": "eval:doc.row_type!='Section'",
+   "mandatory_depends_on": "eval:doc.row_type==\"Item\" || doc.row_type==\"Sub Item\"",
    "options": "UOM"
   },
   {
@@ -153,7 +154,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-03 09:49:53.811590",
+ "modified": "2026-05-06 13:05:23.719922",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu Item",

@@ -46,6 +46,7 @@
    "default": "0",
    "fieldname": "is_closed",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Is Closed"
   },
   {
@@ -61,8 +62,8 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-02 20:07:19.476847",
- "modified_by": "Administrator",
+ "modified": "2026-05-05 15:40:01.912553",
+ "modified_by": "m.bajandooh@tajff.sa",
  "module": "Catering",
  "name": "Catering Center Buffet",
  "owner": "Administrator",
