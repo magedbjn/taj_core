@@ -106,6 +106,15 @@ frappe.ui.form.on("Catering Center Buffet Exception", {
     toggle_exception_fields(frm);
     update_exception_preview(frm, cdt, cdn);
     validate_exception_row_client(frm, cdt, cdn);
+
+    const row = locals[cdt][cdn];
+
+    if (row && row.exception_type === "Closed") {
+      frappe.show_alert({
+        message: __("This will close the selected target for this period and meal."),
+        indicator: "orange"
+      });
+    }
   },
 
   percent: function (frm, cdt, cdn) {

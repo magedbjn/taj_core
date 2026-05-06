@@ -87,7 +87,7 @@
    "fieldname": "percent",
    "fieldtype": "Percent",
    "in_list_view": 1,
-   "label": "Percent",
+   "label": "Reduction Percent",
    "mandatory_depends_on": "eval:doc.exception_type=='Percent'"
   },
   {
@@ -119,7 +119,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-06 19:50:13.491859",
+ "modified": "2026-05-07 00:15:51.301802",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Center Buffet Exception",

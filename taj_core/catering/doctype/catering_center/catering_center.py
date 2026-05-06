@@ -38,7 +38,8 @@ class CateringCenter(Document):
 
             if key in seen:
                 frappe.throw(
-                    f"Buffet Row #{row.idx}: Duplicate Buffet / Company is not allowed: {row.buffet} / {row.buffet_company}"
+                    f"Buffet Row #{row.idx}: Duplicate Buffet / Company is not allowed: "
+                    f"{row.buffet} / {row.buffet_company}"
                 )
 
             seen.add(key)
@@ -89,7 +90,8 @@ class CateringCenter(Document):
 
         if ex.buffet not in open_buffets:
             frappe.throw(
-                f"Exception Row #{ex.idx}: Buffet {ex.buffet} is closed or not available in the base Buffet table."
+                f"Exception Row #{ex.idx}: Buffet {ex.buffet} is closed or not available "
+                f"in the base Buffet table."
             )
 
         if not ex.apply_to:
@@ -106,7 +108,8 @@ class CateringCenter(Document):
 
             if (ex.buffet, ex.buffet_company) not in open_buffet_map:
                 frappe.throw(
-                    f"Exception Row #{ex.idx}: Company {ex.buffet_company} is not available or is closed in Buffet {ex.buffet}."
+                    f"Exception Row #{ex.idx}: Company {ex.buffet_company} is not available "
+                    f"or is closed in Buffet {ex.buffet}."
                 )
 
             duplicate_key = (
@@ -130,7 +133,8 @@ class CateringCenter(Document):
 
         if duplicate_key in seen_exceptions:
             frappe.throw(
-                f"Exception Row #{ex.idx}: Duplicate exception for the same Service Period / Meal Type / Buffet / Company."
+                f"Exception Row #{ex.idx}: Duplicate exception for the same Service Period / "
+                f"Meal Type / Buffet / Company."
             )
 
         seen_exceptions.add(duplicate_key)
@@ -144,6 +148,11 @@ class CateringCenter(Document):
             )
 
         base_qty = self.get_exception_base_qty(ex)
+
+        if base_qty <= 0:
+            frappe.throw(
+                f"Exception Row #{ex.idx}: Base Qty is zero. Please check Buffet / Company setup."
+            )
 
         if ex.exception_type == "Closed":
             ex.percent = 0
@@ -172,7 +181,8 @@ class CateringCenter(Document):
 
             if flt(ex.fixed_qty or 0) > flt(base_qty):
                 frappe.throw(
-                    f"Exception Row #{ex.idx}: Fixed Qty cannot be greater than base qty ({cint(base_qty)})."
+                    f"Exception Row #{ex.idx}: Fixed Qty cannot be greater than base qty "
+                    f"({cint(base_qty)})."
                 )
 
         self.set_exception_preview_fields(ex, base_qty)
@@ -234,18 +244,20 @@ class CateringCenter(Document):
 
         if ex.exception_type == "Closed":
             ex.impact_summary = (
-                f"{ex.service_period} {ex.meal_type}: {target} will be closed. Final Qty: 0."
+                f"{ex.service_period} {ex.meal_type}: {target} will be closed. "
+                f"Final Qty: 0."
             )
 
         elif ex.exception_type == "Percent":
             ex.impact_summary = (
-                f"{ex.service_period} {ex.meal_type}: {target} will be reduced by {flt(ex.percent)}%. "
-                f"Final Qty: {round(effective_qty)}."
+                f"{ex.service_period} {ex.meal_type}: {target} will be reduced by "
+                f"{flt(ex.percent)}%. Final Qty: {round(effective_qty)}."
             )
 
         elif ex.exception_type == "Fixed Qty":
             ex.impact_summary = (
-                f"{ex.service_period} {ex.meal_type}: {target} will use fixed qty {round(effective_qty)}."
+                f"{ex.service_period} {ex.meal_type}: {target} will use fixed qty "
+                f"{round(effective_qty)}."
             )
 
     def get_effective_qty_for_exception(self, base_qty, ex):
