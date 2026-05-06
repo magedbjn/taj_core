@@ -15,6 +15,8 @@
   "person_qty",
   "section_break_pdst",
   "buffet",
+  "section_break_suqf",
+  "buffet_exception",
   "section_break_rwwp",
   "total_buffet_person_qty",
   "column_break_litj",
@@ -92,12 +94,22 @@
    "fieldtype": "Int",
    "label": "Person Qty Difference",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_suqf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "buffet_exception",
+   "fieldtype": "Table",
+   "label": "Buffet Exception",
+   "options": "Catering Center Buffet Exception"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-04 10:19:09.460055",
+ "modified": "2026-05-06 18:36:01.103294",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Center",

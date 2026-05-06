@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-06 18:26:01.793460",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "service_period",
+  "meal_type",
+  "buffet",
+  "apply_to",
+  "buffet_company",
+  "exception_type",
+  "percent",
+  "fixed_qty",
+  "base_qty",
+  "reduction_qty",
+  "effective_qty",
+  "impact_summary"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "service_period",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Service Period",
+   "options": "Catering Service Period"
+  },
+  {
+   "columns": 1,
+   "fieldname": "meal_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Meal Type",
+   "options": "Breakfast\nLunch\nDinner"
+  },
+  {
+   "columns": 1,
+   "fieldname": "buffet",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Buffet",
+   "options": "Buffet 1\nBuffet 2\nBuffet 3\nBuffet 4\nBuffet 5\nBuffet 6\nBuffet 7\nBuffet 8\nBuffet 9\nBuffet 10"
+  },
+  {
+   "columns": 2,
+   "fieldname": "buffet_company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Buffet Company",
+   "options": "Catering Buffet Company"
+  },
+  {
+   "columns": 1,
+   "description": "Defines whether the exception applies to the whole buffet or one company only.",
+   "fieldname": "apply_to",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Apply To",
+   "options": "Buffet\nCompany"
+  },
+  {
+   "columns": 1,
+   "description": "Defines the type of exception: closed, percentage reduction, or fixed quantity.",
+   "fieldname": "exception_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Exception Type",
+   "options": "Percent\nFixed Qty\nClosed"
+  },
+  {
+   "columns": 1,
+   "depends_on": "eval:doc.exception_type=='Fixed Qty'",
+   "description": "Final fixed quantity after the exception.",
+   "fieldname": "fixed_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Fixed Qty",
+   "mandatory_depends_on": "eval:doc.exception_type=='Fixed Qty'"
+  },
+  {
+   "columns": 1,
+   "depends_on": "eval:doc.exception_type=='Percent'",
+   "description": "Reduction percentage from the original quantity.",
+   "fieldname": "percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Percent",
+   "mandatory_depends_on": "eval:doc.exception_type=='Percent'"
+  },
+  {
+   "fieldname": "base_qty",
+   "fieldtype": "Float",
+   "label": "Base Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reduction_qty",
+   "fieldtype": "Float",
+   "label": "Reduction Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_qty",
+   "fieldtype": "Float",
+   "label": "Effective Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "impact_summary",
+   "fieldtype": "Small Text",
+   "label": "Impact Summary",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-06 19:50:13.491859",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Center Buffet Exception",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
