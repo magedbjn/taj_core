@@ -85,22 +85,56 @@ class CateringCenter(Document):
         if not ex.meal_type:
             frappe.throw(f"Exception Row #{ex.idx}: Meal Type is required.")
 
-        if not ex.buffet:
-            frappe.throw(f"Exception Row #{ex.idx}: Buffet is required.")
-
-        if ex.buffet not in open_buffets:
-            frappe.throw(
-                f"Exception Row #{ex.idx}: Buffet {ex.buffet} is closed or not available "
-                f"in the base Buffet table."
-            )
-
         if not ex.apply_to:
             frappe.throw(f"Exception Row #{ex.idx}: Apply To is required.")
 
-        if ex.apply_to not in ["Buffet", "Company"]:
-            frappe.throw(f"Exception Row #{ex.idx}: Apply To must be Buffet or Company.")
+        if ex.apply_to not in ["All Buffets", "Buffet", "Company"]:
+            frappe.throw(
+                f"Exception Row #{ex.idx}: Apply To must be All Buffets, Buffet, or Company."
+            )
 
-        if ex.apply_to == "Company":
+        if ex.apply_to == "All Buffets":
+            ex.buffet = None
+            ex.buffet_company = None
+
+            duplicate_key = (
+                ex.service_period,
+                ex.meal_type,
+                ex.apply_to,
+                "",
+                "",
+            )
+
+        elif ex.apply_to == "Buffet":
+            if not ex.buffet:
+                frappe.throw(f"Exception Row #{ex.idx}: Buffet is required.")
+
+            if ex.buffet not in open_buffets:
+                frappe.throw(
+                    f"Exception Row #{ex.idx}: Buffet {ex.buffet} is closed or not available "
+                    f"in the base Buffet table."
+                )
+
+            ex.buffet_company = None
+
+            duplicate_key = (
+                ex.service_period,
+                ex.meal_type,
+                ex.apply_to,
+                ex.buffet,
+                "",
+            )
+
+        elif ex.apply_to == "Company":
+            if not ex.buffet:
+                frappe.throw(f"Exception Row #{ex.idx}: Buffet is required.")
+
+            if ex.buffet not in open_buffets:
+                frappe.throw(
+                    f"Exception Row #{ex.idx}: Buffet {ex.buffet} is closed or not available "
+                    f"in the base Buffet table."
+                )
+
             if not ex.buffet_company:
                 frappe.throw(
                     f"Exception Row #{ex.idx}: Buffet Company is required when Apply To is Company."
@@ -120,21 +154,10 @@ class CateringCenter(Document):
                 ex.buffet_company,
             )
 
-        else:
-            ex.buffet_company = None
-
-            duplicate_key = (
-                ex.service_period,
-                ex.meal_type,
-                ex.apply_to,
-                ex.buffet,
-                "",
-            )
-
         if duplicate_key in seen_exceptions:
             frappe.throw(
                 f"Exception Row #{ex.idx}: Duplicate exception for the same Service Period / "
-                f"Meal Type / Buffet / Company."
+                f"Meal Type / Apply To / Buffet / Company."
             )
 
         seen_exceptions.add(duplicate_key)
@@ -151,7 +174,7 @@ class CateringCenter(Document):
 
         if base_qty <= 0:
             frappe.throw(
-                f"Exception Row #{ex.idx}: Base Qty is zero. Please check Buffet / Company setup."
+                f"Exception Row #{ex.idx}: Base Qty is zero. Please check Buffet setup."
             )
 
         if ex.exception_type == "Closed":
@@ -197,15 +220,16 @@ class CateringCenter(Document):
             if flt(row.person_qty or 0) <= 0:
                 continue
 
-            if row.buffet != ex.buffet:
-                continue
-
-            if ex.apply_to == "Company":
-                if row.buffet_company == ex.buffet_company:
-                    total += flt(row.person_qty or 0)
+            if ex.apply_to == "All Buffets":
+                total += flt(row.person_qty or 0)
 
             elif ex.apply_to == "Buffet":
-                total += flt(row.person_qty or 0)
+                if row.buffet == ex.buffet:
+                    total += flt(row.person_qty or 0)
+
+            elif ex.apply_to == "Company":
+                if row.buffet == ex.buffet and row.buffet_company == ex.buffet_company:
+                    total += flt(row.person_qty or 0)
 
         return total
 
@@ -237,10 +261,14 @@ class CateringCenter(Document):
         ex.reduction_qty = round(reduction_qty)
         ex.effective_qty = round(effective_qty)
 
-        target = ex.buffet
-
-        if ex.apply_to == "Company" and ex.buffet_company:
+        if ex.apply_to == "All Buffets":
+            target = "All Buffets"
+        elif ex.apply_to == "Buffet":
+            target = ex.buffet
+        elif ex.apply_to == "Company" and ex.buffet_company:
             target = f"{ex.buffet_company} in {ex.buffet}"
+        else:
+            target = ex.buffet or ""
 
         if ex.exception_type == "Closed":
             ex.impact_summary = (

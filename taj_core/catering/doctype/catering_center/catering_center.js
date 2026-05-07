@@ -79,6 +79,11 @@ frappe.ui.form.on("Catering Center Buffet Exception", {
 
     if (!row) return;
 
+    if (row.apply_to === "All Buffets") {
+      frappe.model.set_value(cdt, cdn, "buffet", "");
+      frappe.model.set_value(cdt, cdn, "buffet_company", "");
+    }
+
     if (row.apply_to === "Buffet") {
       frappe.model.set_value(cdt, cdn, "buffet_company", "");
     }
@@ -89,6 +94,14 @@ frappe.ui.form.on("Catering Center Buffet Exception", {
   },
 
   buffet: function (frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+
+    if (row && row.apply_to === "All Buffets") {
+      frappe.model.set_value(cdt, cdn, "buffet", "");
+      frappe.model.set_value(cdt, cdn, "buffet_company", "");
+      return;
+    }
+
     frappe.model.set_value(cdt, cdn, "buffet_company", "");
 
     update_exception_grid_options(frm);
@@ -199,13 +212,9 @@ function setup_buffet_exception_filters(frm) {
   frm.set_query("buffet_company", "buffet_exception", function (doc, cdt, cdn) {
     const row = locals[cdt][cdn];
 
-    if (!row) {
-      return {};
-    }
+    if (!row) return {};
 
-    if (row.apply_to !== "Company") {
-      return {};
-    }
+    if (row.apply_to !== "Company") return {};
 
     if (!row.buffet) {
       frappe.show_alert({
@@ -256,7 +265,7 @@ function update_exception_grid_options(frm) {
   grid.update_docfield_property(
     "apply_to",
     "options",
-    ["", "Buffet", "Company"].join("\n")
+    ["", "All Buffets", "Buffet", "Company"].join("\n")
   );
 
   grid.update_docfield_property(
@@ -277,6 +286,18 @@ function toggle_exception_fields(frm) {
   const grid = frm.fields_dict.buffet_exception.grid;
 
   grid.update_docfield_property(
+    "buffet",
+    "depends_on",
+    "eval:doc.apply_to=='Buffet' || doc.apply_to=='Company'"
+  );
+
+  grid.update_docfield_property(
+    "buffet_company",
+    "depends_on",
+    "eval:doc.apply_to=='Company'"
+  );
+
+  grid.update_docfield_property(
     "percent",
     "depends_on",
     "eval:doc.exception_type=='Percent'"
@@ -286,12 +307,6 @@ function toggle_exception_fields(frm) {
     "fixed_qty",
     "depends_on",
     "eval:doc.exception_type=='Fixed Qty'"
-  );
-
-  grid.update_docfield_property(
-    "buffet_company",
-    "depends_on",
-    "eval:doc.apply_to=='Company'"
   );
 }
 
@@ -303,15 +318,29 @@ function refresh_invalid_exception_rows(frm) {
   const periods = frm.__menu_service_periods || [];
 
   (frm.doc.buffet_exception || []).forEach(function (row) {
-    if (row.buffet && !open_buffets.includes(row.buffet)) {
-      row.buffet = "";
-      row.buffet_company = "";
-      changed = true;
+    if (row.apply_to === "All Buffets") {
+      if (row.buffet) {
+        row.buffet = "";
+        changed = true;
+      }
+
+      if (row.buffet_company) {
+        row.buffet_company = "";
+        changed = true;
+      }
     }
 
     if (row.apply_to === "Buffet" && row.buffet_company) {
       row.buffet_company = "";
       changed = true;
+    }
+
+    if (row.apply_to !== "All Buffets") {
+      if (row.buffet && !open_buffets.includes(row.buffet)) {
+        row.buffet = "";
+        row.buffet_company = "";
+        changed = true;
+      }
     }
 
     if (row.apply_to === "Company" && row.buffet && row.buffet_company) {
@@ -381,7 +410,7 @@ function update_exception_preview(frm, cdt, cdn) {
   let reduction_qty = 0;
   let summary = "";
 
-  if (!row.service_period || !row.meal_type || !row.buffet || !row.exception_type) {
+  if (!row.service_period || !row.meal_type || !row.apply_to || !row.exception_type) {
     frappe.model.set_value(cdt, cdn, "base_qty", Math.round(base_qty || 0));
     frappe.model.set_value(cdt, cdn, "reduction_qty", 0);
     frappe.model.set_value(cdt, cdn, "effective_qty", Math.round(base_qty || 0));
@@ -389,10 +418,31 @@ function update_exception_preview(frm, cdt, cdn) {
     return;
   }
 
-  const target =
-    row.apply_to === "Company"
-      ? `${row.buffet_company || "Company"} in ${row.buffet}`
-      : row.buffet;
+  if (row.apply_to !== "All Buffets" && !row.buffet) {
+    frappe.model.set_value(cdt, cdn, "base_qty", 0);
+    frappe.model.set_value(cdt, cdn, "reduction_qty", 0);
+    frappe.model.set_value(cdt, cdn, "effective_qty", 0);
+    frappe.model.set_value(cdt, cdn, "impact_summary", "");
+    return;
+  }
+
+  if (row.apply_to === "Company" && !row.buffet_company) {
+    frappe.model.set_value(cdt, cdn, "base_qty", 0);
+    frappe.model.set_value(cdt, cdn, "reduction_qty", 0);
+    frappe.model.set_value(cdt, cdn, "effective_qty", 0);
+    frappe.model.set_value(cdt, cdn, "impact_summary", "");
+    return;
+  }
+
+  let target = "";
+
+  if (row.apply_to === "All Buffets") {
+    target = "All Buffets";
+  } else if (row.apply_to === "Buffet") {
+    target = row.buffet || "";
+  } else if (row.apply_to === "Company") {
+    target = `${row.buffet_company || "Company"} in ${row.buffet || ""}`;
+  }
 
   if (row.exception_type === "Closed") {
     effective_qty = 0;
@@ -419,13 +469,8 @@ function update_exception_preview(frm, cdt, cdn) {
     summary = `${row.service_period} ${row.meal_type}: ${target} will use fixed qty ${Math.round(fixed_qty)}.`;
   }
 
-  if (effective_qty < 0) {
-    effective_qty = 0;
-  }
-
-  if (reduction_qty < 0) {
-    reduction_qty = 0;
-  }
+  if (effective_qty < 0) effective_qty = 0;
+  if (reduction_qty < 0) reduction_qty = 0;
 
   frappe.model.set_value(cdt, cdn, "base_qty", Math.round(base_qty));
   frappe.model.set_value(cdt, cdn, "reduction_qty", Math.round(reduction_qty));
@@ -492,6 +537,23 @@ function get_base_buffet_qty(frm, buffet) {
 }
 
 
+function get_base_all_buffets_qty(frm) {
+  let total = 0;
+
+  (frm.doc.buffet || []).forEach(function (row) {
+    if (
+      row.buffet &&
+      !row.is_closed &&
+      Number(row.person_qty || 0) > 0
+    ) {
+      total += Number(row.person_qty || 0);
+    }
+  });
+
+  return total;
+}
+
+
 function get_base_buffet_company_qty(frm, buffet, company) {
   let total = 0;
 
@@ -511,7 +573,11 @@ function get_base_buffet_company_qty(frm, buffet, company) {
 
 
 function get_exception_base_qty(frm, row) {
-  if (!row || !row.buffet) return 0;
+  if (!row) return 0;
+
+  if (row.apply_to === "All Buffets") {
+    return get_base_all_buffets_qty(frm);
+  }
 
   if (row.apply_to === "Buffet") {
     return get_base_buffet_qty(frm, row.buffet);
@@ -530,20 +596,32 @@ function validate_exception_row_client(frm, cdt, cdn) {
 
   if (!row) return;
 
+  if (row.apply_to === "All Buffets") {
+    if (row.buffet) {
+      frappe.model.set_value(cdt, cdn, "buffet", "");
+    }
+
+    if (row.buffet_company) {
+      frappe.model.set_value(cdt, cdn, "buffet_company", "");
+    }
+  }
+
   if (row.apply_to === "Buffet" && row.buffet_company) {
     frappe.model.set_value(cdt, cdn, "buffet_company", "");
   }
 
-  if (!row.buffet) return;
+  if (row.apply_to !== "All Buffets" && !row.buffet) return;
 
   const open_buffets = get_open_buffets(frm);
 
-  if (!open_buffets.includes(row.buffet)) {
-    frappe.model.set_value(cdt, cdn, "buffet", "");
-    frappe.model.set_value(cdt, cdn, "buffet_company", "");
+  if (row.apply_to !== "All Buffets") {
+    if (!open_buffets.includes(row.buffet)) {
+      frappe.model.set_value(cdt, cdn, "buffet", "");
+      frappe.model.set_value(cdt, cdn, "buffet_company", "");
 
-    frappe.msgprint(__("This Buffet is closed or not available in the base Buffet table."));
-    return;
+      frappe.msgprint(__("This Buffet is closed or not available in the base Buffet table."));
+      return;
+    }
   }
 
   if (row.apply_to === "Company") {
@@ -590,9 +668,7 @@ function validate_exception_row_client(frm, cdt, cdn) {
 
 
 function validate_buffet_exceptions_client(frm) {
-  if (!(frm.doc.buffet || []).length) {
-    return;
-  }
+  if (!(frm.doc.buffet || []).length) return;
 
   const seen = {};
   const open_buffets = get_open_buffets(frm);
@@ -610,12 +686,18 @@ function validate_buffet_exceptions_client(frm) {
       frappe.throw(__("Exception Row #{0}: Apply To is required.", [row.idx]));
     }
 
-    if (!row.buffet) {
-      frappe.throw(__("Exception Row #{0}: Buffet is required.", [row.idx]));
+    if (!["All Buffets", "Buffet", "Company"].includes(row.apply_to)) {
+      frappe.throw(__("Exception Row #{0}: Invalid Apply To.", [row.idx]));
     }
 
-    if (!open_buffets.includes(row.buffet)) {
-      frappe.throw(__("Exception Row #{0}: Buffet is closed or not available.", [row.idx]));
+    if (row.apply_to !== "All Buffets") {
+      if (!row.buffet) {
+        frappe.throw(__("Exception Row #{0}: Buffet is required.", [row.idx]));
+      }
+
+      if (!open_buffets.includes(row.buffet)) {
+        frappe.throw(__("Exception Row #{0}: Buffet is closed or not available.", [row.idx]));
+      }
     }
 
     if (row.apply_to === "Company") {
@@ -638,7 +720,7 @@ function validate_buffet_exceptions_client(frm) {
       row.service_period || "",
       row.meal_type || "",
       row.apply_to || "",
-      row.buffet || "",
+      row.apply_to === "All Buffets" ? "" : row.buffet || "",
       row.apply_to === "Company" ? row.buffet_company || "" : ""
     ].join("||");
 

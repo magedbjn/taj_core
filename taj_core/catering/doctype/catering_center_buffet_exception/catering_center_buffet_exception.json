@@ -8,8 +8,8 @@
  "field_order": [
   "service_period",
   "meal_type",
-  "buffet",
   "apply_to",
+  "buffet",
   "buffet_company",
   "exception_type",
   "percent",
@@ -38,6 +38,7 @@
   },
   {
    "columns": 1,
+   "depends_on": "eval:doc.apply_to!='All Buffets'",
    "fieldname": "buffet",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -46,6 +47,7 @@
   },
   {
    "columns": 2,
+   "depends_on": "eval:doc.apply_to!='All Buffets'",
    "fieldname": "buffet_company",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -59,7 +61,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Apply To",
-   "options": "Buffet\nCompany"
+   "options": "All Buffets\nBuffet\nCompany"
   },
   {
    "columns": 1,
@@ -119,8 +121,8 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-07 00:15:51.301802",
- "modified_by": "Administrator",
+ "modified": "2026-05-07 10:02:32.779818",
+ "modified_by": "m.bajandooh@tajff.sa",
  "module": "Catering",
  "name": "Catering Center Buffet Exception",
  "owner": "Administrator",
