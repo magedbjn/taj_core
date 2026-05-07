@@ -9,6 +9,7 @@
   "naming_series",
   "posting_date",
   "center_name",
+  "center_color",
   "column_break_dqjv",
   "disabled",
   "catering_menu",
@@ -104,13 +105,18 @@
    "fieldtype": "Table",
    "label": "Buffet Exception",
    "options": "Catering Center Buffet Exception"
+  },
+  {
+   "fieldname": "center_color",
+   "fieldtype": "Color",
+   "label": "Center Color"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-06 18:36:01.103294",
- "modified_by": "Administrator",
+ "modified": "2026-05-07 11:43:34.855665",
+ "modified_by": "m.bajandooh@tajff.sa",
  "module": "Catering",
  "name": "Catering Center",
  "naming_rule": "By \"Naming Series\" field",
