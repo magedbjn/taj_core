@@ -8,7 +8,8 @@
   "disabled",
   "period_name",
   "period_type",
-  "sort_order"
+  "sort_order",
+  "location"
  ],
  "fields": [
   {
@@ -33,13 +34,19 @@
    "fieldname": "sort_order",
    "fieldtype": "Int",
    "label": "Sort Order"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Select",
+   "label": "Location",
+   "options": "\nMina\nArafat"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-30 12:06:20.386655",
- "modified_by": "Administrator",
+ "modified": "2026-05-07 08:43:16.524642",
+ "modified_by": "m.bajandooh@tajff.sa",
  "module": "Catering",
  "name": "Catering Service Period",
  "naming_rule": "By fieldname",
