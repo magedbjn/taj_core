@@ -8,9 +8,12 @@
   "item_code",
   "item_name",
   "item_name_arabic",
+  "section_break_jrro",
   "column_break_bjdo",
   "workstation",
   "workstation_load_qty",
+  "workstation_unit_capacity_qty",
+  "workstation_unit_capacity_uom",
   "column_break_dgie",
   "capacity_qty",
   "capacity_uom",
@@ -109,14 +112,29 @@
    "fieldtype": "Select",
    "label": "Pallet Group",
    "options": "\nFruits\nFrozen\nProduction\nDry Items\nBeverage\nDisposable"
+  },
+  {
+   "fieldname": "workstation_unit_capacity_qty",
+   "fieldtype": "Float",
+   "label": "Workstation Unit Capacity Qty"
+  },
+  {
+   "fieldname": "workstation_unit_capacity_uom",
+   "fieldtype": "Link",
+   "label": "Workstation Unit Capacity UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "section_break_jrro",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-07 12:00:15.330084",
- "modified_by": "m.bajandooh@tajff.sa",
+ "modified": "2026-05-07 21:49:40.868828",
+ "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Capacity Item",
  "owner": "Administrator",
