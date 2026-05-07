@@ -102,10 +102,19 @@ function remove_empty_capacity_rows(frm) {
   const original_count = frm.doc.items.length;
 
   frm.doc.items = frm.doc.items.filter(function (row) {
+    const has_item =
+      row.item_code || row.item_name || row.item_name_arabic;
+
+    // حذف تلقائي لأي صف فيه صنف لكن Capacity Qty صفر أو أقل
+    if (has_item && Number(row.capacity_qty || 0) <= 0) {
+      return false;
+    }
+
+    // حذف الصفوف الفارغة بالكامل
     return (
-      Number(row.workstation_load_qty || 0) > 0 ||
-      Number(row.capacity_qty || 0) > 0 ||
+      has_item ||
       row.workstation ||
+      Number(row.workstation_load_qty || 0) > 0 ||
       row.capacity_uom
     );
   });
@@ -120,12 +129,11 @@ function remove_empty_capacity_rows(frm) {
     frm.refresh_field("items");
 
     frappe.show_alert({
-      message: __("Removed {0} empty capacity row(s).", [removed_count]),
+      message: __("Removed {0} row(s) with zero Capacity Qty.", [removed_count]),
       indicator: "orange"
     });
   }
 }
-
 
 function validate_unique_capacity_items(frm) {
   const seen = {};
@@ -163,9 +171,9 @@ function validate_capacity_rows(frm) {
     //   frappe.throw(__("Row #{0}: Workstation Load Qty must be greater than zero.", [row.idx]));
     // }
 
-    if (Number(row.capacity_qty || 0) <= 0) {
-      frappe.throw(__("Row #{0}: Capacity Qty must be greater than zero.", [row.idx]));
-    }
+    // if (Number(row.capacity_qty || 0) <= 0) {
+    //   frappe.throw(__("Row #{0}: Capacity Qty must be greater than zero.", [row.idx]));
+    // }
 
     if (!row.capacity_uom) {
       frappe.throw(__("Row #{0}: Capacity UOM is required.", [row.idx]));
