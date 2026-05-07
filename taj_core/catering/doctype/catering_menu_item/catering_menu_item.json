@@ -20,6 +20,7 @@
   "new_item_name_arabic",
   "qty",
   "uom",
+  "buffet_location",
   "is_show_print"
  ],
  "fields": [
@@ -148,14 +149,20 @@
    "fieldname": "is_show_print",
    "fieldtype": "Check",
    "label": "Is Show Print"
+  },
+  {
+   "fieldname": "buffet_location",
+   "fieldtype": "Select",
+   "label": "Buffet Location",
+   "options": "\nMina\nArafat"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-06 13:05:23.719922",
- "modified_by": "Administrator",
+ "modified": "2026-05-07 14:39:45.875588",
+ "modified_by": "m.bajandooh@tajff.sa",
  "module": "Catering",
  "name": "Catering Menu Item",
  "owner": "Administrator",
