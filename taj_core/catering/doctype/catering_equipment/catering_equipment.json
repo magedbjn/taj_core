@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-08 03:04:51.845665",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "disabled",
+  "naming_series",
+  "equipment_name_arabic",
+  "equipment_category",
+  "total_qty",
+  "has_serial_no"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "equipment_name_arabic",
+   "fieldtype": "Data",
+   "label": "Equipment Name Arabic"
+  },
+  {
+   "fieldname": "equipment_category",
+   "fieldtype": "Select",
+   "label": "Equipment Category",
+   "options": "\u062a\u062e\u0632\u064a\u0646\n\u062a\u0642\u062f\u064a\u0645\n\u062a\u0633\u062e\u064a\u0646\n\u062a\u0628\u0631\u064a\u062f"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_serial_no",
+   "fieldtype": "Check",
+   "label": "Has Serial No"
+  },
+  {
+   "fieldname": "total_qty",
+   "fieldtype": "Int",
+   "label": "Total Qty"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CTG-EQ-.####"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-10 13:57:18.134491",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Equipment",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"wV-PVKXDEo\",\"type\":\"card\",\"data\":{\"card_name\":\"Catering\",\"col\":4}}]",
+ "content": "[{\"id\":\"wV-PVKXDEo\",\"type\":\"card\",\"data\":{\"card_name\":\"Catering\",\"col\":4}},{\"id\":\"RXOhHGyy68\",\"type\":\"card\",\"data\":{\"card_name\":\"Equipment\",\"col\":4}}]",
  "creation": "2026-05-05 15:08:52.248457",
  "custom_blocks": [],
  "docstatus": 0,
@@ -17,7 +17,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Catering",
-   "link_count": 6,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -65,9 +65,18 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Catering Buffet Company",
+   "label": "Equipment",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Equipment",
    "link_count": 0,
-   "link_to": "Catering Buffet Company",
+   "link_to": "Catering Equipment",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -75,15 +84,25 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Catering Buffet Requirement",
+   "label": "Catering Equipment Delivery",
    "link_count": 0,
-   "link_to": "Catering Buffet Requirement",
+   "link_to": "Catering Equipment Delivery",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Equipment Return",
+   "link_count": 0,
+   "link_to": "Catering Equipment Return",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-05-05 20:19:07.513325",
+ "modified": "2026-05-10 14:10:58.082050",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "Catering",

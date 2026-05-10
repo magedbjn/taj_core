@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-08 03:28:48.754827",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "has_serial_no",
+  "equipment",
+  "equipment_name_arabic",
+  "serial_no",
+  "qty",
+  "delivered_qty",
+  "returned_qty",
+  "outstanding_qty"
+ ],
+ "fields": [
+  {
+   "fieldname": "equipment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Equipment",
+   "options": "Catering Equipment"
+  },
+  {
+   "fetch_from": "equipment.equipment_name_arabic",
+   "fieldname": "equipment_name_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Equipment Name Arabic",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "equipment.has_serial_no",
+   "fieldname": "has_serial_no",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Has Serial No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "serial_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Serial No",
+   "options": "Catering Equipment Unit"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Qty"
+  },
+  {
+   "fieldname": "delivered_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Delivered Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Returned Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outstanding_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Outstanding Qty",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-10 13:58:18.786624",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Equipment Delivery Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

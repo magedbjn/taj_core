@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-08 03:35:24.183402",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "equipment",
+  "equipment_name_arabic",
+  "has_serial_no",
+  "serial_no",
+  "delivered_qty",
+  "already_returned_qty",
+  "outstanding_qty",
+  "return_qty",
+  "delivery_item"
+ ],
+ "fields": [
+  {
+   "fieldname": "equipment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Equipment",
+   "options": "Catering Equipment"
+  },
+  {
+   "fetch_from": "equipment.equipment_name_arabic",
+   "fieldname": "equipment_name_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Equipment Name Arabic"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_serial_no",
+   "fieldtype": "Check",
+   "label": "Has Serial No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "serial_no",
+   "fieldtype": "Link",
+   "label": "Serial No",
+   "options": "Catering Equipment Unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_qty",
+   "fieldtype": "Int",
+   "label": "Delivered Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "already_returned_qty",
+   "fieldtype": "Int",
+   "label": "Already Returned Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outstanding_qty",
+   "fieldtype": "Int",
+   "label": "Outstanding Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Return Qty"
+  },
+  {
+   "fieldname": "delivery_item",
+   "fieldtype": "Data",
+   "label": "Delivery Item",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-10 14:06:11.921988",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Equipment Return Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
