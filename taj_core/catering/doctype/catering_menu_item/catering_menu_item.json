@@ -21,7 +21,13 @@
   "qty",
   "uom",
   "buffet_location",
-  "is_show_print"
+  "is_show_print",
+  "section_break_gihe",
+  "workstation",
+  "workstation_load_qty",
+  "column_break_tnhd",
+  "workstation_unit_capacity_qty",
+  "workstation_unit_capacity_uom"
  ],
  "fields": [
   {
@@ -155,14 +161,45 @@
    "fieldtype": "Select",
    "label": "Buffet Location",
    "options": "\nMina\nArafat"
+  },
+  {
+   "fieldname": "section_break_gihe",
+   "fieldtype": "Section Break",
+   "label": "Capacity"
+  },
+  {
+   "fieldname": "workstation",
+   "fieldtype": "Link",
+   "label": "Workstation",
+   "options": "Workstation"
+  },
+  {
+   "fieldname": "workstation_load_qty",
+   "fieldtype": "Int",
+   "label": "Workstation Load Qty"
+  },
+  {
+   "fieldname": "column_break_tnhd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "workstation_unit_capacity_qty",
+   "fieldtype": "Float",
+   "label": "Workstation Unit Capacity Qty"
+  },
+  {
+   "fieldname": "workstation_unit_capacity_uom",
+   "fieldtype": "Link",
+   "label": "Workstation Unit Capacity UOM",
+   "options": "UOM"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-07 14:39:45.875588",
- "modified_by": "m.bajandooh@tajff.sa",
+ "modified": "2026-05-10 16:20:43.127294",
+ "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu Item",
  "owner": "Administrator",
