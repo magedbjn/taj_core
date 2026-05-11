@@ -12,6 +12,8 @@
   "buffet",
   "buffet_company",
   "exception_type",
+  "location",
+  "person_qty",
   "percent",
   "fixed_qty",
   "base_qty",
@@ -43,7 +45,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Buffet",
-   "options": "Buffet 1\nBuffet 2\nBuffet 3\nBuffet 4\nBuffet 5\nBuffet 6\nBuffet 7\nBuffet 8\nBuffet 9\nBuffet 10"
+   "options": "Buffet 1\nBuffet 2\nBuffet 3\nBuffet 4\nBuffet 5\nBuffet 6\nBuffet 7\nBuffet 8\nBuffet 9\nBuffet 10\nBuffet 11\nBuffet 12\nBuffet 13\nBuffet 14\nBuffet 15\nBuffet 16\nBuffet 17\nBuffet 18\nBuffet 19\nBuffet 20"
   },
   {
    "columns": 2,
@@ -65,12 +67,12 @@
   },
   {
    "columns": 1,
-   "description": "Defines the type of exception: closed, percentage reduction, or fixed quantity.",
+   "description": "Defines the rule type: distribution by location, closed, percentage reduction, or fixed quantity.",
    "fieldname": "exception_type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Exception Type",
-   "options": "Percent\nFixed Qty\nClosed"
+   "options": "Closed\nDistribution\nFixed Qty\nPercent"
   },
   {
    "columns": 1,
@@ -115,14 +117,31 @@
    "fieldtype": "Small Text",
    "label": "Impact Summary",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.exception_type=='Distribution'",
+   "fieldname": "location",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Location",
+   "mandatory_depends_on": "eval:doc.exception_type=='Distribution'",
+   "options": "\nMina\nArafat"
+  },
+  {
+   "depends_on": "eval:doc.exception_type=='Distribution'",
+   "fieldname": "person_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Person Qty",
+   "mandatory_depends_on": "eval:doc.exception_type=='Distribution'"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-07 10:02:32.779818",
- "modified_by": "m.bajandooh@tajff.sa",
+ "modified": "2026-05-11 16:04:14.972192",
+ "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Center Buffet Exception",
  "owner": "Administrator",

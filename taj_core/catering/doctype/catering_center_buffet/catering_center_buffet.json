@@ -32,7 +32,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Buffet",
-   "options": "Buffet 1\nBuffet 2\nBuffet 3\nBuffet 4\nBuffet 5\nBuffet 6\nBuffet 7\nBuffet 8\nBuffet 9\nBuffet 10",
+   "options": "Buffet 1\nBuffet 2\nBuffet 3\nBuffet 4\nBuffet 5\nBuffet 6\nBuffet 7\nBuffet 8\nBuffet 9\nBuffet 10\nBuffet 11\nBuffet 12\nBuffet 13\nBuffet 14\nBuffet 15\nBuffet 16\nBuffet 17\nBuffet 18\nBuffet 19\nBuffet 20",
    "reqd": 1
   },
   {
@@ -62,8 +62,8 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-05 15:40:01.912553",
- "modified_by": "m.bajandooh@tajff.sa",
+ "modified": "2026-05-11 15:40:05.191367",
+ "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Center Buffet",
  "owner": "Administrator",
