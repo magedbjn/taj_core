@@ -10,18 +10,25 @@
   "meal_type",
   "row_type",
   "section",
-  "row_id",
-  "parent_row_id",
-  "parent_row_label",
+  "is_show_print",
+  "column_break_bwwz",
   "item_code",
   "item_name",
   "item_name_arabic",
+  "column_break_ndif",
   "new_item_name",
   "new_item_name_arabic",
+  "section_break_mfcz",
   "qty",
   "uom",
+  "column_break_iazg",
+  "menu_group",
+  "line_role",
   "buffet_location",
-  "is_show_print",
+  "section_break_ecpn",
+  "row_id",
+  "parent_row_id",
+  "parent_row_label",
   "section_break_gihe",
   "workstation",
   "workstation_load_qty",
@@ -192,13 +199,45 @@
    "fieldtype": "Link",
    "label": "Workstation Unit Capacity UOM",
    "options": "UOM"
+  },
+  {
+   "fieldname": "menu_group",
+   "fieldtype": "Link",
+   "label": "Menu Group",
+   "options": "Catering Menu Section"
+  },
+  {
+   "fieldname": "column_break_bwwz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ndif",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_mfcz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_iazg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ecpn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "line_role",
+   "fieldtype": "Select",
+   "label": "Line Role",
+   "options": "Section Header\nFinished Dish\nIngredient\nReady Main Dish\nReady Side Dish\nBeverage\nSnack\nFruit\nDisposable\nHidden"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-10 16:20:43.127294",
+ "modified": "2026-05-12 20:27:09.845936",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu Item",

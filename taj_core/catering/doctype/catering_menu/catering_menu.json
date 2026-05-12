@@ -8,13 +8,15 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_mx3g",
-  "amended_from",
-  "naming_series",
   "disabled",
-  "posting_date",
+  "naming_series",
   "catering_name",
+  "column_break_cswo",
+  "posting_date",
   "qty",
   "uom",
+  "amended_from",
+  "section_break_drgx",
   "items"
  ],
  "fields": [
@@ -80,13 +82,21 @@
    "fieldtype": "Int",
    "label": "Quantity",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_cswo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_drgx",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-03 10:22:19.738642",
+ "modified": "2026-05-12 19:21:23.608078",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu",
