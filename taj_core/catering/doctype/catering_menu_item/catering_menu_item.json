@@ -18,6 +18,10 @@
   "column_break_ndif",
   "new_item_name",
   "new_item_name_arabic",
+  "section_break_ohtm",
+  "cooking_time",
+  "column_break_xznr",
+  "temperature",
   "section_break_mfcz",
   "qty",
   "uom",
@@ -34,7 +38,9 @@
   "workstation_load_qty",
   "column_break_tnhd",
   "workstation_unit_capacity_qty",
-  "workstation_unit_capacity_uom"
+  "workstation_unit_capacity_uom",
+  "section_break_qenp",
+  "note"
  ],
  "fields": [
   {
@@ -231,13 +237,40 @@
    "fieldtype": "Select",
    "label": "Line Role",
    "options": "Section Header\nFinished Dish\nIngredient\nReady Main Dish\nReady Side Dish\nBeverage\nSnack\nFruit\nDisposable\nHidden"
+  },
+  {
+   "fieldname": "section_break_ohtm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "cooking_time",
+   "fieldtype": "Time",
+   "label": "Cooking Time"
+  },
+  {
+   "fieldname": "column_break_xznr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "temperature",
+   "fieldtype": "Float",
+   "label": "Temperature"
+  },
+  {
+   "fieldname": "section_break_qenp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-12 20:27:09.845936",
+ "modified": "2026-05-16 11:10:07.148312",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu Item",
