@@ -1,0 +1,105 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-17 09:03:21.647783",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section",
+  "dish",
+  "qty_per_person",
+  "uom",
+  "show_in_menu_print",
+  "include_in_purchase",
+  "include_in_production",
+  "sort_order",
+  "section_break_adgp",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fetch_from": "dish.default_section",
+   "fieldname": "section",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Section",
+   "options": "Catering Menu Section"
+  },
+  {
+   "fieldname": "dish",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Dish",
+   "options": "Catering Dish"
+  },
+  {
+   "fetch_from": "dish.default_qty_per_person",
+   "fieldname": "qty_per_person",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty Per Person"
+  },
+  {
+   "fetch_from": "dish.default_uom",
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "default": "1",
+   "fetch_from": "dish.show_in_menu_print",
+   "fieldname": "show_in_menu_print",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Show In Menu Print"
+  },
+  {
+   "default": "1",
+   "fetch_from": "dish.include_in_purchase",
+   "fieldname": "include_in_purchase",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Include In Purchase"
+  },
+  {
+   "default": "0",
+   "fetch_from": "dish.include_in_production",
+   "fieldname": "include_in_production",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Include In Production"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  },
+  {
+   "fieldname": "section_break_adgp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-17 09:13:32.704438",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Meal Package Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

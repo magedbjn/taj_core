@@ -1,0 +1,98 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-25 14:21:13.015738",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_date",
+  "meal_type",
+  "menu_template",
+  "person_qty",
+  "actual_person_qty",
+  "final_person_qty",
+  "status",
+  "section_break_ynue",
+  "items"
+ ],
+ "fields": [
+  {
+   "default": "Today",
+   "fieldname": "plan_date",
+   "fieldtype": "Date",
+   "label": "Plan Date"
+  },
+  {
+   "fieldname": "meal_type",
+   "fieldtype": "Link",
+   "label": "Meal Type",
+   "options": "Catering Meal Type"
+  },
+  {
+   "fieldname": "menu_template",
+   "fieldtype": "Link",
+   "label": "Menu Template",
+   "options": "Catering Menu Template"
+  },
+  {
+   "fieldname": "person_qty",
+   "fieldtype": "Int",
+   "label": "Person Qty"
+  },
+  {
+   "fieldname": "actual_person_qty",
+   "fieldtype": "Int",
+   "label": "Actual Person Qty"
+  },
+  {
+   "fieldname": "final_person_qty",
+   "fieldtype": "Int",
+   "label": "Final Person Qty"
+  },
+  {
+   "fieldname": "section_break_ynue",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Catering Meal Plan Item"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nGenerated\nSubmitted\nCancelled"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-25 14:41:03.147397",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Meal Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

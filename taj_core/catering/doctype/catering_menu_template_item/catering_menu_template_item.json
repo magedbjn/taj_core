@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-25 13:49:05.673574",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "dish",
+  "dish_name",
+  "dish_name_arabic",
+  "dish_type",
+  "supply_mode",
+  "default_section",
+  "is_required",
+  "include_in_calculation",
+  "print_in_menu"
+ ],
+ "fields": [
+  {
+   "fetch_from": "dish.dish_name_arabic",
+   "fieldname": "dish_name_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Dish Name Arabic",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "dish.dish_type",
+   "fieldname": "dish_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Dish Type",
+   "options": "Catering Dish Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "dish.supply_mode",
+   "fieldname": "supply_mode",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supply Mode",
+   "options": "Catering Dish Supply Mode",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_required",
+   "fieldtype": "Check",
+   "label": "Is Required"
+  },
+  {
+   "fieldname": "dish",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Dish",
+   "options": "Catering Dish",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "include_in_calculation",
+   "fieldtype": "Check",
+   "label": "Include In Calculation"
+  },
+  {
+   "fieldname": "default_section",
+   "fieldtype": "Link",
+   "label": "Default Section",
+   "options": "Catering Menu Section"
+  },
+  {
+   "default": "1",
+   "fieldname": "print_in_menu",
+   "fieldtype": "Check",
+   "label": "Print In Menu"
+  },
+  {
+   "fetch_from": "dish.dish_name",
+   "fieldname": "dish_name",
+   "fieldtype": "Data",
+   "label": "Dish Name",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-25 14:10:12.171042",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Menu Template Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

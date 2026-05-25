@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-16 01:28:15.547035",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "is_active",
+  "location",
+  "location_arabic",
+  "short_code",
+  "sort_order",
+  "is_service_location",
+  "is_supply_location",
+  "is_kitchen_location"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Location",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "location_arabic",
+   "fieldtype": "Data",
+   "label": "Location Arabic"
+  },
+  {
+   "fieldname": "short_code",
+   "fieldtype": "Data",
+   "label": "Short Code"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_service_location",
+   "fieldtype": "Check",
+   "label": "Is Service Location"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_supply_location",
+   "fieldtype": "Check",
+   "label": "Is Supply Location"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_kitchen_location",
+   "fieldtype": "Check",
+   "label": "Is Kitchen Location"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-16 10:37:40.926890",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Location",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

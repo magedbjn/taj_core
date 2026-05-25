@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-25 14:16:09.464801",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "template_item",
+  "dish",
+  "dish_name",
+  "dish_name_arabic",
+  "dish_type",
+  "supply_mode",
+  "section",
+  "person_qty",
+  "include_in_calculation",
+  "print_in_menu",
+  "is_required",
+  "section_break_odvh",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "template_item",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Item"
+  },
+  {
+   "fieldname": "dish",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Dish",
+   "options": "Catering Dish",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "dish.dish_name",
+   "fieldname": "dish_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Dish Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "dish.dish_name_arabic",
+   "fieldname": "dish_name_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Dish Name Arabic",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "dish.dish_type",
+   "fieldname": "dish_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Dish Type",
+   "options": "Catering Dish Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "dish.supply_mode",
+   "fieldname": "supply_mode",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supply Mode",
+   "options": "Catering Dish Supply Mode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Section",
+   "options": "Catering Menu Section"
+  },
+  {
+   "fieldname": "person_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Person Qty"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_in_calculation",
+   "fieldtype": "Check",
+   "label": "Include In Calculation"
+  },
+  {
+   "default": "1",
+   "fieldname": "print_in_menu",
+   "fieldtype": "Check",
+   "label": "Print In Menu"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_required",
+   "fieldtype": "Check",
+   "label": "Is Required"
+  },
+  {
+   "fieldname": "section_break_odvh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-25 14:39:20.184290",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Meal Plan Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

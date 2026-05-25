@@ -1,63 +1,62 @@
 {
  "actions": [],
- "autoname": "field:section",
- "creation": "2026-04-30 10:32:01.966160",
+ "allow_rename": 1,
+ "autoname": "field:meal_type",
+ "creation": "2026-05-16 01:23:23.379113",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "is_active",
-  "section",
-  "section_name_arabic",
-  "print_label",
+  "meal_type",
+  "meal_type_arabic",
   "sort_order",
-  "is_main_dishes"
+  "short_code",
+  "is_main_meal"
  ],
  "fields": [
   {
-   "fieldname": "section",
+   "fieldname": "meal_type",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Section",
+   "label": "Meal Type",
    "reqd": 1,
    "unique": 1
   },
   {
-   "fieldname": "sort_order",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Sort Order",
-   "reqd": 1
-  },
-  {
-   "default": "0",
+   "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "Is Active"
   },
   {
-   "fieldname": "section_name_arabic",
+   "fieldname": "meal_type_arabic",
    "fieldtype": "Data",
-   "label": "Section Name Arabic"
+   "label": "Meal Type Arabic"
   },
   {
-   "fieldname": "print_label",
-   "fieldtype": "Data",
-   "label": "Print Label"
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
   },
   {
    "default": "0",
-   "fieldname": "is_main_dishes",
+   "fieldname": "is_main_meal",
    "fieldtype": "Check",
-   "label": "Is Main Dishes"
+   "label": "Is Main Meal"
+  },
+  {
+   "fieldname": "short_code",
+   "fieldtype": "Data",
+   "label": "Short Code"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-18 15:49:06.925358",
+ "modified": "2026-05-17 07:16:45.747166",
  "modified_by": "Administrator",
  "module": "Catering",
- "name": "Catering Menu Section",
+ "name": "Catering Meal Type",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
@@ -76,8 +75,8 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "section_name_arabic",
- "sort_field": "sort_order",
- "sort_order": "ASC",
+ "search_fields": "meal_type,meal_type_arabic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
  "states": []
 }

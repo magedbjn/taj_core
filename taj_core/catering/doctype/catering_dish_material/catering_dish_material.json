@@ -1,0 +1,269 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-16 13:06:55.574673",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "material_item",
+  "material_name",
+  "material_name_arabic",
+  "qty_per_person",
+  "uom",
+  "include_in_purchase",
+  "include_in_production",
+  "sort_order",
+  "receiving_mode",
+  "include_in_output_qty",
+  "column_break_zqcd",
+  "receiving_capacity_qty",
+  "receiving_capacity_uom",
+  "receiving_rounding_method",
+  "use_full_receiving_qty",
+  "is_scaling_driver",
+  "follow_scaling_driver",
+  "section_break_ogjd",
+  "material__calculation_base",
+  "qty_per_output",
+  "small_qty_rule_section",
+  "column_break_hcoa",
+  "small_qty_threshold_percent",
+  "small_qty_uom",
+  "section_break_eden",
+  "column_break_ybzh",
+  "base_receiving_uom",
+  "small_pack_qty",
+  "small_pack_uom",
+  "large_pack_qty",
+  "large_pack_uom",
+  "section_break_vpdf",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "material_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Material Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "qty_per_person",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty For Recipe Basis"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_in_purchase",
+   "fieldtype": "Check",
+   "label": "Include in Purchase"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_in_production",
+   "fieldtype": "Check",
+   "label": "Include in Production"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  },
+  {
+   "fieldname": "section_break_vpdf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "column_break_zqcd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Quantity contained in one receiving unit. Example: 40 KG per Bag.",
+   "fieldname": "receiving_capacity_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Receiving Capacity Qty"
+  },
+  {
+   "description": "Receiving unit used for purchase or preparation, such as Bag, Carton, or Basket.",
+   "fieldname": "receiving_capacity_uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Receiving Capacity UOM",
+   "options": "UOM"
+  },
+  {
+   "default": "Round Up",
+   "description": "Defines how receiving quantity is rounded after conversion.",
+   "fieldname": "receiving_rounding_method",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Receiving Rounding Method",
+   "options": "No Rounding\nRound Up\nRound Down\nHalf Round"
+  },
+  {
+   "default": "0",
+   "description": "Use the full rounded receiving quantity for production calculation instead of the exact required quantity.",
+   "fieldname": "use_full_receiving_qty",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Use Full Receiving Qty"
+  },
+  {
+   "default": "0",
+   "description": "This material controls recipe scaling when full receiving quantity is used.",
+   "fieldname": "is_scaling_driver",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Is Scaling Driver"
+  },
+  {
+   "default": "1",
+   "description": "This material increases when the scaling driver increases.",
+   "fieldname": "follow_scaling_driver",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Follow Scaling Driver"
+  },
+  {
+   "default": "Single Unit",
+   "fieldname": "receiving_mode",
+   "fieldtype": "Select",
+   "label": "Receiving Mode",
+   "options": "Single Unit\nUnit Breakdown\nSmall Qty Rule\nNo Receiving"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
+   "fieldname": "section_break_eden",
+   "fieldtype": "Section Break",
+   "label": "Unit Breakdown"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
+   "fieldname": "base_receiving_uom",
+   "fieldtype": "Link",
+   "label": "Base Receiving UOM",
+   "options": "UOM"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
+   "fieldname": "small_pack_qty",
+   "fieldtype": "Float",
+   "label": "Small Pack Qty"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
+   "fieldname": "small_pack_uom",
+   "fieldtype": "Link",
+   "label": "Small Pack UOM",
+   "options": "UOM"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
+   "fieldname": "large_pack_qty",
+   "fieldtype": "Float",
+   "label": "Large Pack Qty"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
+   "fieldname": "large_pack_uom",
+   "fieldtype": "Link",
+   "label": "Large Pack UOM",
+   "options": "UOM"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
+   "fieldname": "column_break_ybzh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Small Qty Rule\"",
+   "fieldname": "small_qty_rule_section",
+   "fieldtype": "Section Break",
+   "label": "Small Qty Rule"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Small Qty Rule\"",
+   "fieldname": "column_break_hcoa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Small Qty Rule\"",
+   "fieldname": "small_qty_threshold_percent",
+   "fieldtype": "Percent",
+   "label": "Small Qty Threshold Percent"
+  },
+  {
+   "depends_on": "eval:doc.receiving_mode==\"Small Qty Rule\"",
+   "fieldname": "small_qty_uom",
+   "fieldtype": "Link",
+   "label": "Small Qty UOM",
+   "options": "UOM"
+  },
+  {
+   "default": "1",
+   "description": "Include this material quantity when calculating prepared dish output quantity.",
+   "fieldname": "include_in_output_qty",
+   "fieldtype": "Check",
+   "label": "Include in Output Qty"
+  },
+  {
+   "fieldname": "section_break_ogjd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "material__calculation_base",
+   "fieldtype": "Select",
+   "label": "Material  Calculation Base",
+   "options": "Per Person\nPer Output\nOutput Driver\nManual"
+  },
+  {
+   "fieldname": "qty_per_output",
+   "fieldtype": "Float",
+   "label": "Qty Per Output"
+  },
+  {
+   "fetch_from": "material_item.item_name",
+   "fieldname": "material_name",
+   "fieldtype": "Data",
+   "label": "Material Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "material_item.item_name_arabic",
+   "fieldname": "material_name_arabic",
+   "fieldtype": "Data",
+   "label": "Material Name Arabic",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-25 12:51:18.838717",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Dish Material",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

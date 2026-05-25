@@ -1,0 +1,106 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:season_name",
+ "creation": "2026-05-17 11:34:20.601640",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "season_information_section",
+  "is_active",
+  "season_name",
+  "season_name_arabic",
+  "column_break_cyhi",
+  "start_date",
+  "end_date",
+  "sort_order",
+  "section_break_jjdm",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "season_information_section",
+   "fieldtype": "Section Break",
+   "label": "Season Information"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "season_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Season Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "season_name_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Season Name Arabic"
+  },
+  {
+   "fieldname": "column_break_cyhi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  },
+  {
+   "fieldname": "section_break_jjdm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-17 11:53:29.616672",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Season",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "season_name,season_name_arabic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

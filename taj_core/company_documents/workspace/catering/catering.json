@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"wV-PVKXDEo\",\"type\":\"card\",\"data\":{\"card_name\":\"Catering\",\"col\":4}},{\"id\":\"RXOhHGyy68\",\"type\":\"card\",\"data\":{\"card_name\":\"Equipment\",\"col\":4}}]",
+ "content": "[{\"id\":\"PNO96zkLp8\",\"type\":\"card\",\"data\":{\"card_name\":\"Menu Builder\",\"col\":4}},{\"id\":\"39WTBVWdx3\",\"type\":\"card\",\"data\":{\"card_name\":\"Season and Center\",\"col\":4}},{\"id\":\"Murr7QJa0W\",\"type\":\"card\",\"data\":{\"card_name\":\"Menu Setup\",\"col\":4}},{\"id\":\"wV-PVKXDEo\",\"type\":\"card\",\"data\":{\"card_name\":\"Catering\",\"col\":4}},{\"id\":\"RXOhHGyy68\",\"type\":\"card\",\"data\":{\"card_name\":\"Equipment\",\"col\":4}},{\"id\":\"Ofjhiaegm2\",\"type\":\"card\",\"data\":{\"card_name\":\"Packages and Templates\",\"col\":4}}]",
  "creation": "2026-05-05 15:08:52.248457",
  "custom_blocks": [],
  "docstatus": 0,
@@ -100,9 +100,215 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Menu Setup",
+   "link_count": 7,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Dish Type",
+   "link_count": 0,
+   "link_to": "Catering Dish Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Dish Supply Mode",
+   "link_count": 0,
+   "link_to": "Catering Dish Supply Mode",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Menu Section",
+   "link_count": 0,
+   "link_to": "Catering Menu Section",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Meal Type",
+   "link_count": 0,
+   "link_to": "Catering Meal Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Menu Row Type",
+   "link_count": 0,
+   "link_to": "Catering Menu Row Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Preparation Method",
+   "link_count": 0,
+   "link_to": "Catering Preparation Method",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Operation",
+   "link_count": 0,
+   "link_to": "Catering Operation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Season and Center",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Season",
+   "link_count": 0,
+   "link_to": "Catering Season",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Menu Assignment",
+   "link_count": 0,
+   "link_to": "Catering Menu Assignment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Center",
+   "link_count": 0,
+   "link_to": "Catering Center",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Packages and Templates",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Meal Package",
+   "link_count": 0,
+   "link_to": "Catering Meal Package",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Dish",
+   "link_count": 0,
+   "link_to": "Catering Dish",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Menu",
+   "link_count": 0,
+   "link_to": "Catering Menu",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Menu Builder",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Dish",
+   "link_count": 0,
+   "link_to": "Catering Dish",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Menu",
+   "link_count": 0,
+   "link_to": "Catering Menu",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Meal Package",
+   "link_count": 0,
+   "link_to": "Catering Meal Package",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Menu Assignment",
+   "link_count": 0,
+   "link_to": "Catering Menu Assignment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-05-10 14:10:58.082050",
+ "modified": "2026-05-18 12:13:36.135817",
  "modified_by": "Administrator",
  "module": "Company Documents",
  "name": "Catering",

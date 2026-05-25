@@ -10,3 +10,4 @@ taj_core.patches.2025_10_28_delete_field
 taj_core.patches.cleanup_intern_sales_order
 taj_core.patches.slnee_cleanup
 taj_core.patches.2026_03_23_delete_fields
+taj_core.patches.fill_catering_doctype

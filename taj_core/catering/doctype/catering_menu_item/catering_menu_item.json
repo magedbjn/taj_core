@@ -18,10 +18,6 @@
   "column_break_ndif",
   "new_item_name",
   "new_item_name_arabic",
-  "section_break_ohtm",
-  "cooking_time",
-  "column_break_xznr",
-  "temperature",
   "section_break_mfcz",
   "qty",
   "uom",
@@ -33,10 +29,16 @@
   "row_id",
   "parent_row_id",
   "parent_row_label",
+  "column_break_ejqd",
+  "source_dish",
+  "source_dish_line",
   "section_break_gihe",
   "workstation",
-  "workstation_load_qty",
+  "operation",
+  "cooking_time",
+  "temperature",
   "column_break_tnhd",
+  "workstation_load_qty",
   "workstation_unit_capacity_qty",
   "workstation_unit_capacity_uom",
   "section_break_qenp",
@@ -239,17 +241,9 @@
    "options": "Section Header\nFinished Dish\nIngredient\nReady Main Dish\nReady Side Dish\nBeverage\nSnack\nFruit\nDisposable\nHidden"
   },
   {
-   "fieldname": "section_break_ohtm",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "cooking_time",
    "fieldtype": "Time",
    "label": "Cooking Time"
-  },
-  {
-   "fieldname": "column_break_xznr",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "temperature",
@@ -264,13 +258,36 @@
    "fieldname": "note",
    "fieldtype": "Small Text",
    "label": "Note"
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Link",
+   "label": "Operation",
+   "options": "Catering Operation"
+  },
+  {
+   "fieldname": "column_break_ejqd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_dish",
+   "fieldtype": "Link",
+   "label": "Source Dish",
+   "options": "Catering Dish",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_dish_line",
+   "fieldtype": "Data",
+   "label": "Source Dish Line",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-16 11:10:07.148312",
+ "modified": "2026-05-17 08:11:42.455861",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Menu Item",

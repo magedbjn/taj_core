@@ -1,0 +1,107 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-16 10:48:24.986387",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "material_item",
+  "is_base_item",
+  "qty_per_person",
+  "uom",
+  "workstation",
+  "operation",
+  "include_in_purchase",
+  "include_in_production",
+  "sort_order",
+  "section_break_lgez",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "material_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Material Item",
+   "options": "Item"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_base_item",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Base Item"
+  },
+  {
+   "fieldname": "qty_per_person",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty Per Person"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "workstation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Workstation",
+   "options": "Workstation"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_in_purchase",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Include in Purchase"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_in_production",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Include in Production"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  },
+  {
+   "fieldname": "section_break_lgez",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Operation",
+   "options": "Catering Operation"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-17 07:30:42.124255",
+ "modified_by": "Administrator",
+ "module": "Catering",
+ "name": "Catering Preparation Method Material",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
