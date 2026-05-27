@@ -47,7 +47,7 @@ class CustomStockEntry(StockEntry):
 		Key format:
 		(original_item_or_item_code, source_warehouse)
 
-		Finished goods and scrap rows are ignored.
+		Finished goods, scrap, and secondary output rows are ignored.
 		Duplicate rows for the same item and warehouse are summed.
 		"""
 		precision = frappe.get_precision("Stock Entry Detail", "qty")
@@ -58,6 +58,12 @@ class CustomStockEntry(StockEntry):
 				continue
 
 			if row.get("is_scrap_item"):
+				continue
+
+			if row.get("is_legacy_scrap_item"):
+				continue
+
+			if row.get("type"):
 				continue
 
 			if not row.get("s_warehouse"):

@@ -181,6 +181,7 @@ def make_stock_entry(
 	purpose: str,
 	qty: float | None = None,
 	target_warehouse: str | None = None,
+	is_additional_transfer_entry: bool = False,
 	source_stock_entry: str | None = None,
 ):
 	result = core_work_order.make_stock_entry(
@@ -188,6 +189,7 @@ def make_stock_entry(
 		purpose=purpose,
 		qty=qty,
 		target_warehouse=target_warehouse,
+		is_additional_transfer_entry=is_additional_transfer_entry,
 		source_stock_entry=source_stock_entry,
 	)
 
@@ -200,22 +202,17 @@ def make_stock_entry(
 	work_order = frappe.get_doc("Work Order", work_order_id)
 	stock_entry = frappe.get_doc(result)
 
-	# This flag identifies that the document was generated from the Finish button.
 	stock_entry.taj_from_finish_button = 1
 
-	# Rebuild raw material rows only when taj_keep_rm_qty is enabled.
 	rebuild_manufacture_rm_rows(stock_entry, work_order)
 
-	# Re-apply BOM reference fields.
 	stock_entry.from_bom = 1
 	stock_entry.bom_no = work_order.bom_no
 	stock_entry.use_multi_level_bom = work_order.use_multi_level_bom
 
-	# Keep fg_completed_qty aligned with the requested manufacture quantity.
 	if qty is not None:
 		stock_entry.fg_completed_qty = flt(qty)
 	elif not stock_entry.fg_completed_qty:
 		stock_entry.fg_completed_qty = flt(work_order.qty) - flt(work_order.produced_qty)
 
 	return stock_entry.as_dict()
-# -------------------------------------------------------------------------
