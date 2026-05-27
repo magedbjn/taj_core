@@ -1388,6 +1388,139 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
   }
 
   // -------------------------
+  // Create Batch
+  // -------------------------
+  async function start_job_with_batch_guard(name) {
+    const doc = await frappe
+      .call({
+        method: "frappe.client.get",
+        args: { doctype: "Job Card", name },
+      })
+      .then((r) => r.message || {});
+
+    const plant_floor = String(doc.taj_plant_floor || "").trim();
+
+    if (plant_floor !== "Retort Area") {
+      return start_job(name);
+    }
+
+    if (doc.taj_batch_id) {
+      return start_job(name);
+    }
+
+    return show_batch_before_start_dialog(name, doc);
+  }
+
+
+  async function show_batch_before_start_dialog(name, doc) {
+    const r = await frappe.call({
+      method: "taj_job_card_batch_action",
+      args: {
+        action: "preview",
+        job_card: name
+      },
+      freeze: true,
+      freeze_message: __("Preparing Batch ID...")
+    });
+
+    const proposed_batch_id = r.message && r.message.batch_id;
+
+    if (!proposed_batch_id) {
+      frappe.msgprint({
+        title: __("Batch Required"),
+        message: __("No Batch ID could be proposed."),
+        indicator: "orange"
+      });
+      return;
+    }
+
+    const dialog = new frappe.ui.Dialog({
+      title: __("Batch Required Before Start"),
+      fields: [
+        {
+          fieldname: "batch_note",
+          fieldtype: "HTML",
+          options: `
+            <div style="padding:12px; border:1px solid #e5e7eb; border-radius:10px; background:#f8fafc; margin-bottom:10px;">
+              <div style="font-size:13px; color:#6b7280; margin-bottom:6px;">
+                ${__("This Job Card requires a Batch before starting. Review or edit the Batch ID.")}
+              </div>
+              <div style="font-size:12px; color:#6b7280;">
+                <b>${__("Job Card")}:</b> ${frappe.utils.escape_html(name)}<br>
+                <b>${__("Production Item")}:</b> ${frappe.utils.escape_html(doc.production_item || doc.item_code || "")}<br>
+                <b>${__("Workstation")}:</b> ${frappe.utils.escape_html(doc.workstation || "")}
+              </div>
+            </div>
+          `
+        },
+        {
+          label: __("Batch ID"),
+          fieldname: "batch_id",
+          fieldtype: "Data",
+          default: proposed_batch_id,
+          reqd: 1,
+          description: __("If you are in a hurry, keep the suggested number and press Create Batch & Start Job.")
+        }
+      ],
+      primary_action_label: __("Create Batch & Start Job"),
+      primary_action: async function (values) {
+        const final_batch_id = String(values.batch_id || "").trim();
+
+        if (!final_batch_id) {
+          frappe.msgprint({
+            title: __("Missing Batch ID"),
+            message: __("Batch ID is required."),
+            indicator: "red"
+          });
+          return;
+        }
+
+        try {
+          dialog.set_primary_action(__("Working..."), function () {});
+          dialog.get_primary_btn().prop("disabled", true);
+
+          await frappe.call({
+            method: "taj_job_card_batch_action",
+            args: {
+              action: "create",
+              job_card: name,
+              batch_id: final_batch_id
+            },
+            freeze: true,
+            freeze_message: __("Creating Batch...")
+          });
+
+          dialog.hide();
+
+          frappe.show_alert({
+            message: __("Batch created: {0}", [final_batch_id]),
+            indicator: "green"
+          });
+
+          return start_job(name);
+
+        } catch (e) {
+          dialog.get_primary_btn().prop("disabled", false);
+          dialog.set_primary_action(__("Create Batch & Start Job"), async function () {
+            const values = dialog.get_values() || {};
+            dialog.primary_action(values);
+          });
+        }
+      }
+    });
+
+    dialog.show();
+
+    setTimeout(() => {
+      const field = dialog.fields_dict.batch_id;
+      if (field && field.$input) {
+        field.$input.focus();
+        field.$input.select();
+      }
+    }, 300);
+  }
+
+  // -------------------------
   // Actions
   // -------------------------
   async function start_job(name) {
@@ -2061,7 +2194,7 @@ frappe.pages["job-card-board"].on_page_load = function (wrapper) {
     const cmd = $(this).attr("data-cmd");
     const name = $(this).attr("data-name");
 
-    if (cmd === "start") return start_job(name);
+    if (cmd === "start") return start_job_with_batch_guard(name);
     if (cmd === "pause") return pause_job(name);
     if (cmd === "resume") return resume_job(name);
     if (cmd === "complete") return complete_job(name);
