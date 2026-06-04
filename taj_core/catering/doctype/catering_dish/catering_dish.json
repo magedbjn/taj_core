@@ -12,57 +12,27 @@
   "is_active",
   "dish_name",
   "dish_name_arabic",
-  "column_break_wqdy",
   "default_section",
-  "dish_type",
-  "supply_mode",
-  "item_and_supply_setup_section",
-  "item_code",
-  "item_name",
-  "item_name_arabic",
-  "preparation_method",
-  "column_break_wwew",
-  "recipe_basis_qty",
-  "default_uom",
-  "stock_uom",
-  "uom_conversion_factor",
-  "stock_qty_per_person",
-  "print_and_calculation_settings_section",
-  "show_in_menu_print",
-  "include_in_purchase",
-  "include_in_production",
-  "show_output_qty_difference",
-  "receiving_display_method",
-  "column_break_aske",
-  "requires_item_code",
-  "requires_recipe",
-  "has_materials",
-  "has_operation_settings",
-  "production_tab",
+  "column_break_wqdy",
+  "requires_workstation",
+  "workstation_tab",
   "cooking__heating_settings_section",
   "column_break_yqqa",
   "default_workstation",
+  "workstation_load_qty",
+  "workstation_load_uom",
   "column_break_itcy",
   "default_temperature",
   "default_duration_minutes",
   "column_break_qgww",
   "holding_temperature",
   "holding_duration_minutes",
-  "section_break_insg",
-  "workstation_calculation_method",
-  "workstation_load_qty",
-  "workstation_load_uom",
-  "column_break_btdt",
   "production_output_section",
   "output_container_uom",
   "output_container_capacity_qty",
   "output_container_capacity_uom",
   "column_break_aojn",
-  "output_planning_method",
   "output_rounding_method",
-  "allow_partial_output_qty",
-  "run_partial_output",
-  "show_output_coverage_difference",
   "materials_tab",
   "section_break_yzcj",
   "materials",
@@ -94,43 +64,12 @@
    "label": "Dish Name Arabic"
   },
   {
-   "fieldname": "dish_type",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Dish Type",
-   "options": "Catering Dish Type",
-   "reqd": 1
-  },
-  {
    "fieldname": "default_section",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Default Section",
    "options": "Catering Menu Section",
    "reqd": 1
-  },
-  {
-   "depends_on": "eval:doc.requires_item_code == 1",
-   "description": "Item linked to this dish when it is a direct or finished item.",
-   "fieldname": "item_code",
-   "fieldtype": "Link",
-   "label": "Item Code",
-   "mandatory_depends_on": "eval:doc.requires_item_code == 1",
-   "options": "Item"
-  },
-  {
-   "depends_on": "eval:doc.dish_type == \"Prepared Dish\"",
-   "description": "Method, such as boiled, grilled, or mixed",
-   "fieldname": "preparation_method",
-   "fieldtype": "Link",
-   "label": "Preparation Method",
-   "options": "Catering Preparation Method"
-  },
-  {
-   "fieldname": "default_uom",
-   "fieldtype": "Link",
-   "label": "Default Recipe Basis UOM",
-   "options": "UOM"
   },
   {
    "fieldname": "default_workstation",
@@ -141,25 +80,6 @@
   {
    "fieldname": "column_break_wqdy",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "1",
-   "fieldname": "show_in_menu_print",
-   "fieldtype": "Check",
-   "label": "Show in Menu Print"
-  },
-  {
-   "default": "1",
-   "fieldname": "include_in_purchase",
-   "fieldtype": "Check",
-   "label": "Include in Purchase"
-  },
-  {
-   "default": "0",
-   "description": "Include this dish in preparation, cooking, or heating.",
-   "fieldname": "include_in_production",
-   "fieldtype": "Check",
-   "label": "Include in Production"
   },
   {
    "fieldname": "section_break_yzcj",
@@ -177,59 +97,6 @@
    "fieldname": "basic_information_section",
    "fieldtype": "Section Break",
    "label": "Basic Information"
-  },
-  {
-   "depends_on": "eval:doc.dish_type && doc.dish_type != \"Display Only\"",
-   "fieldname": "item_and_supply_setup_section",
-   "fieldtype": "Section Break",
-   "label": "Item and Supply Setup"
-  },
-  {
-   "fieldname": "column_break_wwew",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "print_and_calculation_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Print and Calculation Settings"
-  },
-  {
-   "fieldname": "column_break_aske",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "description": "Indicates that an ERP Item Code is required for this dish type.",
-   "fetch_from": "dish_type.requires_item_code",
-   "fieldname": "requires_item_code",
-   "fieldtype": "Check",
-   "label": "Requires Item Code",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "description": "Indicates that material rows are required for this dish type.",
-   "fetch_from": "dish_type.requires_recipe",
-   "fieldname": "requires_recipe",
-   "fieldtype": "Check",
-   "label": "Requires Recipe",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "description": "Shows whether this dish has material rows.",
-   "fieldname": "has_materials",
-   "fieldtype": "Check",
-   "label": "Has Materials",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "description": "Shows whether this dish has operation or workstation settings.",
-   "fieldname": "has_operation_settings",
-   "fieldtype": "Check",
-   "label": "Has Operation Settings",
-   "read_only": 1
   },
   {
    "fieldname": "cooking__heating_settings_section",
@@ -266,37 +133,6 @@
    "label": "Cooking Instructions"
   },
   {
-   "depends_on": "eval:doc.dish_type && doc.dish_type != \"Display Only\"",
-   "description": "How the dish is supplied or handled operationally.",
-   "fieldname": "supply_mode",
-   "fieldtype": "Link",
-   "label": "Supply Mode",
-   "mandatory_depends_on": "eval:doc.dish_type && doc.dish_type != \"Display Only\"",
-   "options": "Catering Dish Supply Mode"
-  },
-  {
-   "fetch_from": "item_code.stock_uom",
-   "fieldname": "stock_uom",
-   "fieldtype": "Link",
-   "label": "Stock UOM",
-   "options": "UOM",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.stock_uom && doc.default_uom && doc.stock_uom != doc.default_uom",
-   "fieldname": "uom_conversion_factor",
-   "fieldtype": "Float",
-   "label": "UOM Conversion Factor",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.stock_uom && doc.default_uom && doc.stock_uom != doc.default_uom",
-   "fieldname": "stock_qty_per_person",
-   "fieldtype": "Float",
-   "label": "Stock Qty Per Person",
-   "read_only": 1
-  },
-  {
    "fieldname": "column_break_itcy",
    "fieldtype": "Column Break"
   },
@@ -304,17 +140,6 @@
    "fieldname": "section_break_layg",
    "fieldtype": "Section Break",
    "label": "Note"
-  },
-  {
-   "fieldname": "section_break_insg",
-   "fieldtype": "Section Break",
-   "label": "Production / Workstation Setup"
-  },
-  {
-   "fieldname": "workstation_calculation_method",
-   "fieldtype": "Link",
-   "label": "Workstation Calculation Method",
-   "options": "Catering Workstation Calculation Method"
   },
   {
    "fieldname": "workstation_load_qty",
@@ -326,10 +151,6 @@
    "fieldtype": "Link",
    "label": "Workstation Load UOM",
    "options": "UOM"
-  },
-  {
-   "fieldname": "column_break_btdt",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "production_output_section",
@@ -363,27 +184,8 @@
    "label": "Dish Setup"
   },
   {
-   "fieldname": "production_tab",
-   "fieldtype": "Tab Break",
-   "label": "Production"
-  },
-  {
    "fieldname": "column_break_qgww",
    "fieldtype": "Column Break"
-  },
-  {
-   "fetch_from": "item_code.item_name",
-   "fieldname": "item_name",
-   "fieldtype": "Data",
-   "label": "Item Name",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "item_code.item_name_arabic",
-   "fieldname": "item_name_arabic",
-   "fieldtype": "Data",
-   "label": "Item Name Arabic",
-   "read_only": 1
   },
   {
    "depends_on": "eval:!doc.__islocal",
@@ -410,68 +212,33 @@
    "options": "Round Up\nRound Down\nHalf Round\nNo Rounding"
   },
   {
-   "default": "0",
-   "description": "Allow remaining quantity to be shown as partial output using Default UOM.",
-   "fieldname": "allow_partial_output_qty",
-   "fieldtype": "Check",
-   "label": "Allow Partial Output Qty"
-  },
-  {
-   "default": "0",
-   "description": "Calculate one workstation run when only partial output exists.",
-   "fieldname": "run_partial_output",
-   "fieldtype": "Check",
-   "label": "Run Partial Output"
-  },
-  {
    "depends_on": "eval:doc.dish_type == \"Prepared Dish\"",
    "fieldname": "materials_tab",
    "fieldtype": "Tab Break",
    "label": "Materials"
   },
   {
-   "fieldname": "recipe_basis_qty",
-   "fieldtype": "Float",
-   "label": "Default Recipe Basis Qty"
-  },
-  {
-   "default": "1",
-   "description": "Show extra or shortage persons caused by output rounding.",
-   "fieldname": "show_output_coverage_difference",
-   "fieldtype": "Check",
-   "label": "Show Output Coverage Difference"
-  },
-  {
-   "default": "Manual",
-   "fieldname": "output_planning_method",
-   "fieldtype": "Select",
-   "label": "Output Planning Method",
-   "options": "Dish Qty Per Person\nCovers Persons\nOutput Driver Material\nSum Output Materials\nPer Buffet\nManual"
-  },
-  {
-   "fieldname": "receiving_display_method",
-   "fieldtype": "Select",
-   "label": "Receiving Display Method",
-   "options": "Required Qty\nOutput Qty\nNo Receiving"
-  },
-  {
-   "default": "0",
-   "description": "Show extra or shortage quantity caused by output rounding.",
-   "fieldname": "show_output_qty_difference",
-   "fieldtype": "Check",
-   "label": "Show Output Qty Difference"
-  },
-  {
    "default": "1",
    "fieldname": "default_buffet_qty",
    "fieldtype": "Int",
    "label": "Default Buffet Qty"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_workstation",
+   "fieldtype": "Check",
+   "label": "Requires Workstation"
+  },
+  {
+   "fieldname": "workstation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Workstation"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-25 13:36:02.520482",
+ "modified": "2026-06-01 13:48:44.536358",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Dish",

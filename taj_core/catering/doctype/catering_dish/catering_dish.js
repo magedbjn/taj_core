@@ -6,6 +6,7 @@ frappe.ui.form.on("Catering Dish", {
   refresh(frm) {
     set_default_values(frm);
     set_queries(frm);
+    update_recipe_basis_labels(frm);
     toggle_fields(frm);
     set_field_labels(frm);
 
@@ -38,6 +39,7 @@ frappe.ui.form.on("Catering Dish", {
 
   output_planning_method(frm) {
     clear_fields_by_output_planning_method(frm);
+    update_recipe_basis_labels(frm);
     toggle_fields(frm);
   },
 
@@ -554,7 +556,7 @@ function clear_fields_by_output_planning_method(frm) {
   if (method === "Covers Persons") {
     frm.set_value("output_container_capacity_qty", 0);
     frm.set_value("output_container_capacity_uom", "");
-
+    
     if (!frm.doc.default_uom) {
       frm.set_value("default_uom", "Person");
     }
@@ -587,7 +589,9 @@ function clear_fields_by_output_planning_method(frm) {
     frm.set_value("output_container_capacity_uom", "");
     frm.set_value("allow_partial_output_qty", 0);
     frm.set_value("run_partial_output", 0);
-
+    frm.set_value("recipe_basis_qty", 0);
+    frm.set_value("default_uom", "");
+    
     if (!frm.doc.output_rounding_method) {
       frm.set_value("output_rounding_method", "No Rounding");
     }
@@ -961,4 +965,64 @@ function validate_workstation_run_setup(frm) {
   if (flt(frm.doc.workstation_load_qty || 0) > 0 && !frm.doc.workstation_calculation_method) {
     frappe.throw(__("Run Calculation Base is required when Run Load Qty is entered."));
   }
+}
+
+function update_recipe_basis_labels(frm) {
+  const method = frm.doc.output_planning_method || "Manual";
+
+  let qty_label = "Default Recipe Basis Qty";
+  let qty_description = "Base quantity used by the selected output planning method.";
+  let uom_label = "Default Recipe Basis UOM";
+  let uom_description = "UOM for the recipe basis quantity.";
+
+  if (method === "Dish Qty Per Person") {
+    qty_label = "Qty Per Person";
+    qty_description = "Quantity required per one person. Example: 1.2 Pouch per person.";
+    uom_label = "Qty Per Person UOM";
+    uom_description = "UOM of the quantity required per person.";
+  }
+
+  else if (method === "Covers Persons") {
+    qty_label = "Persons Covered Per Output";
+    qty_description = "Number of persons covered by one output container. Example: 30 persons per Chafing Dish.";
+    uom_label = "Coverage UOM";
+    uom_description = "Usually Person.";
+  }
+
+  else if (method === "Output Driver Material") {
+    qty_label = "Recipe Basis Multiplier";
+    qty_description = "Multiplier used with material Qty For Recipe Basis to calculate Qty Per Person. Usually 1 Person.";
+    uom_label = "Recipe Basis UOM";
+    uom_description = "Usually Person.";
+  }
+
+  else if (method === "Sum Output Materials") {
+    qty_label = "Recipe Basis Multiplier";
+    qty_description = "Multiplier used with included output materials to calculate output base quantity. Usually 1 Person.";
+    uom_label = "Recipe Basis UOM";
+    uom_description = "Usually Person.";
+  }
+
+  else if (method === "Per Buffet") {
+    qty_label = "Not Used";
+    qty_description = "Not used for Per Buffet. Output Qty is calculated from Default Buffet Qty.";
+    uom_label = "Not Used";
+    uom_description = "Not used for Per Buffet.";
+  }
+
+  else if (method === "Manual") {
+    qty_label = "Not Used";
+    qty_description = "Not used for Manual planning.";
+    uom_label = "Not Used";
+    uom_description = "Not used for Manual planning.";
+  }
+
+  frm.set_df_property("recipe_basis_qty", "label", qty_label);
+  frm.set_df_property("recipe_basis_qty", "description", qty_description);
+
+  frm.set_df_property("default_uom", "label", uom_label);
+  frm.set_df_property("default_uom", "description", uom_description);
+
+  frm.refresh_field("recipe_basis_qty");
+  frm.refresh_field("default_uom");
 }
