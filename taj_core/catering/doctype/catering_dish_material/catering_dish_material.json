@@ -9,32 +9,32 @@
   "material_item",
   "material_name",
   "material_name_arabic",
+  "column_break_flmr",
   "qty_per_person",
   "uom",
-  "include_in_purchase",
-  "include_in_production",
-  "sort_order",
-  "receiving_mode",
-  "include_in_output_qty",
   "column_break_zqcd",
+  "include_in_production",
+  "include_in_purchase",
+  "purchase_full_pack_only",
+  "section_break_ytan",
+  "operation_qty_mode",
+  "fixed_operation_qty",
+  "operation_run_frequency",
+  "operation_display_uom_mode",
+  "section_break_eiwb",
   "receiving_capacity_qty",
   "receiving_capacity_uom",
   "receiving_rounding_method",
-  "use_full_receiving_qty",
-  "is_scaling_driver",
-  "follow_scaling_driver",
   "section_break_ogjd",
   "material__calculation_base",
   "qty_per_output",
-  "small_qty_rule_section",
-  "column_break_hcoa",
-  "small_qty_threshold_percent",
-  "small_qty_uom",
   "section_break_eden",
   "column_break_ybzh",
   "base_receiving_uom",
+  "column_break_nqtl",
   "small_pack_qty",
   "small_pack_uom",
+  "column_break_ucwh",
   "large_pack_qty",
   "large_pack_uom",
   "section_break_vpdf",
@@ -74,11 +74,6 @@
    "label": "Include in Production"
   },
   {
-   "fieldname": "sort_order",
-   "fieldtype": "Int",
-   "label": "Sort Order"
-  },
-  {
    "fieldname": "section_break_vpdf",
    "fieldtype": "Section Break"
   },
@@ -116,110 +111,41 @@
    "options": "No Rounding\nRound Up\nRound Down\nHalf Round"
   },
   {
-   "default": "0",
-   "description": "Use the full rounded receiving quantity for production calculation instead of the exact required quantity.",
-   "fieldname": "use_full_receiving_qty",
-   "fieldtype": "Check",
-   "in_standard_filter": 1,
-   "label": "Use Full Receiving Qty"
-  },
-  {
-   "default": "0",
-   "description": "This material controls recipe scaling when full receiving quantity is used.",
-   "fieldname": "is_scaling_driver",
-   "fieldtype": "Check",
-   "in_standard_filter": 1,
-   "label": "Is Scaling Driver"
-  },
-  {
-   "default": "1",
-   "description": "This material increases when the scaling driver increases.",
-   "fieldname": "follow_scaling_driver",
-   "fieldtype": "Check",
-   "in_standard_filter": 1,
-   "label": "Follow Scaling Driver"
-  },
-  {
-   "default": "Single Unit",
-   "fieldname": "receiving_mode",
-   "fieldtype": "Select",
-   "label": "Receiving Mode",
-   "options": "Single Unit\nUnit Breakdown\nSmall Qty Rule\nNo Receiving"
-  },
-  {
-   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
    "fieldname": "section_break_eden",
    "fieldtype": "Section Break",
    "label": "Unit Breakdown"
   },
   {
-   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
    "fieldname": "base_receiving_uom",
    "fieldtype": "Link",
    "label": "Base Receiving UOM",
    "options": "UOM"
   },
   {
-   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
    "fieldname": "small_pack_qty",
    "fieldtype": "Float",
    "label": "Small Pack Qty"
   },
   {
-   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
    "fieldname": "small_pack_uom",
    "fieldtype": "Link",
    "label": "Small Pack UOM",
    "options": "UOM"
   },
   {
-   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
    "fieldname": "large_pack_qty",
    "fieldtype": "Float",
    "label": "Large Pack Qty"
   },
   {
-   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
    "fieldname": "large_pack_uom",
    "fieldtype": "Link",
    "label": "Large Pack UOM",
    "options": "UOM"
   },
   {
-   "depends_on": "eval:doc.receiving_mode==\"Unit Breakdown\"",
    "fieldname": "column_break_ybzh",
    "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:doc.receiving_mode==\"Small Qty Rule\"",
-   "fieldname": "small_qty_rule_section",
-   "fieldtype": "Section Break",
-   "label": "Small Qty Rule"
-  },
-  {
-   "depends_on": "eval:doc.receiving_mode==\"Small Qty Rule\"",
-   "fieldname": "column_break_hcoa",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:doc.receiving_mode==\"Small Qty Rule\"",
-   "fieldname": "small_qty_threshold_percent",
-   "fieldtype": "Percent",
-   "label": "Small Qty Threshold Percent"
-  },
-  {
-   "depends_on": "eval:doc.receiving_mode==\"Small Qty Rule\"",
-   "fieldname": "small_qty_uom",
-   "fieldtype": "Link",
-   "label": "Small Qty UOM",
-   "options": "UOM"
-  },
-  {
-   "default": "1",
-   "description": "Include this material quantity when calculating prepared dish output quantity.",
-   "fieldname": "include_in_output_qty",
-   "fieldtype": "Check",
-   "label": "Include in Output Qty"
   },
   {
    "fieldname": "section_break_ogjd",
@@ -249,13 +175,75 @@
    "fieldtype": "Data",
    "label": "Material Name Arabic",
    "read_only": 1
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.include_in_purchase",
+   "fieldname": "purchase_full_pack_only",
+   "fieldtype": "Check",
+   "label": "Purchase Full Pack Only"
+  },
+  {
+   "fieldname": "column_break_flmr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_eiwb",
+   "fieldtype": "Section Break",
+   "label": "Receiving"
+  },
+  {
+   "fieldname": "column_break_nqtl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ucwh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ytan",
+   "fieldtype": "Section Break",
+   "label": "Operation Distribution"
+  },
+  {
+   "default": "Recipe Ratio",
+   "description": "Defines how this material is used during operation. Recipe Ratio means the material participates in run quantity calculation. Fixed Once means one fixed quantity is used once. Fixed Every N Runs means a fixed quantity is repeated after a defined number of runs.",
+   "fieldname": "operation_qty_mode",
+   "fieldtype": "Select",
+   "label": "Operation Qty Mode",
+   "options": "Recipe Ratio\nFixed Once\nFixed Every N Runs"
+  },
+  {
+   "depends_on": "eval:doc.operation_qty_mode == \"Fixed Once\" || doc.operation_qty_mode == \"Fixed Every N Runs\"",
+   "description": "Fixed quantity used in operation. The UOM is the material UOM. Example: 17 Litre Palm Oil.",
+   "fieldname": "fixed_operation_qty",
+   "fieldtype": "Float",
+   "label": "Fixed Operation Qty",
+   "mandatory_depends_on": "eval:doc.operation_qty_mode == \"Fixed Once\" || doc.operation_qty_mode == \"Fixed Every N Runs\""
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.operation_qty_mode == \"Fixed Every N Runs\"",
+   "description": "Number of runs covered by one fixed operation quantity. Example: 3 means the fixed quantity is used once for every 3 runs.",
+   "fieldname": "operation_run_frequency",
+   "fieldtype": "Int",
+   "label": "Operation Run Frequency",
+   "mandatory_depends_on": "eval:doc.operation_qty_mode == \"Fixed Every N Runs\""
+  },
+  {
+   "default": "Receiving UOM",
+   "description": "Defines how operation quantity is displayed in the report. Material UOM shows base quantity like Piece or Litre. Receiving UOM shows converted quantity like Carton or Gallon. Both shows both values.",
+   "fieldname": "operation_display_uom_mode",
+   "fieldtype": "Select",
+   "label": "Operation Display UOM Mode",
+   "options": "Material UOM\nReceiving UOM\nBoth"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-25 12:51:18.838717",
+ "modified": "2026-06-11 14:18:38.227127",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Dish Material",

@@ -8,10 +8,10 @@
  "field_order": [
   "catering_workstation",
   "catering_workstation_arabic",
-  "default_operation",
   "column_break_ukjv",
   "default_unit_capacity_qty",
   "default_unit_capacity_uom",
+  "column_break_dvsz",
   "default_temperature",
   "default_duration_minutes"
  ],
@@ -36,12 +36,6 @@
    "options": "UOM"
   },
   {
-   "fieldname": "default_operation",
-   "fieldtype": "Link",
-   "label": "Default Operation",
-   "options": "Catering Operation"
-  },
-  {
    "fieldname": "default_temperature",
    "fieldtype": "Float",
    "label": "Default Temperature"
@@ -59,12 +53,16 @@
    "fieldname": "default_unit_capacity_qty",
    "fieldtype": "Float",
    "label": "Default Unit Capacity Qty"
+  },
+  {
+   "fieldname": "column_break_dvsz",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-19 09:19:24.990126",
+ "modified": "2026-06-10 10:34:26.683904",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Workstation",

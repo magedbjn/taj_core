@@ -28,11 +28,13 @@
   "holding_temperature",
   "holding_duration_minutes",
   "production_output_section",
+  "input_qtyuom_same_as_output",
   "output_container_uom",
   "output_container_capacity_qty",
   "output_container_capacity_uom",
   "column_break_aojn",
   "output_rounding_method",
+  "use_full_warehouse_issue_qty",
   "materials_tab",
   "section_break_yzcj",
   "materials",
@@ -87,7 +89,6 @@
    "label": "Dish Material"
   },
   {
-   "depends_on": "eval:doc.dish_type == \"Prepared Dish\"",
    "fieldname": "materials",
    "fieldtype": "Table",
    "label": "Materials",
@@ -212,7 +213,6 @@
    "options": "Round Up\nRound Down\nHalf Round\nNo Rounding"
   },
   {
-   "depends_on": "eval:doc.dish_type == \"Prepared Dish\"",
    "fieldname": "materials_tab",
    "fieldtype": "Tab Break",
    "label": "Materials"
@@ -224,7 +224,7 @@
    "label": "Default Buffet Qty"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "requires_workstation",
    "fieldtype": "Check",
    "label": "Requires Workstation"
@@ -233,12 +233,25 @@
    "fieldname": "workstation_tab",
    "fieldtype": "Tab Break",
    "label": "Workstation"
+  },
+  {
+   "default": "0",
+   "fieldname": "input_qtyuom_same_as_output",
+   "fieldtype": "Check",
+   "label": "Input Qty/UOM Same as Output"
+  },
+  {
+   "default": "0",
+   "description": "Use the full rounded warehouse issue quantity of the output driver material to recalculate operation output and related materials",
+   "fieldname": "use_full_warehouse_issue_qty",
+   "fieldtype": "Check",
+   "label": "Use Full Warehouse Issue Qty"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-01 13:48:44.536358",
+ "modified": "2026-06-10 15:46:13.739862",
  "modified_by": "Administrator",
  "module": "Catering",
  "name": "Catering Dish",
