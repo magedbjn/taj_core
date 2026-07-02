@@ -30,7 +30,6 @@
   "pp_solid_liquid",
   "section_break_tksr",
   "quantity",
-  "print_quantity",
   "column_break_hhwh",
   "holding_time",
   "section_break_vwgz",
@@ -42,7 +41,11 @@
   "sensory_decision",
   "amended_from",
   "column_break_flof",
-  "note"
+  "note",
+  "trial_cooking_tab",
+  "print_quantity",
+  "section_break_ljby",
+  "trial_cooking"
  ],
  "fields": [
   {
@@ -159,6 +162,7 @@
    "fieldname": "sensory_decision",
    "fieldtype": "Select",
    "label": "Sensory Evaluation Decision",
+   "no_copy": 1,
    "options": "Open\nApprove\nReject\nNeeds Improvement"
   },
   {
@@ -199,7 +203,8 @@
    "default": "Today",
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Date"
+   "label": "Date",
+   "no_copy": 1
   },
   {
    "fieldname": "section_break_tksr",
@@ -246,10 +251,28 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "description": "Used only for printing. It does not change the original item quantity",
    "fieldname": "print_quantity",
    "fieldtype": "Int",
    "label": "Print Quantity"
+  },
+  {
+   "fieldname": "trial_cooking_tab",
+   "fieldtype": "Tab Break",
+   "label": "Trial Cooking"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "trial_cooking",
+   "fieldtype": "Table",
+   "label": "Trial Cooking",
+   "options": "Product Proposal Trial Cooking"
+  },
+  {
+   "fieldname": "section_break_ljby",
+   "fieldtype": "Section Break",
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,
@@ -257,8 +280,8 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-04-19 10:21:47.219678",
- "modified_by": "Administrator",
+ "modified": "2026-07-02 10:44:32.861811",
+ "modified_by": "m.bajandooh@tajff.sa",
  "module": "RND",
  "name": "Product Proposal",
  "owner": "Administrator",

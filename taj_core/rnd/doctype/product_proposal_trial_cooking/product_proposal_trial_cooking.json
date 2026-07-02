@@ -1,0 +1,74 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-01 14:59:31.355756",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "posting_date",
+  "trial_user",
+  "trial_qty",
+  "pouch_size",
+  "holding_time",
+  "remark"
+ ],
+ "fields": [
+  {
+   "fieldname": "trial_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Trial Qty",
+   "reqd": 1
+  },
+  {
+   "fieldname": "holding_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Holding Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Remark"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trial_user",
+   "fieldtype": "Link",
+   "label": "Trial User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pouch_size",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Pouch Size",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-01 15:26:49.925438",
+ "modified_by": "Administrator",
+ "module": "RND",
+ "name": "Product Proposal Trial Cooking",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
