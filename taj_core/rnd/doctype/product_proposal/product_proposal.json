@@ -30,6 +30,7 @@
   "pp_solid_liquid",
   "section_break_tksr",
   "quantity",
+  "print_quantity",
   "column_break_hhwh",
   "holding_time",
   "section_break_vwgz",
@@ -43,7 +44,6 @@
   "column_break_flof",
   "note",
   "trial_cooking_tab",
-  "print_quantity",
   "section_break_ljby",
   "trial_cooking"
  ],
@@ -255,6 +255,7 @@
    "description": "Used only for printing. It does not change the original item quantity",
    "fieldname": "print_quantity",
    "fieldtype": "Int",
+   "hidden": 1,
    "label": "Print Quantity"
   },
   {
@@ -280,8 +281,8 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-07-02 10:44:32.861811",
- "modified_by": "m.bajandooh@tajff.sa",
+ "modified": "2026-07-06 08:30:04.769047",
+ "modified_by": "Administrator",
  "module": "RND",
  "name": "Product Proposal",
  "owner": "Administrator",
