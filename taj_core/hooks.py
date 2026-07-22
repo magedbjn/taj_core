@@ -12,6 +12,7 @@ doctype_js = {
     "Production Plan": "public/js/production_plan.js",
     "Work Order": "public/js/work_order.js",
     "Job Card": "public/js/job_card.js",
+    "Leave Encashment": "public/js/leave_encashment.js",
 }
 
 permission_query_conditions = {
@@ -34,6 +35,8 @@ override_doctype_class = {
     "Party Specific Item": "taj_core.overrides.party_specific_item.TajPartySpecificItem",
     "Leave Application": "taj_core.overrides.leave_application.LeaveApplication",
     "Stock Entry": "taj_core.overrides.stock_entry.CustomStockEntry",
+    "Leave Encashment": "taj_core.overrides.leave_encashment.TajLeaveEncashment",
+    "Gratuity": "taj_core.overrides.gratuity.CustomGratuity",
 }
 
 override_whitelisted_methods = {
@@ -137,8 +140,8 @@ fixtures = [
     {
         "dt": "Custom Field",
         "filters": [
-            ["dt", "in", ["Job Card"]],
-            ["fieldname", "like", "taj_%"]
+            ["dt", "in", ["Gratuity Rule"]],
+            ["fieldname", "like", "custom_%"]
         ]
     }
 ]
