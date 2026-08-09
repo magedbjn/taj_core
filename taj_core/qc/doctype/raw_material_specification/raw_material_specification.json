@@ -71,7 +71,22 @@
   "peanut",
   "sesame",
   "soybeans",
-  "sulfite"
+  "sulfite",
+  "nutritional_information_tab",
+  "energy_macronutrients_section",
+  "calories_kcal",
+  "protein_g",
+  "total_fat_g",
+  "saturated_fat_g",
+  "trans_fat_g",
+  "cholesterol_mg",
+  "column_break_pcdq",
+  "carbohydrates_g",
+  "total_sugars_g",
+  "added_sugars_g",
+  "dietary_fiber_g",
+  "minerals_section",
+  "sodium_mg"
  ],
  "fields": [
   {
@@ -428,10 +443,96 @@
    "fieldname": "max_temperature",
    "fieldtype": "Float",
    "label": "Max Temperature (\u00b0C)"
+  },
+  {
+   "fieldname": "nutritional_information_tab",
+   "fieldtype": "Tab Break",
+   "label": "Nutritional Information"
+  },
+  {
+   "fieldname": "calories_kcal",
+   "fieldtype": "Float",
+   "label": "Calories (kcal)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "protein_g",
+   "fieldtype": "Float",
+   "label": "Protein (g)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "total_fat_g",
+   "fieldtype": "Float",
+   "label": "Total Fat (g)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "saturated_fat_g",
+   "fieldtype": "Float",
+   "label": "Saturated Fat (g)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "trans_fat_g",
+   "fieldtype": "Float",
+   "label": "Trans Fat (g)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "carbohydrates_g",
+   "fieldtype": "Float",
+   "label": "Carbohydrates (g)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "total_sugars_g",
+   "fieldtype": "Float",
+   "label": "Total Sugars (g)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "added_sugars_g",
+   "fieldtype": "Float",
+   "label": "Added Sugars (g)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "dietary_fiber_g",
+   "fieldtype": "Float",
+   "label": "Dietary Fiber (g)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "sodium_mg",
+   "fieldtype": "Float",
+   "label": "Sodium (mg)",
+   "precision": "2"
+  },
+  {
+   "description": "All nutritional values are per 100 g.",
+   "fieldname": "energy_macronutrients_section",
+   "fieldtype": "Section Break",
+   "label": "Energy & Macronutrients"
+  },
+  {
+   "fieldname": "column_break_pcdq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "minerals_section",
+   "fieldtype": "Section Break",
+   "label": "Minerals"
+  },
+  {
+   "fieldname": "cholesterol_mg",
+   "fieldtype": "Float",
+   "label": "Cholesterol (mg)",
+   "precision": "2"
   }
  ],
  "links": [],
- "modified": "2026-04-23 11:37:50.675352",
+ "modified": "2026-08-09 13:16:12.490016",
  "modified_by": "Administrator",
  "module": "QC",
  "name": "Raw Material Specification",
