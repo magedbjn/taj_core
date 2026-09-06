@@ -74,7 +74,7 @@
    "fieldname": "final_status",
    "fieldtype": "Select",
    "label": "Final Status",
-   "options": "Accept\nNeed Improvemen"
+   "options": "Accept\nNeed Improvement"
   }
  ],
  "grid_page_length": 50,

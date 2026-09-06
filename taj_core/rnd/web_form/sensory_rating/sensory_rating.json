@@ -149,7 +149,7 @@
    "label": "Final Status",
    "max_length": 0,
    "max_value": 0,
-   "options": "Accept\nNeed Improvemen",
+   "options": "Accept\nNeed Improvement",
    "precision": "",
    "read_only": 0,
    "reqd": 0,

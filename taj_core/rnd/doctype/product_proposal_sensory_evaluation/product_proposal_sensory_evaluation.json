@@ -63,7 +63,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Final Status",
-   "options": "Accept\nNeed Improvemen"
+   "options": "Accept\nNeed Improvement"
   }
  ],
  "grid_page_length": 50,
