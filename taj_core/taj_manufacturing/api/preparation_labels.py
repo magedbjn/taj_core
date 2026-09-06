@@ -1071,6 +1071,7 @@ def _build_all_labels(doc, selected_item_filters=None, source_job_card=None, lab
 @frappe.whitelist()
 def get_required_items_for_work_order(work_order):
     work_order_doc = frappe.get_doc("Work Order", work_order)
+    work_order_doc.check_permission("read")
 
     rows = []
     for row in (work_order_doc.get(WORK_ORDER_REQUIRED_ITEMS_FIELD) or []):
@@ -1088,6 +1089,7 @@ def get_required_items_for_work_order(work_order):
 @frappe.whitelist()
 def render_preparation_labels_html(work_order, selected_rows=None, source_job_card=None, label_mode="standard"):
     work_order_doc = frappe.get_doc("Work Order", work_order)
+    work_order_doc.check_permission("read")
 
     selected_item_filters = _get_selected_required_item_filters(
         work_order_doc,
@@ -1118,6 +1120,7 @@ def render_preparation_labels_html(work_order, selected_rows=None, source_job_ca
 @frappe.whitelist()
 def render_preparation_labels_from_job_card(job_card, selected_rows=None, label_mode="standard"):
     jc = frappe.get_doc("Job Card", job_card)
+    jc.check_permission("read")
 
     if not jc.work_order:
         frappe.throw("Job Card does not have a linked Work Order.")
@@ -1209,11 +1212,13 @@ def _aggregate_items(items):
 @frappe.whitelist()
 def get_raw_materials_from_job_card(job_card, selected_rows=None):
     jc = frappe.get_doc("Job Card", job_card)
+    jc.check_permission("read")
 
     if not jc.work_order:
         frappe.throw("Job Card does not have a linked Work Order.")
 
     work_order_doc = frappe.get_doc("Work Order", jc.work_order)
+    work_order_doc.check_permission("read")
 
     selected_item_filters = _get_selected_required_item_filters(
         work_order_doc,
