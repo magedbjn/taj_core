@@ -275,7 +275,6 @@ def get_supplier_items_status_map(supplier: str, item_codes: list[str] | None = 
         out[code] = found.get(code, "Request Approval")
     return out
 
-
 @frappe.whitelist()
 def request_items_approval(
     supplier: str,
@@ -284,117 +283,164 @@ def request_items_approval(
     reference_name: str | None = None,
     note: str | None = None,
 ) -> dict:
-    """
-    نسخة مصححة - تفرق بين الأصناف المعلقة والمعتمدة والمرفوضة
-    """
+    """Request qualification review for items from an authorized Purchase Order."""
+
+    if frappe.session.user == "Guest":
+        frappe.throw(_("Authentication required"), frappe.PermissionError)
+
     if isinstance(items, str):
         try:
             items = json.loads(items or "[]")
         except json.JSONDecodeError:
-            items = []
+            frappe.throw(_("Invalid items payload"))
 
-    if not supplier or not items:
-        return {"message": "No items provided", "success": False}
+    if not isinstance(items, list):
+        frappe.throw(_("Items must be a list"))
 
-    if not frappe.db.exists("Supplier", supplier):
-        return {"message": "Supplier not found", "success": False}
-
-    qual = frappe.get_all(
-        "Supplier Qualification",
-        filters={"supplier": supplier},
-        fields=["name"],
-        limit=1,
-        order_by="creation DESC"
+    clean_items = list(
+        dict.fromkeys(
+            item.strip()
+            for item in items
+            if isinstance(item, str) and item.strip()
+        )
     )
-    
-    if not qual:
-        return {"message": "No qualification found", "success": False}
 
-    qual_name = qual[0]["name"]
-    
-    # تنظيف وتفريغ الأصناف
-    clean_items = list(set([item.strip() for item in items if item and item.strip()]))
-    
-    if not clean_items:
-        return {"message": "No valid items provided", "success": False}
+    if not supplier or not clean_items:
+        return {
+            "message": _("No items provided"),
+            "success": False,
+            "added": [],
+            "pending": [],
+            "approved": [],
+            "rejected": [],
+        }
 
-    # الحصول على الأصناف الموجودة مع حالتها
+    # This endpoint is intentionally scoped to the Purchase Order workflow.
+    if reference_doctype != "Purchase Order" or not reference_name:
+        frappe.throw(
+            _("A valid Purchase Order reference is required"),
+            frappe.PermissionError,
+        )
+
+    purchase_order = frappe.get_doc(
+        "Purchase Order",
+        reference_name,
+    )
+
+    purchase_order.check_permission("write")
+
+    if purchase_order.supplier != supplier:
+        frappe.throw(
+            _("Supplier does not match Purchase Order {0}").format(
+                reference_name
+            )
+        )
+
+    po_item_codes = {
+        row.item_code
+        for row in purchase_order.items
+        if row.item_code
+    }
+
+    invalid_items = [
+        item
+        for item in clean_items
+        if item not in po_item_codes
+    ]
+
+    if invalid_items:
+        frappe.throw(
+            _(
+                "The following items do not belong to Purchase Order {0}: {1}"
+            ).format(
+                reference_name,
+                ", ".join(invalid_items),
+            )
+        )
+
+    qualification_name = frappe.db.get_value(
+        "Supplier Qualification",
+        {"supplier": supplier},
+        "name",
+        order_by="creation desc",
+    )
+
+    if not qualification_name:
+        return {
+            "message": _("No qualification found"),
+            "success": False,
+            "added": [],
+            "pending": [],
+            "approved": [],
+            "rejected": [],
+        }
+
     existing_items = frappe.get_all(
         "Supplier Approved Item",
         filters={
-            "parent": qual_name,
-            "item": ["in", clean_items]
+            "parent": qualification_name,
+            "parenttype": "Supplier Qualification",
+            "item": ["in", clean_items],
         },
-        fields=["item", "item_status"],
-        limit=len(clean_items)
+        fields=[
+            "item",
+            "item_status",
+        ],
+        limit=len(clean_items),
     )
-    
-    # تصنيف الأصناف حسب حالتها
-    pending_items = []   # Request Approval
-    approved_items = []  # Approved
-    rejected_items = []  # Rejected
-    new_items = []       # غير موجودة
-    
-    existing_item_map = {row["item"]: row["item_status"] for row in existing_items}
-    
+
+    existing_item_map = {
+        row["item"]: row["item_status"]
+        for row in existing_items
+    }
+
+    pending_items = []
+    approved_items = []
+    rejected_items = []
+    new_items = []
+
     for item_code in clean_items:
-        if item_code in existing_item_map:
-            status = existing_item_map[item_code]
-            if status == "Request Approval":
-                pending_items.append(item_code)
-            elif status == "Approved":
-                approved_items.append(item_code)
-            elif status == "Rejected":
-                rejected_items.append(item_code)
-        else:
+        status = existing_item_map.get(item_code)
+
+        if status == "Request Approval":
+            pending_items.append(item_code)
+        elif status == "Approved":
+            approved_items.append(item_code)
+        elif status == "Rejected":
+            rejected_items.append(item_code)
+        elif status is None:
             new_items.append(item_code)
 
-    # إضافة الأصناف الجديدة فقط
-    added = []
+    # Explicit authorization has already happened against the Purchase Order.
+    # Qualification modification is a controlled service operation because
+    # purchasing users are not expected to have direct QC write permission.
+    qualification = frappe.get_doc(
+        "Supplier Qualification",
+        qualification_name,
+    )
+
     for item_code in new_items:
-        try:
-            doc = frappe.get_doc({
-                "doctype": "Supplier Approved Item",
-                "parent": qual_name,
-                "parenttype": "Supplier Qualification",
-                "parentfield": "sq_items",
+        qualification.append(
+            "sq_items",
+            {
                 "item": item_code,
                 "item_status": "Request Approval",
                 "remarks": note or "",
-            })
-            doc.insert(ignore_permissions=True)
-            added.append(item_code)
-        except Exception:
-            pass
+            },
+        )
 
-    frappe.db.commit()
-
-    # بناء رسالة واضحة
-    message_parts = []
-    
-    if added:
-        message_parts.append(f"✅ Added for review: {', '.join(added)}")
-    
-    if pending_items:
-        message_parts.append(f"⏳ Already pending: {', '.join(pending_items)}")
-    
-    if approved_items:
-        message_parts.append(f"🔵 Already approved: {len(approved_items)} items")
-    
-    if rejected_items:
-        message_parts.append(f"🔴 Already rejected: {len(rejected_items)} items")
-
-    message = " • ".join(message_parts) if message_parts else "No action needed"
+    if new_items:
+        qualification.flags.ignore_permissions = True
+        qualification.save()
 
     return {
-        "message": message,
+        "message": _("Qualification request processed"),
         "success": True,
-        "added": added,
+        "added": new_items,
         "pending": pending_items,
         "approved": approved_items,
-        "rejected": rejected_items
+        "rejected": rejected_items,
     }
-
 
 @frappe.whitelist()
 def update_certificate_statuses():
