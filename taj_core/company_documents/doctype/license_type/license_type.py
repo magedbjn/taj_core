@@ -47,7 +47,6 @@ def propagate_no_expiry_change(license_type_name: str, new_no_expiry: int):
         "lt": license_type_name,
     })
 
-    frappe.db.commit()
 
 def propagate_renew_change(license_type_name: str, new_renew: int):
     """
@@ -73,5 +72,3 @@ def propagate_renew_change(license_type_name: str, new_renew: int):
         WHERE l.license_english = %(lt)s
           AND l.no_expiry = 0
     """, {"renew": renew, "lt": license_type_name})
-
-    frappe.db.commit()
