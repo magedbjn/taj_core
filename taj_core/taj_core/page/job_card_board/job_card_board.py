@@ -34,7 +34,7 @@ def _existing_fields(doctype: str, wanted_fields):
 def _safe_fields() -> List[str]:
     fields = ["name", "modified", "docstatus", "creation"]
     for f in [
-        "psoting_date",
+        "posting_date",
         "company",
         "work_order",
         "workstation",
