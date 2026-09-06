@@ -72,16 +72,6 @@ def _get_item_name(item_code, fallback=None):
     return frappe.db.get_value("Item", item_code, "item_name") or item_code
 
 
-def _aggregate_labels_by_item(labels):
-    rows = []
-    for lbl in (labels or []):
-        rows.append({
-            "item_code": _norm_txt(lbl.get("item_code")),
-            "item_name": lbl.get("item_name") or "",
-            "qty": flt(lbl.get("qty") or 0),
-            "uom": _get_item_stock_uom(_norm_txt(lbl.get("item_code"))),
-        })
-    return _aggregate_items(rows)
 
 def _get_item_description(item_code, fallback=None):
     if fallback:
@@ -1072,26 +1062,6 @@ def _build_all_labels(doc, selected_item_filters=None, source_job_card=None, lab
     return labels
 
 
-def _aggregate_labels_by_item(labels):
-    grouped = {}
-
-    for lbl in (labels or []):
-        item_code = _norm_txt(lbl.get("item_code"))
-        if not item_code:
-            continue
-
-        key = item_code
-        if key not in grouped:
-            grouped[key] = {
-                "item_code": item_code,
-                "item_name": lbl.get("item_name") or _get_item_name(item_code),
-                "qty": 0,
-                "uom": _get_item_stock_uom(item_code),
-            }
-
-        grouped[key]["qty"] = flt(grouped[key]["qty"]) + flt(lbl.get("qty") or 0)
-
-    return list(grouped.values())
 
 
 # ---------------------------------------------------------------------
@@ -1160,30 +1130,6 @@ def render_preparation_labels_from_job_card(job_card, selected_rows=None, label_
     )
 
 
-@frappe.whitelist()
-def get_raw_materials_from_job_card(job_card, selected_rows=None):
-    jc = frappe.get_doc("Job Card", job_card)
-
-    if not jc.work_order:
-        frappe.throw("Job Card does not have a linked Work Order.")
-
-    work_order_doc = frappe.get_doc("Work Order", jc.work_order)
-
-    selected_item_filters = _get_selected_required_item_filters(
-        work_order_doc,
-        _as_list(selected_rows),
-    )
-
-    labels = _build_all_labels(
-        work_order_doc,
-        selected_item_filters=selected_item_filters,
-        source_job_card=jc.name,
-        label_mode="raw",
-    )
-
-    return {
-        "items": _aggregate_labels_by_item(labels)
-    }
 
 def _resolve_non_merged_source(current_sub):
     pp_item_name = _norm_txt(current_sub.get("production_plan_item"))
@@ -1214,10 +1160,6 @@ def _resolve_non_merged_source(current_sub):
         linked_operation_hint=current_sub.get("operation"),
     )
 
-def _get_item_stock_uom(item_code):
-    if not item_code:
-        return ""
-    return frappe.db.get_value("Item", item_code, "stock_uom") or ""
 
 
 def _aggregate_labels_by_item(labels):
@@ -1241,60 +1183,7 @@ def _aggregate_labels_by_item(labels):
     return list(grouped.values())
 
 
-@frappe.whitelist()
-def get_raw_materials_from_job_card(job_card, selected_rows=None):
-    jc = frappe.get_doc("Job Card", job_card)
 
-    if not jc.work_order:
-        frappe.throw("Job Card does not have a linked Work Order.")
-
-    work_order_doc = frappe.get_doc("Work Order", jc.work_order)
-
-    selected_item_filters = _get_selected_required_item_filters(
-        work_order_doc,
-        _as_list(selected_rows),
-    )
-
-    try:
-        labels = _build_all_labels(
-            work_order_doc,
-            selected_item_filters=selected_item_filters,
-            source_job_card=jc.name,
-        )
-        items = _aggregate_labels_by_item(labels)
-        if items:
-            return {"items": items}
-    except Exception:
-        pass
-
-    selected_lookup = _build_selected_lookup(selected_item_filters or [])
-    items = []
-
-    for row in (work_order_doc.get(WORK_ORDER_REQUIRED_ITEMS_FIELD) or []):
-        if not _is_row_selected(row, selected_lookup):
-            continue
-
-        item_code = _norm_txt(_row_value(row, "item_code"))
-        if not item_code:
-            continue
-
-        qty = flt(_row_value(row, "required_qty") or _row_value(row, "qty") or 0)
-        if qty <= 0:
-            continue
-
-        items.append({
-            "item_code": item_code,
-            "item_name": _row_value(row, "item_name") or _get_item_name(item_code),
-            "qty": qty,
-            "uom": frappe.db.get_value("Item", item_code, "stock_uom") or "",
-        })
-
-    return {"items": items}
-
-def _get_item_stock_uom(item_code):
-    if not item_code:
-        return ""
-    return frappe.db.get_value("Item", item_code, "stock_uom") or ""
 
 
 def _aggregate_items(items):
