@@ -428,7 +428,7 @@ async function addBOMItemWithConversion(frm, pp_item, item_code, uom, final_qty,
   await frappe.model.set_value(row.doctype, row.name, 'description', pp_item.item_name || row.description);
 
   // ✅ الحقول المخصصة من PP -> BOM Item
-  await frappe.model.set_value(row.doctype, row.name, 'taj_procees_type', pp_item.procees_type || null);
+  await frappe.model.set_value(row.doctype, row.name, 'taj_process_type', pp_item.procees_type || null);
   await frappe.model.set_value(row.doctype, row.name, 'taj_cooking_type', pp_item.cooking_type || null);
   await frappe.model.set_value(row.doctype, row.name, 'taj_temperature', pp_item.temperature || null);
   await frappe.model.set_value(row.doctype, row.name, 'taj_duration', pp_item.duration || null);
