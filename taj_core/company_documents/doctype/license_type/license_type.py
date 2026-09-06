@@ -1,7 +1,6 @@
 # license_type.py
 import frappe
 from frappe.model.document import Document
-from frappe.utils import today, getdate
 from frappe import _
 
 class LicenseType(Document):
@@ -21,31 +20,38 @@ class LicenseType(Document):
             )
 
 
-def propagate_no_expiry_change(license_type_name: str, new_no_expiry: int):
-    """توحيد تحديث no_expiry و expiry_date (والحالة) دفعة واحدة عند تغيّر no_expiry."""
-    today_date = getdate(today())
+def propagate_no_expiry_change(
+    license_type_name: str,
+    new_no_expiry: int,
+):
+    """
+    Synchronize no_expiry across existing licenses.
 
-    # إذا no_expiry=1: اجعل expiry_date = NULL واجعل الحالة Active
-    # إذا no_expiry=0: عيّن expiry_date = اليوم (كما طلبت سابقًا) واترك الحالة كما هي (سيُعاد حسابها لاحقًا بالمجدولة أو يدويًا)
-    frappe.db.sql("""
+    Enabling no-expiry clears expiry dates and makes licenses Active.
+    Disabling no-expiry must not invent an expiry date; existing dates
+    are preserved and missing dates can be completed explicitly.
+    """
+    frappe.db.sql(
+        """
         UPDATE `tabLicense`
         SET
             `no_expiry` = %(new)s,
             `expiry_date` = CASE
                 WHEN %(new)s = 1 THEN NULL
-                WHEN %(new)s = 0 THEN %(today)s
                 ELSE `expiry_date`
             END,
             `status` = CASE
-                WHEN %(new)s = 1 THEN 'Active'   -- التراخيص بلا انتهاء دائماً Active
+                WHEN %(new)s = 1 THEN 'Active'
                 ELSE `status`
             END
         WHERE `license_english` = %(lt)s
-    """, {
-        "new": int(new_no_expiry),
-        "today": today_date,
-        "lt": license_type_name,
-    })
+        """,
+        {
+            "new": int(new_no_expiry),
+            "lt": license_type_name,
+        },
+    )
+
 
 
 def propagate_renew_change(license_type_name: str, new_renew: int):
