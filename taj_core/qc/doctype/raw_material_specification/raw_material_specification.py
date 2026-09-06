@@ -25,23 +25,52 @@ class RawMaterialSpecification(Document):
         if not self.item_code:
             frappe.throw(_("Item Code is missing."))
 
-        # تجاهل التحقق داخل Hook عند تعديل Item من هنا
+        missing = object()
+        previous_flag = frappe.flags.get(
+            "in_rms_update",
+            missing,
+        )
+
         frappe.flags.in_rms_update = True
 
-        item = frappe.get_doc("Item", self.item_code)
+        try:
+            item = frappe.get_doc(
+                "Item",
+                self.item_code,
+            )
 
-        if self.status == "Approved":
-            item.is_purchase_item = 1
-            item.include_item_in_manufacturing = 1
+            if self.status == "Approved":
+                item.is_purchase_item = 1
+                item.include_item_in_manufacturing = 1
 
-        elif self.status == "Rejected":
-            item.is_purchase_item = 0
-            item.include_item_in_manufacturing = 0
-            frappe.msgprint(_("Item {0} can no longer be purchased or used in production.")
-                            .format(frappe.bold(self.item_code)), alert=True)
+            elif self.status == "Rejected":
+                item.is_purchase_item = 0
+                item.include_item_in_manufacturing = 0
+                frappe.msgprint(
+                    _(
+                        "Item {0} can no longer be purchased "
+                        "or used in production."
+                    ).format(
+                        frappe.bold(self.item_code)
+                    ),
+                    alert=True,
+                )
 
-        else:  # Open / Cancelled
-            item.is_purchase_item = 1
-            item.include_item_in_manufacturing = 1
+            else:  # Open / Cancelled
+                item.is_purchase_item = 1
+                item.include_item_in_manufacturing = 1
 
-        item.save(ignore_permissions=True)
+            item.save(
+                ignore_permissions=True
+            )
+
+        finally:
+            if previous_flag is missing:
+                frappe.flags.pop(
+                    "in_rms_update",
+                    None,
+                )
+            else:
+                frappe.flags.in_rms_update = (
+                    previous_flag
+                )
