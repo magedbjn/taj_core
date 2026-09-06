@@ -71,42 +71,6 @@ def get_partial_approved_items_set(qualification: str | None, doc_items: list | 
 
 def validate_items_against_qualification(doc, method=None) -> None:
     """
-    منع الاعتماد حتى موافقة المورد - برسائل مختصرة
-    """
-    supplier = getattr(doc, "supplier", None)
-    if not supplier:
-        return
-
-    # تخطَّ الموردين غير الخاضعين للتأهيل
-    from taj_core.integrations.supplier_hooks import is_qualified_supplier_group
-    supplier_group = frappe.db.get_value("Supplier", supplier, "supplier_group")
-    if not is_qualified_supplier_group(supplier_group):
-        return
-
-    qual = get_active_qualification(supplier)
-    
-    # إذا لم توجد مؤهلية نشطة، أنشئ واحدة وامنع الاعتماد
-    if not qual:
-        create_auto_qualification(supplier)
-        frappe.throw(
-            _("❌ Supplier requires qualification. Request sent to quality team.")
-        )
-
-    # التحقق من حالة المؤهلية
-    status = (frappe.db.get_value("Supplier Qualification", qual, "approval_status") or "").strip()
-
-    # السماح فقط بـ Approved أو Partially Approved
-    if status not in ["Approved", "Partially Approved"]:
-        frappe.throw(
-            _("❌ Supplier status: {}. Must be Approved or Partially Approved.").format(status)
-        )
-
-    # إذا كانت Partially Approved، تحقق من الأصناف
-    if status == "Partially Approved":
-        validate_partial_approval_items(doc, qual)
-
-def validate_items_against_qualification(doc, method=None) -> None:
-    """
     نسخة دقيقة - تفرق بين الحالات المختلفة
     """
     supplier = getattr(doc, "supplier", None)
