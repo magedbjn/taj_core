@@ -313,7 +313,7 @@ def get_label_html(work_order, job_card=None):
         labels.extend(_build_labels_for_source(ctx, selected_item_codes))
 
     html = frappe.render_template(
-        "taj_custom/templates/steamer_preparation_label.html",
+        "taj_manufacturing/templates/steamer_preparation_label.html",
         {
             "labels": labels,
             "work_order": wo.name,

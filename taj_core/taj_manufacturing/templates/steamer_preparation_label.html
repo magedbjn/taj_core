@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Steamer Preparation Label</title>
+
+	<style>
+		@page {
+			size: 60mm 40mm;
+			margin: 0;
+		}
+
+		html,
+		body {
+			margin: 0 !important;
+			padding: 0 !important;
+		}
+
+		.pagebreak {
+			page-break-after: always;
+		}
+
+		.lbl {
+			width: 60mm;
+			height: 40mm;
+			margin: 0;
+			padding: 1.2mm 1mm 1mm 1mm;
+			box-sizing: border-box;
+			font-family: Arial, sans-serif;
+			font-size: 11px;
+			line-height: 1.1;
+			overflow: hidden;
+		}
+
+		.row {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+		}
+
+		.k {
+			font-weight: 800;
+		}
+
+		.v {
+			font-weight: 400;
+		}
+
+		.hr {
+			border-top: 2px solid #000;
+			margin: 0.9mm 0;
+		}
+
+		.item-title {
+			font-size: 9px;
+			font-weight: 900;
+			line-height: 1.15;
+			word-break: break-word;
+			overflow-wrap: anywhere;
+			text-align: center;
+		}
+
+		.code {
+			margin-top: 0.8mm;
+			font-size: 13px;
+			font-weight: 900;
+			letter-spacing: 0.6px;
+			text-align: center;
+		}
+
+		.footer {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+			margin-top: 0.6mm;
+		}
+
+		.footer.center {
+			justify-content: center;
+		}
+
+		.big {
+			font-size: 15px;
+			font-weight: 900;
+		}
+	</style>
+</head>
+
+<body>
+
+{% macro render_label(lbl) %}
+	<div class="lbl">
+
+		<div class="row" style="justify-content:center;">
+			<div>
+				<span class="k">P.Name</span>
+				<span class="v">{{ lbl.product_name }}</span>
+			</div>
+		</div>
+
+		<div class="hr"></div>
+
+		<div class="item-title">
+			{{ lbl.item_name }}
+			{% if lbl.description %}
+				{{ lbl.description }}
+			{% endif %}
+		</div>
+
+		{% if lbl.item_code %}
+			<div class="code">{{ lbl.item_code }}</div>
+		{% endif %}
+
+		<div
+			class="row"
+			style="margin-top:0.6mm;{% if not lbl.ep_date %} justify-content:flex-start;{% endif %}"
+		>
+			<div>
+				<span class="k">Used:</span>
+				<span class="v">{{ lbl.used_date }}</span>
+			</div>
+
+			{% if lbl.ep_date %}
+				<div>
+					<span class="k">EP:</span>
+					<span class="v">{{ lbl.ep_date }}</span>
+				</div>
+			{% endif %}
+		</div>
+
+		<div class="hr"></div>
+
+		<div class="footer">
+			<div class="big">
+				QTY: {{ lbl.qty }}
+			</div>
+
+			{% if lbl.lot_total and lbl.lot_total > 1 %}
+				<div class="big">
+					lot: {{ lbl.lot_i }} / {{ lbl.lot_total }}
+				</div>
+			{% endif %}
+		</div>
+
+		<div class="footer center">
+			<div class="big">
+				load: {{ lbl.load_i }} / {{ lbl.loads }}
+			</div>
+		</div>
+
+	</div>
+
+	<div class="pagebreak"></div>
+{% endmacro %}
+
+{% if labels and labels|length > 0 %}
+	{% for lbl in labels %}
+		{{ render_label(lbl) }}
+	{% endfor %}
+{% else %}
+	<div style="font-family:Arial;padding:20px;">
+		<h3>No labels to print</h3>
+	</div>
+{% endif %}
+
+</body>
+</html>
