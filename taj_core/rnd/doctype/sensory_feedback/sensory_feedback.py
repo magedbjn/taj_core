@@ -7,27 +7,26 @@ class SensoryFeedback(Document):
 
 
 def sync_to_product_proposal(doc: "SensoryFeedback", method=None):
-    """Push webform submission into Product Proposal's child table (pp_sensory_evaluation)."""
-    # 1) تحقّق من وجود الرابط إلى Product Proposal
+    """Sync feedback to Product Proposal only for authorized users."""
+
+    # The public Web Form may create Sensory Feedback, but an anonymous
+    # submission must never mutate the linked Product Proposal.
+    if frappe.session.user == "Guest":
+        return
+
     item_name = (doc.item or "").strip()
     if not item_name:
-        # لا يوجد هدف نضيف له الصف
         return
 
     if not frappe.db.exists("Product Proposal", item_name):
-        # اسم غير صحيح/غير موجود، نتجاهل بصمت
         return
 
-    # 2) جهّز القيم
     eval_date = doc.evaluation_date or today()
     try:
-        # طيّع التنسيق لو أُرسِل كنص
         eval_date = getdate(eval_date)
-        # جدول الطفل عندك الحقل evaluation_date = Data (مش Date)
-        # لذلك نخزّنها كنص منسّق YYYY-MM-DD أو حسب تفضيلك:
         eval_date_str = formatdate(eval_date, "yyyy-MM-dd")
     except Exception:
-        eval_date_str = eval_date  # fallback
+        eval_date_str = eval_date
 
     row_values = {
         "evaluation_date": eval_date_str,
@@ -40,11 +39,11 @@ def sync_to_product_proposal(doc: "SensoryFeedback", method=None):
         "final_status": doc.final_status,
     }
 
-    # 3) أضِف الصف إلى جدول الطفل واحفظ
     pp = frappe.get_doc("Product Proposal", item_name)
-    pp.append("pp_sensory_evaluation", row_values)
+    pp.check_permission("write")
 
-    # بما أن الـ Web Form يسمح بالـ anonymous، نخزّن مع تجاهل الصلاحيات
-    pp.save(ignore_permissions=True)
-    frappe.db.commit()
-
+    pp.append(
+        "pp_sensory_evaluation",
+        row_values,
+    )
+    pp.save()
