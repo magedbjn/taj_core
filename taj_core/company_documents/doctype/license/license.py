@@ -312,5 +312,9 @@ def send_license_notification(row_or_doc, new_status: str = None):
             f"[License Notify] '{lic_name}' changed to '{status}'. Notified {len(emails)} users (role='{allowed_role}')."
         )
 
-    except Exception as e:
-        frappe.log_error(f"send_license_notification failed: {str(e)}", "License Notification Error")
+    except Exception:
+        frappe.log_error(
+            frappe.get_traceback(),
+            "License Notification Error",
+        )
+        raise
