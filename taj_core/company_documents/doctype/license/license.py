@@ -106,70 +106,132 @@ def scheduled_status_update():
 
 def update_status_bulk(doctype, filters=None, batch_size=500):
     filters = filters or {}
-    filters.setdefault('status', ['!=', 'Expired'])
-    filters.setdefault('no_expiry', 0)  
+    filters.setdefault("status", ["!=", "Expired"])
+    filters.setdefault("no_expiry", 0)
 
+    batch_size = max(1, int(batch_size or 500))
     today_date = getdate(today())
 
     license_types = {
         lt["name"]: {
             "no_expiry": lt.get("no_expiry") or 0,
-            "renew": lt.get("renew") or 0
+            "renew": lt.get("renew") or 0,
         }
-        for lt in frappe.get_all("License Type", fields=["name", "no_expiry", "renew"])
+        for lt in frappe.get_all(
+            "License Type",
+            fields=["name", "no_expiry", "renew"],
+        )
     }
 
-    updated_rows, start = [], 0
+    # Snapshot the candidate set before updating statuses.
+    # This prevents offset pagination from skipping rows when
+    # records leave the original filter after becoming Expired.
+    candidate_rows = frappe.get_all(
+        doctype,
+        filters=filters,
+        fields=["name"],
+        order_by="name asc",
+    )
+    candidate_names = [
+        row["name"]
+        for row in candidate_rows
+    ]
 
-    while True:
+    updated_rows = []
+
+    for offset in range(
+        0,
+        len(candidate_names),
+        batch_size,
+    ):
+        batch_names = candidate_names[
+            offset:offset + batch_size
+        ]
+
         docs = frappe.get_all(
             doctype,
-            filters=filters,
-            fields=['name', 'expiry_date', 'status', 'license_english'],
-            limit_start=start,
-            limit_page_length=batch_size
+            filters={
+                "name": ["in", batch_names],
+            },
+            fields=[
+                "name",
+                "expiry_date",
+                "status",
+                "license_english",
+            ],
+            order_by="name asc",
         )
-        if not docs:
-            break
 
-        cases, names, params = [], [], []
+        cases = []
+        names = []
+        params = []
 
         for doc in docs:
-            lt_info = license_types.get(doc.get('license_english')) or {"no_expiry": 0, "renew": 0}
+            lt_info = license_types.get(
+                doc.get("license_english")
+            ) or {
+                "no_expiry": 0,
+                "renew": 0,
+            }
 
-            if not doc.get('expiry_date'):
+            if not doc.get("expiry_date"):
                 continue
 
             try:
-                expiry_date = getdate(doc['expiry_date'])
-                days_difference = date_diff(expiry_date, today_date)
-                renew_days = 0
+                expiry_date = getdate(
+                    doc["expiry_date"]
+                )
+                days_difference = date_diff(
+                    expiry_date,
+                    today_date,
+                )
+
                 try:
-                    renew_days = max(0, int(lt_info["renew"] or 0))
+                    renew_days = max(
+                        0,
+                        int(lt_info["renew"] or 0),
+                    )
                 except (ValueError, TypeError):
-                    pass
+                    renew_days = 0
 
-                new_status = get_license_status(days_difference, renew_days)
+                new_status = get_license_status(
+                    days_difference,
+                    renew_days,
+                )
 
-                if doc.get('status') != new_status:
-                    cases.append("WHEN %s THEN %s")
-                    params.extend([doc['name'], new_status])
-                    names.append(doc['name'])
+                if doc.get("status") != new_status:
+                    cases.append(
+                        "WHEN %s THEN %s"
+                    )
+                    params.extend([
+                        doc["name"],
+                        new_status,
+                    ])
+                    names.append(doc["name"])
+
                     updated_rows.append({
-                        "name": doc['name'],
-                        "license_english": doc['license_english'],
-                        "status": new_status
+                        "name": doc["name"],
+                        "license_english":
+                            doc["license_english"],
+                        "status": new_status,
                     })
+
             except Exception as e:
                 frappe.log_error(
-                    f"Error processing license {doc.get('name')}: {str(e)}",
-                    "Bulk License Status Update Error"
+                    (
+                        "Error processing license "
+                        f"{doc.get('name')}: {str(e)}"
+                    ),
+                    "Bulk License Status Update Error",
                 )
 
         if cases:
             case_sql = " ".join(cases)
-            placeholders = ", ".join(["%s"] * len(names))
+            placeholders = ", ".join(
+                ["%s"] * len(names)
+            )
             params.extend(names)
+
             sql = f"""
                 UPDATE `tab{doctype}`
                 SET `status` = CASE `name`
@@ -177,9 +239,11 @@ def update_status_bulk(doctype, filters=None, batch_size=500):
                 END
                 WHERE `name` IN ({placeholders})
             """
-            frappe.db.sql(sql, params)
 
-        start += batch_size
+            frappe.db.sql(
+                sql,
+                params,
+            )
 
     if updated_rows:
         frappe.logger().info(
@@ -187,6 +251,7 @@ def update_status_bulk(doctype, filters=None, batch_size=500):
         )
 
     return updated_rows
+
 
 def send_license_notification(row_or_doc, new_status: str = None):
     """
