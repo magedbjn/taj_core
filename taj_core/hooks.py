@@ -34,6 +34,7 @@ scheduler_events = {
 }
 
 override_doctype_class = {                
+    "Production Plan": "taj_core.overrides.production_plan.CustomProductionPlan",
     "Purchase Invoice": "taj_core.overrides.purchase_invoice.TajPurchaseInvoice",
     "Party Specific Item": "taj_core.overrides.party_specific_item.TajPartySpecificItem",
     "Leave Application": "taj_core.overrides.leave_application.LeaveApplication",
