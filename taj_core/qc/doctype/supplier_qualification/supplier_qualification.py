@@ -722,38 +722,35 @@ def create_approval_todo(
 
 
 def auto_set_item_status_for_po(doc, method=None):
-    """
-    تعيين تلقائي لحالة الأصناف في Purchase Order مع معالجة الأخطاء
-    """
-    try:
-        if not doc or doc.is_new() or not getattr(doc, "supplier", None):
-            return
+    """Set supplier qualification status on Purchase Order items."""
+    if (
+        not doc
+        or doc.is_new()
+        or not getattr(doc, "supplier", None)
+        or not getattr(doc, "items", None)
+    ):
+        return
 
-        if not hasattr(doc, "items") or not doc.items:
-            return
+    item_codes = []
+    seen = set()
 
-        # جمع أكواد الأصناف الفريدة
-        item_codes = []
-        seen = set()
-        
-        for item in doc.items:
-            code = getattr(item, "item_code", None)
-            if code and code not in seen:
-                item_codes.append(code)
-                seen.add(code)
+    for item in doc.items:
+        code = getattr(item, "item_code", None)
 
-        if not item_codes:
-            return
+        if code and code not in seen:
+            item_codes.append(code)
+            seen.add(code)
 
-        # الحصول على حالات الأصناف
-        status_map = get_supplier_items_status_map(doc.supplier, item_codes)
-        
-        # تعيين الحالة لكل صنف
-        for item in doc.items:
-            code = getattr(item, "item_code", None)
-            if code and code in status_map:
-                item.item_status = status_map[code]
-                
-    except Exception as e:
-        # تسجيل الخطأ بدون إيقاف العملية
-        frappe.log_error(f"Error in auto_set_item_status_for_po: {str(e)}")
+    if not item_codes:
+        return
+
+    status_map = get_supplier_items_status_map(
+        doc.supplier,
+        item_codes,
+    )
+
+    for item in doc.items:
+        code = getattr(item, "item_code", None)
+
+        if code and code in status_map:
+            item.item_status = status_map[code]
