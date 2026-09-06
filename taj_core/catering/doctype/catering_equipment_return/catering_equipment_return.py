@@ -477,7 +477,11 @@ def get_delivery_items(delivery):
             "items": []
         }
 
-    delivery_doc = frappe.get_doc("Catering Equipment Delivery", delivery)
+    delivery_doc = frappe.get_doc(
+        "Catering Equipment Delivery",
+        delivery,
+    )
+    delivery_doc.check_permission("read")
 
     if delivery_doc.docstatus != 1:
         frappe.throw(_("Please select a submitted Delivery"))
