@@ -5,6 +5,8 @@ app_description = "Core Customizations and common utilities for Taj ERPNext impl
 app_email = "m.bajandooh@tajff.sa"
 app_license = "mit"
 
+required_apps = ["erpnext", "hrms"]
+
 doctype_js = {
     "Material Request": "public/js/material_request.js",
     "Purchase Order": "public/js/purchase_order.js",
