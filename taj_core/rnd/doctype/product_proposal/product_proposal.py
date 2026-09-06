@@ -21,6 +21,9 @@ class ProductProposal(Document):
         self.set_trial_cooking_defaults()
         self.validate_trial_cooking_locked_fields()
         self.validate_trial_cooking_permission()
+        self.is_default = cint(
+            self.sensory_decision == "Approve"
+        )
 
     def before_update_after_submit(self):
         self.set_trial_cooking_defaults()
@@ -53,12 +56,6 @@ class ProductProposal(Document):
 
     def before_insert(self):
         self._ensure_previous_version_is_submitted()
-
-    def on_update(self):
-        if self.sensory_decision != "Approve":
-            self.is_default = 0
-        else:
-            self.is_default = 1
 
     # -------------------------------------------------------------------------
     # Naming / Version
