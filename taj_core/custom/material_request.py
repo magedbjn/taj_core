@@ -25,46 +25,50 @@ def collect_similar_items(docname):
         items_to_delete = []
         first_occurrence_index = {}
 
-        # Collect data for all items
-        for idx, item in enumerate(doc.items):
-            item_code = item.item_code
-            
-            # Initialize if first time seeing this item
-            if item_code not in first_occurrence_index:
-                first_occurrence_index[item_code] = idx
-                total_stock_qty[item_code] = 0
-                total_qty[item_code] = 0
-                item_count[item_code] = 0
-            
-            # Sum quantities
-            total_stock_qty[item_code] += flt(item.stock_qty)
-            total_qty[item_code] += flt(item.qty)
-            item_count[item_code] += 1
+        def consolidation_key(item):
+            """Only merge Material Request rows that are operationally compatible."""
+            return (
+                item.item_code or "",
+                item.warehouse or "",
+                item.from_warehouse or "",
+                item.uom or "",
+                flt(item.conversion_factor or 0),
+                str(item.schedule_date or ""),
+            )
 
-            # Mark for deletion if duplicate (keep first occurrence)
-            if idx != first_occurrence_index[item_code]:
+        # Collect data for compatible item rows.
+        for idx, item in enumerate(doc.items):
+            key = consolidation_key(item)
+
+            if key not in first_occurrence_index:
+                first_occurrence_index[key] = idx
+                total_stock_qty[key] = 0
+                total_qty[key] = 0
+                item_count[key] = 0
+
+            total_stock_qty[key] += flt(item.stock_qty)
+            total_qty[key] += flt(item.qty)
+            item_count[key] += 1
+
+            # Keep the first occurrence of each compatible group.
+            if idx != first_occurrence_index[key]:
                 items_to_delete.append(item)
 
-        # Delete duplicate items (reverse to avoid index issues)
+        # Delete duplicate compatible rows.
         for item in reversed(items_to_delete):
             doc.remove(item)
 
-        # Update remaining items
+        # Update the surviving row without changing its UOM,
+        # conversion factor, warehouse, or schedule date.
         for item in doc.items:
-            item_code = item.item_code
-            
-            if item_count[item_code] > 1:
-                # For duplicated items, update quantities and reset to stock UOM
-                stock_uom = frappe.db.get_value("Item", item_code, "stock_uom")
-                
-                item.uom = stock_uom
-                item.conversion_factor = 1.0
-                item.qty = total_qty[item_code]
-                item.stock_qty = total_stock_qty[item_code]
-                
-                # Update rate if applicable
-                if hasattr(item, 'rate'):
-                    # You can add custom rate calculation logic here
+            key = consolidation_key(item)
+
+            if item_count[key] > 1:
+                item.qty = total_qty[key]
+                item.stock_qty = total_stock_qty[key]
+
+                # Update rate if applicable.
+                if hasattr(item, "rate"):
                     pass
 
         # Save the document to apply changes
