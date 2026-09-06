@@ -23,6 +23,8 @@ class MaintenanceContract(Document):
         total_visits_allowed = self.total_visits or 0
         visits_count = len(self.maintenance_visit or [])
 
+        self.visits_count = visits_count
+
         if visits_count > total_visits_allowed:
             frappe.throw(_("Number of Maintenance Visits cannot exceed Total Visits"))
 
