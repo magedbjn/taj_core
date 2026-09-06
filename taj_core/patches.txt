@@ -11,3 +11,4 @@ taj_core.patches.cleanup_intern_sales_order
 taj_core.patches.slnee_cleanup
 taj_core.patches.2026_03_23_delete_fields
 taj_core.patches.2026_09_06_backfill_checklist_answer_fields
+taj_core.patches.2026_09_06_remove_redundant_job_card_field_order
