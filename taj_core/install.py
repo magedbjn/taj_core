@@ -120,5 +120,5 @@ def handle_migration_error(error):
         f"❌ Migration failed: {str(error)}\nPlease report the issue on {BUG_REPORT_URL}",
         fg="red"
     )
-    # نحافظ على استقرار الـ deploy
     frappe.db.rollback()
+    raise error
