@@ -59,7 +59,7 @@ function calculate_totals(frm) {
     (frm.doc.taj_solid_over_weight_2 || 0);
 
   frm.set_value("taj_total_weight", total_weight);
-  frm.set_value("taj_total_under_weight_", total_under);
+  frm.set_value("taj_total_under_weight", total_under);
   frm.set_value("taj_total_over_weight", total_over);
 }
 
