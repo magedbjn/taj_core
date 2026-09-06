@@ -358,9 +358,13 @@ def get_available_qty(equipment, exclude_delivery=None):
     if not equipment:
         return 0
 
-    total_qty = cint(
-        frappe.db.get_value("Catering Equipment", equipment, "total_qty") or 0
+    equipment_doc = frappe.get_doc(
+        "Catering Equipment",
+        equipment,
     )
+    equipment_doc.check_permission("read")
+
+    total_qty = cint(equipment_doc.total_qty or 0)
 
     filters = {
         "equipment": equipment
