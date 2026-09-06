@@ -34,6 +34,7 @@ scheduler_events = {
 }
 
 override_doctype_class = {                
+    "Purchase Invoice": "taj_core.overrides.purchase_invoice.TajPurchaseInvoice",
     "Party Specific Item": "taj_core.overrides.party_specific_item.TajPartySpecificItem",
     "Leave Application": "taj_core.overrides.leave_application.LeaveApplication",
     "Stock Entry": "taj_core.overrides.stock_entry.CustomStockEntry",
@@ -100,8 +101,6 @@ doc_events = {
     },
 
     "Purchase Invoice": {
-        "before_validate": "taj_core.custom.purchase_invoice.before_validate",
-        "before_save": "taj_core.custom.purchase_invoice.before_save",
         "before_submit": [
             "taj_core.qc.doctype.supplier_qualification.supplier_qualification.validate_items_against_qualification",
         ]
