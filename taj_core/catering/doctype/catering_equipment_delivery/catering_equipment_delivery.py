@@ -12,8 +12,8 @@ class CateringEquipmentDelivery(Document):
         self.validate_serial_items()
 
     def before_submit(self):
-        self.validate_available_qty()
-        self.validate_serial_items()
+        self.validate_available_qty(lock=True)
+        self.validate_serial_items(lock=True)
 
     def on_submit(self):
         self.prepare_items()
@@ -28,6 +28,14 @@ class CateringEquipmentDelivery(Document):
         self.status = "Delivered"
 
     def on_cancel(self):
+        serials = sorted({
+            row.serial_no
+            for row in self.items
+            if cint(row.has_serial_no) and row.serial_no
+        })
+
+        _get_equipment_units_for_update(serials)
+
         for row in self.items:
             if cint(row.has_serial_no) and row.serial_no:
                 update_equipment_unit_as_available(row.serial_no)
@@ -97,7 +105,7 @@ class CateringEquipmentDelivery(Document):
                         .format(row.idx)
                     )
 
-    def validate_available_qty(self):
+    def validate_available_qty(self, lock=False):
         """
         Validate non-serialized equipment quantity.
         Available Qty = Catering Equipment.total_qty - submitted outstanding qty.
@@ -117,11 +125,24 @@ class CateringEquipmentDelivery(Document):
             required_qty_by_equipment.setdefault(row.equipment, 0)
             required_qty_by_equipment[row.equipment] += cint(row.qty)
 
-        for equipment, required_qty in required_qty_by_equipment.items():
-            available_qty = get_available_qty(
-                equipment=equipment,
-                exclude_delivery=self.name
-            )
+        for equipment in sorted(required_qty_by_equipment):
+            required_qty = required_qty_by_equipment[equipment]
+
+            if lock:
+                total_qty = _lock_equipment_for_update(
+                    equipment
+                )
+
+                available_qty = _get_available_qty_current(
+                    equipment=equipment,
+                    total_qty=total_qty,
+                    exclude_delivery=self.name,
+                )
+            else:
+                available_qty = get_available_qty(
+                    equipment=equipment,
+                    exclude_delivery=self.name
+                )
 
             if required_qty > available_qty:
                 equipment_name = frappe.db.get_value(
@@ -137,13 +158,25 @@ class CateringEquipmentDelivery(Document):
                     title=_("Insufficient Quantity")
                 )
 
-    def validate_serial_items(self):
+    def validate_serial_items(self, lock=False):
         """
         Validate serialized equipment.
         Each serial/unit can only be delivered if status is Available.
         """
 
         used_serials = set()
+        locked_units = {}
+
+        if lock:
+            serials = sorted({
+                row.serial_no
+                for row in self.items
+                if cint(row.has_serial_no) and row.serial_no
+            })
+
+            locked_units = _get_equipment_units_for_update(
+                serials
+            )
 
         for row in self.items:
             if not cint(row.has_serial_no):
@@ -162,7 +195,22 @@ class CateringEquipmentDelivery(Document):
 
             used_serials.add(row.serial_no)
 
-            unit = frappe.get_doc("Catering Equipment Unit", row.serial_no)
+            if lock:
+                unit = locked_units.get(
+                    row.serial_no
+                )
+
+                if not unit:
+                    frappe.throw(
+                        _(
+                            "Serial No {0} does not exist"
+                        ).format(row.serial_no)
+                    )
+            else:
+                unit = frappe.get_doc(
+                    "Catering Equipment Unit",
+                    row.serial_no
+                )
 
             if unit.equipment != row.equipment:
                 frappe.throw(
@@ -175,6 +223,127 @@ class CateringEquipmentDelivery(Document):
                     _("Serial No {0} is not available. Current status is {1}")
                     .format(row.serial_no, unit.status)
                 )
+
+
+def _lock_equipment_for_update(equipment):
+    rows = frappe.db.sql(
+        """
+        select
+            name,
+            total_qty
+        from
+            `tabCatering Equipment`
+        where
+            name = %s
+        for update
+        """,
+        (equipment,),
+        as_dict=True,
+    )
+
+    if not rows:
+        frappe.throw(
+            _(
+                "Equipment {0} does not exist"
+            ).format(equipment)
+        )
+
+    return cint(rows[0].total_qty)
+
+
+def _get_equipment_units_for_update(serials):
+    serials = sorted(
+        set(serials or [])
+    )
+
+    if not serials:
+        return {}
+
+    placeholders = ", ".join(
+        ["%s"] * len(serials)
+    )
+
+    rows = frappe.db.sql(
+        f"""
+        select
+            name,
+            equipment,
+            status
+        from
+            `tabCatering Equipment Unit`
+        where
+            name in ({placeholders})
+        order by
+            name
+        for update
+        """,
+        tuple(serials),
+        as_dict=True,
+    )
+
+    return {
+        row.name: row
+        for row in rows
+    }
+
+
+def _get_available_qty_current(
+    equipment,
+    total_qty,
+    exclude_delivery=None,
+):
+    exclude_condition = ""
+    values = {
+        "equipment": equipment,
+    }
+
+    if exclude_delivery:
+        exclude_condition = (
+            "and parent_doc.name "
+            "!= %(exclude_delivery)s"
+        )
+        values["exclude_delivery"] = (
+            exclude_delivery
+        )
+
+    rows = frappe.db.sql(
+        f"""
+        select
+            item.outstanding_qty
+        from
+            `tabCatering Equipment Delivery Item` item
+        inner join
+            `tabCatering Equipment Delivery` parent_doc
+        on
+            parent_doc.name = item.parent
+        where
+            parent_doc.docstatus = 1
+            and parent_doc.status not in (
+                'Returned',
+                'Closed'
+            )
+            and item.equipment = %(equipment)s
+            and coalesce(
+                item.has_serial_no,
+                0
+            ) = 0
+            {exclude_condition}
+        order by
+            item.name
+        for update
+        """,
+        values,
+    )
+
+    delivered_qty = sum(
+        cint(row[0])
+        for row in rows
+    )
+
+    return max(
+        cint(total_qty) - delivered_qty,
+        0,
+    )
 
 
 @frappe.whitelist()
