@@ -182,8 +182,9 @@ def update_status_bulk(doctype, filters=None, batch_size=500):
         start += batch_size
 
     if updated_rows:
-        frappe.db.commit()
-        frappe.logger().info(f"{len(updated_rows)} licenses updated in bulk for {doctype}")
+        frappe.logger().info(
+            f"{len(updated_rows)} licenses updated in bulk for {doctype}"
+        )
 
     return updated_rows
 
