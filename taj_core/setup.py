@@ -83,6 +83,17 @@ def get_core_fields():
                 "insert_after": "column_break_5",
             },
         ],
+        "Work Order Item": [
+            {
+                "fieldname": "taj_select_for_steamer_label",
+                "fieldtype": "Check",
+                "label": _("Select for Steamer Label"),
+                "insert_after": "include_item_in_manufacturing",
+                "default": "0",
+                "in_list_view": 1,
+                "allow_on_submit": 1,
+            },
+        ],
         "Supplier": [
             {
                 "fieldname": "taj_ignore_due_date_validation",

@@ -19,7 +19,7 @@ def _get_item_name(item_code):
 def _get_selected_item_codes_from_work_order(wo):
     selected = []
     for row in wo.required_items:
-        if cint(getattr(row, "custom_select_for_steamer_label", 0)) == 1 and row.item_code:
+        if cint(getattr(row, "taj_select_for_steamer_label", 0)) == 1 and row.item_code:
             selected.append(row.item_code)
 
     return list(dict.fromkeys(selected))  # unique keep order
@@ -57,7 +57,7 @@ def _get_source_contexts_from_work_order(wo):
                 "parent",
                 "production_item",
                 "bom_no",
-                "custom_merge_group_id",
+                "taj_merge_group_id",
             ],
             as_dict=True,
         )
@@ -65,9 +65,9 @@ def _get_source_contexts_from_work_order(wo):
         if not sub_row:
             frappe.throw(_("Production Plan Sub Assembly Item not found: {0}").format(sub_assembly_row))
 
-        # merged => custom_merge_group_id
+        # merged => taj_merge_group_id
         # non merged => fallback to own row name
-        merge_key = sub_row.custom_merge_group_id or sub_row.name
+        merge_key = sub_row.taj_merge_group_id or sub_row.name
 
         split_rows = frappe.get_all(
             "Production Plan Sub Assembly Split",
