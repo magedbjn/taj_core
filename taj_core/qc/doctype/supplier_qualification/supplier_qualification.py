@@ -92,10 +92,30 @@ def validate_items_against_qualification(doc, method=None) -> None:
     )
     
     if not last_qual:
-        # لا توجد أي مؤهلية
-        create_auto_qualification(supplier)
-        frappe.throw(_("❌ Qualification required - request sent to quality"))
-        return
+        try:
+            queue_auto_qualification_request(
+                supplier
+            )
+        except Exception:
+            frappe.logger("taj_core").exception(
+                "Failed to queue supplier "
+                "qualification request for %s",
+                supplier,
+            )
+            frappe.throw(
+                _(
+                    "❌ Qualification required - "
+                    "quality request could not be queued. "
+                    "Contact quality team."
+                )
+            )
+
+        frappe.throw(
+            _(
+                "❌ Qualification required - "
+                "request queued for quality"
+            )
+        )
 
     status = (last_qual[0]["approval_status"] or "").strip()
     
@@ -158,20 +178,107 @@ def validate_partial_approval_items(doc, qualification: str):
         else:
             frappe.throw(_("❌ Rejected items: {}").format(", ".join(rejected)))
 
+_AUTO_QUALIFICATION_JOB = (
+    "taj_core.qc.doctype.supplier_qualification."
+    "supplier_qualification.create_auto_qualification"
+)
+
+
+def queue_auto_qualification_request(
+    supplier: str,
+):
+    """
+    Queue the request outside the current DB transaction.
+
+    The purchasing document can then roll back normally while
+    the background job creates the Qualification and ToDo in
+    its own transaction.
+    """
+    job_id = (
+        "taj_core:auto_supplier_qualification:"
+        f"{supplier}"
+    )
+
+    return frappe.enqueue(
+        _AUTO_QUALIFICATION_JOB,
+        queue="short",
+        job_id=job_id,
+        deduplicate=True,
+        enqueue_after_commit=False,
+        supplier=supplier,
+    )
+
+
 def create_auto_qualification(supplier: str):
-    """إنشاء مؤهلية تلقائية بدون رسائل للمستخدم"""
-    try:
-        qualification = frappe.get_doc({
-            "doctype": "Supplier Qualification",
-            "supplier": supplier,
-            "supplier_name": frappe.db.get_value("Supplier", supplier, "supplier_name"),
-            "approval_status": "Request Approval",
-            "valid_from": frappe.utils.nowdate()
-        })
-        qualification.insert(ignore_permissions=True)
-        create_approval_todo(qualification.name, supplier)
-    except Exception:
-        pass  # صامت - لا تظهر رسائل للمستخدم
+    """
+    Atomically create a pending Supplier Qualification and ToDo.
+
+    Lock the Supplier row so concurrent jobs for the same supplier
+    cannot create duplicate qualifications.
+    """
+    supplier_rows = frappe.db.sql(
+        """
+        select
+            name,
+            supplier_name
+        from
+            `tabSupplier`
+        where
+            name = %s
+        for update
+        """,
+        (supplier,),
+        as_dict=True,
+    )
+
+    if not supplier_rows:
+        frappe.throw(
+            _("Supplier {0} does not exist").format(
+                supplier
+            )
+        )
+
+    supplier_row = supplier_rows[0]
+
+    existing = frappe.db.sql(
+        """
+        select
+            name
+        from
+            `tabSupplier Qualification`
+        where
+            supplier = %s
+        order by
+            creation desc
+        limit 1
+        for update
+        """,
+        (supplier,),
+        as_dict=True,
+    )
+
+    if existing:
+        return existing[0].name
+
+    qualification = frappe.get_doc({
+        "doctype": "Supplier Qualification",
+        "supplier": supplier,
+        "supplier_name": supplier_row.supplier_name,
+        "approval_status": "Request Approval",
+        "valid_from": frappe.utils.nowdate(),
+    })
+
+    qualification.insert(
+        ignore_permissions=True
+    )
+
+    create_approval_todo(
+        qualification.name,
+        supplier,
+    )
+
+    return qualification.name
+
 
 def dedupe_approved_items(doc, method=None):
     """Remove duplicate items in the child table (fieldname: sq_items)."""
@@ -528,52 +635,86 @@ def before_save_capture_status(doc, method=None):
             "approval_status"
         )
 
-def create_approval_todo(qualification_name: str, supplier: str):
-    """إنشاء ToDo تلقائي لموافقة المورد الجديد"""
-    try:
-        supplier_name = frappe.db.get_value("Supplier", supplier, "supplier_name")
-        
-        # الحصول على الإعدادات
-        settings = frappe.get_cached_doc("Supplier Qualification Settings")
-        assigned_role = getattr(settings, "default_todo_role", "Quality Manager")
-        
-        # البحث عن مستخدمين بالدور المحدد
-        users_with_role = frappe.get_all(
-            "Has Role",
-            filters={"role": assigned_role, "parenttype": "User"},
-            fields=["parent"],
-            distinct=True
-        )
-        
-        if not users_with_role:
-            allocated_to = frappe.session.user
-        else:
-            allocated_to = users_with_role[0]["parent"]
-        
-        # وصف المهمة
-        description = _("🆕 New supplier requires qualification: {0} ({1})").format(
-            supplier_name, supplier
-        )
-        
-        # إنشاء ToDo
-        todo = frappe.get_doc({
-            "doctype": "ToDo",
-            "description": description,
+def create_approval_todo(
+    qualification_name: str,
+    supplier: str,
+):
+    """
+    Create the approval ToDo as part of the caller's transaction.
+
+    No manual commit is performed here. If ToDo creation fails,
+    the surrounding Qualification transaction must fail as well.
+    """
+    existing_todo = frappe.db.exists(
+        "ToDo",
+        {
             "reference_type": "Supplier Qualification",
             "reference_name": qualification_name,
-            "allocated_to": allocated_to,
-            "priority": "High",
-            "date": frappe.utils.nowdate(),
-            "role": assigned_role
-        })
-        
-        todo.flags.ignore_permissions = True
-        todo.insert()
-        
-        frappe.db.commit()
-        
-    except Exception as e:
-        frappe.log_error(f"Error creating approval todo for {supplier}: {str(e)}")
+        },
+    )
+
+    if existing_todo:
+        return existing_todo
+
+    supplier_name = frappe.db.get_value(
+        "Supplier",
+        supplier,
+        "supplier_name",
+    )
+
+    settings = frappe.get_cached_doc(
+        "Supplier Qualification Settings"
+    )
+
+    assigned_role = (
+        getattr(
+            settings,
+            "default_todo_role",
+            None,
+        )
+        or "Quality Manager"
+    )
+
+    users_with_role = frappe.get_all(
+        "Has Role",
+        filters={
+            "role": assigned_role,
+            "parenttype": "User",
+        },
+        fields=["parent"],
+        distinct=True,
+    )
+
+    if not users_with_role:
+        allocated_to = frappe.session.user
+    else:
+        allocated_to = users_with_role[0]["parent"]
+
+    description = _(
+        "🆕 New supplier requires qualification: "
+        "{0} ({1})"
+    ).format(
+        supplier_name,
+        supplier,
+    )
+
+    todo = frappe.get_doc({
+        "doctype": "ToDo",
+        "description": description,
+        "reference_type": "Supplier Qualification",
+        "reference_name": qualification_name,
+        "allocated_to": allocated_to,
+        "priority": "High",
+        "date": frappe.utils.nowdate(),
+        "role": assigned_role,
+    })
+
+    todo.insert(
+        ignore_permissions=True
+    )
+
+    return todo.name
+
 
 def auto_set_item_status_for_po(doc, method=None):
     """
