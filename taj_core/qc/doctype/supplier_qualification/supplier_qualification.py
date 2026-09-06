@@ -549,7 +549,6 @@ def request_items_approval(
         "rejected": rejected_items,
     }
 
-@frappe.whitelist()
 def update_certificate_statuses():
     """
     Daily job: update status on Supplier Certificate rows based on expiry_date.
