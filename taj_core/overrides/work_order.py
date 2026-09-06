@@ -81,9 +81,41 @@ def create_pick_list(source_name, target_doc=None, for_qty=None):
 	doc.purpose = "Material Transfer for Manufacture"
 	doc.for_qty = for_qty
 
-	parent_wh = "Raw Materials - Taj"
-	if not frappe.db.exists("Warehouse", parent_wh):
-		frappe.throw(f"Warehouse not found: {parent_wh}")
+	parent_wh = frappe.db.get_single_value(
+		"Manufacturing Settings",
+		"taj_pick_list_parent_warehouse",
+	)
+
+	if not parent_wh:
+		frappe.throw(
+			"Please configure Pick List Parent Warehouse "
+			"in Manufacturing Settings."
+		)
+
+	warehouse_company = frappe.db.get_value(
+		"Warehouse",
+		parent_wh,
+		"company",
+	)
+
+	if not warehouse_company:
+		frappe.throw(
+			f"Configured Pick List Parent Warehouse "
+			f"does not exist: {parent_wh}"
+		)
+
+	work_order_company = frappe.db.get_value(
+		"Work Order",
+		source_name,
+		"company",
+	)
+
+	if warehouse_company != work_order_company:
+		frappe.throw(
+			f"Pick List Parent Warehouse {parent_wh} "
+			f"does not belong to company "
+			f"{work_order_company}."
+		)
 
 	doc.parent_warehouse = parent_wh
 	doc.set_item_locations()
