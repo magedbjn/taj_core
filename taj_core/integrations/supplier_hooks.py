@@ -8,23 +8,32 @@ from typing import Optional
 
 @lru_cache(maxsize=256)
 def is_qualified_supplier_group(group: str | None) -> bool:
-    """نسخة محسنة مع Cache للعلاقات الهرمية"""
+    """
+    Return whether a supplier group requires qualification.
+
+    Configuration or database failures must propagate rather than
+    silently treating the supplier as exempt from qualification.
+    """
     if not group:
         return False
-    
-    try:
-        settings = frappe.get_cached_doc("Supplier Qualification Settings")
-        qualified_groups = [row.supplier_group for row in settings.get("supplier_group", [])]
-        
-        # التحقق المباشر أولاً
-        if group in qualified_groups:
-            return True
-            
-        # التحقق من الـ Hierarchy
-        return check_group_hierarchy(group, qualified_groups)
-        
-    except Exception:
-        return False
+
+    settings = frappe.get_cached_doc(
+        "Supplier Qualification Settings"
+    )
+
+    qualified_groups = [
+        row.supplier_group
+        for row in settings.get("supplier_group", [])
+        if row.supplier_group
+    ]
+
+    if group in qualified_groups:
+        return True
+
+    return check_group_hierarchy(
+        group,
+        qualified_groups,
+    )
 
 def check_group_hierarchy(group: str, qualified_groups: list) -> bool:
     """التحقق من التسلسل الهرمي للمجموعة"""
