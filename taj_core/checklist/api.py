@@ -213,6 +213,8 @@ def create_checklist_answer(template_name):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_reassign_users(doctype, txt, searchfield, start, page_len, filters):
+    _ensure_manager()
+
     filters = filters or {}
     department = filters.get("department")
 
@@ -332,9 +334,26 @@ def claim_checklist_answer(docname):
 
     is_manager = is_checklist_manager(user)
 
-    if doc.assignment_type == "Specific User":
-        if not is_manager and doc.assigned_user != user:
-            frappe.throw(_("This checklist is assigned to another user."), frappe.PermissionError)
+    if not is_manager:
+        if doc.assignment_type == "Specific User":
+            if doc.assigned_user != user:
+                frappe.throw(
+                    _("This checklist is assigned to another user."),
+                    frappe.PermissionError,
+                )
+
+        elif doc.assignment_type == "Any User in Department":
+            if not checklist_answer_has_permission(doc, user, "write"):
+                frappe.throw(
+                    _("You do not belong to the department assigned to this checklist."),
+                    frappe.PermissionError,
+                )
+
+        else:
+            frappe.throw(
+                _("This checklist does not have a valid assignment."),
+                frappe.PermissionError,
+            )
 
     if getattr(doc, "taken_by", None) and doc.taken_by != user and not is_manager:
         frappe.throw(
@@ -364,7 +383,14 @@ def release_checklist_answer(docname):
 
     is_manager = is_checklist_manager(user)
 
-    if getattr(doc, "taken_by", None) and doc.taken_by != user and not is_manager:
+    taken_by = getattr(doc, "taken_by", None)
+
+    if not taken_by:
+        frappe.throw(
+            _("This checklist is not currently claimed.")
+        )
+
+    if taken_by != user and not is_manager:
         frappe.throw(
             _("Only the current claimant or manager can release this checklist."),
             frappe.PermissionError,

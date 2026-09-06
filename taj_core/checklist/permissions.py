@@ -1,6 +1,9 @@
 import frappe
 
-DEFAULT_MANAGER_ROLES = {"Checklist Manager", "System Manager", "Department Manager"}
+DEFAULT_MANAGER_ROLES = {
+    "Checklist Manager",
+    "System Manager",
+}
 
 
 def _get_roles_from_settings():
@@ -56,12 +59,20 @@ def checklist_answer_has_permission(doc, user=None, permission_type=None):
         return assigned_user == user or answer_by == user or taken_by == user
 
     if assignment_type == "Any User in Department":
-        user_departments = _get_user_departments(user)
-        if department and department not in user_departments:
+        if not department:
             return False
-        return (not taken_by) or taken_by == user or answer_by == user or assigned_user == user
 
-    return answer_by == user or taken_by == user
+        user_departments = _get_user_departments(user)
+
+        if department not in user_departments:
+            return False
+
+        return (
+            (not taken_by)
+            or taken_by == user
+            or answer_by == user
+            or assigned_user == user
+        )
 
 
 def checklist_answer_query_conditions(user=None):

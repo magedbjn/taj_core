@@ -8,6 +8,11 @@
  "field_order": [
   "question",
   "type",
+  "yes_no_answer",
+  "int_answer",
+  "float_answer",
+  "select_answer",
+  "answer_select_options",
   "answer",
   "has_issue",
   "issue_note"

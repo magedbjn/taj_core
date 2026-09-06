@@ -7,6 +7,8 @@
  "field_order": [
   "amended_from",
   "posting_date",
+  "source_due_date",
+  "generation_key",
   "template",
   "status",
   "result_status",
@@ -14,6 +16,7 @@
   "department",
   "assignment_type",
   "assigned_user",
+  "taken_by",
   "answer_by",
   "section_break_fewk",
   "answer",
@@ -158,6 +161,28 @@
   {
    "fieldname": "column_break_alua",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_due_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Source Due Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "generation_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Generation Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "taken_by",
+   "fieldtype": "Link",
+   "label": "Taken By",
+   "options": "User",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
