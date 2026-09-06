@@ -390,58 +390,144 @@ class ProductProposal(Document):
         if not default_company:
             frappe.throw(_("No default Company is set for your user or Global Defaults."))
 
-        item_group = "Finished Goods"
-
-        if not frappe.db.exists("Item Group", item_group):
-            fallback_group = frappe.db.get_value(
-                "Item Group",
-                {"is_group": 0},
-                "name",
-            )
-
-            if not fallback_group:
-                frappe.throw(_("No leaf Item Group found to assign to the Item."))
-
-            item_group = fallback_group
-
-        default_warehouse = (
-            frappe.db.get_value(
-                "Warehouse",
-                {
-                    "company": default_company,
-                    "is_group": 0,
-                    "warehouse_name": ["like", "%Finished Goods%"],
-                },
-                "name",
-            )
-            or frappe.db.get_value(
-                "Warehouse",
-                {
-                    "company": default_company,
-                    "is_group": 0,
-                },
-                "name",
-            )
+        settings = frappe.get_cached_doc(
+            "RND Settings"
         )
+
+        naming_series = cstr(
+            settings.item_naming_series
+        ).strip()
+        item_group = cstr(
+            settings.default_item_group
+        ).strip()
+        stock_uom = cstr(
+            settings.stock_uom
+        ).strip()
+        brand = cstr(
+            settings.default_brand
+        ).strip()
+        shelf_life = cint(
+            settings.shelf_life_in_days
+        )
+        default_warehouse = cstr(
+            settings.default_warehouse
+        ).strip()
+
+        missing_settings = []
+
+        if not naming_series:
+            missing_settings.append(
+                "Item Naming Series"
+            )
+        if not item_group:
+            missing_settings.append(
+                "Default Item Group"
+            )
+        if not stock_uom:
+            missing_settings.append(
+                "Stock UOM"
+            )
+        if shelf_life <= 0:
+            missing_settings.append(
+                "Shelf Life In Days"
+            )
+
+        if missing_settings:
+            frappe.throw(
+                _(
+                    "Please configure RND Settings: {0}"
+                ).format(
+                    ", ".join(missing_settings)
+                )
+            )
+
+        if not frappe.db.exists(
+            "Item Group",
+            {
+                "name": item_group,
+                "is_group": 0,
+            },
+        ):
+            frappe.throw(
+                _(
+                    "RND Settings Item Group {0} "
+                    "must be a leaf Item Group."
+                ).format(item_group)
+            )
+
+        if not frappe.db.exists(
+            "UOM",
+            stock_uom,
+        ):
+            frappe.throw(
+                _(
+                    "RND Settings Stock UOM {0} "
+                    "does not exist."
+                ).format(stock_uom)
+            )
+
+        if brand and not frappe.db.exists(
+            "Brand",
+            brand,
+        ):
+            frappe.throw(
+                _(
+                    "RND Settings Brand {0} "
+                    "does not exist."
+                ).format(brand)
+            )
+
+        if default_warehouse:
+            warehouse = frappe.db.get_value(
+                "Warehouse",
+                default_warehouse,
+                [
+                    "company",
+                    "is_group",
+                ],
+                as_dict=True,
+            )
+
+            if (
+                not warehouse
+                or warehouse.is_group
+                or warehouse.company
+                    != default_company
+            ):
+                frappe.throw(
+                    _(
+                        "RND Settings Default Warehouse "
+                        "must be a leaf warehouse for {0}."
+                    ).format(default_company)
+                )
 
         item_values = {
             "doctype": "Item",
-            "naming_series": "FG.####.P",
+            "naming_series": naming_series,
             "item_name": product,
             "item_group": item_group,
-            "stock_uom": "Pouch",
+            "stock_uom": stock_uom,
             "is_stock_item": 1,
-            "brand": "Taj",
-            "shelf_life_in_days": 720,
+            "shelf_life_in_days": shelf_life,
             "default_material_request_type": "Manufacture",
             "has_batch_no": 1,
             "has_expiry_date": 1,
             "is_purchase_item": 0,
             "item_defaults": [{
                 "company": default_company,
-                **({"default_warehouse": default_warehouse} if default_warehouse else {}),
+                **(
+                    {
+                        "default_warehouse":
+                            default_warehouse
+                    }
+                    if default_warehouse
+                    else {}
+                ),
             }],
         }
+
+        if brand:
+            item_values["brand"] = brand
 
         item_meta = frappe.get_meta("Item")
 

@@ -1,0 +1,74 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_naming_series",
+  "default_item_group",
+  "stock_uom",
+  "default_brand",
+  "shelf_life_in_days",
+  "default_warehouse"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_naming_series",
+   "fieldtype": "Data",
+   "label": "Item Naming Series",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_item_group",
+   "fieldtype": "Link",
+   "label": "Default Item Group",
+   "options": "Item Group",
+   "reqd": 1
+  },
+  {
+   "fieldname": "stock_uom",
+   "fieldtype": "Link",
+   "label": "Stock UOM",
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_brand",
+   "fieldtype": "Link",
+   "label": "Default Brand",
+   "options": "Brand"
+  },
+  {
+   "fieldname": "shelf_life_in_days",
+   "fieldtype": "Int",
+   "label": "Shelf Life In Days",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_warehouse",
+   "fieldtype": "Link",
+   "label": "Default Warehouse",
+   "options": "Warehouse"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "module": "RND",
+ "name": "RND Settings",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "write": 1,
+   "role": "RND Manager"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
