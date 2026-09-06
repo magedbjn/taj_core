@@ -500,9 +500,9 @@ def create_approval_todo(qualification_name: str, supplier: str):
         )
         
         if not users_with_role:
-            assigned_to = frappe.session.user
+            allocated_to = frappe.session.user
         else:
-            assigned_to = users_with_role[0]["parent"]
+            allocated_to = users_with_role[0]["parent"]
         
         # وصف المهمة
         description = _("🆕 New supplier requires qualification: {0} ({1})").format(
@@ -515,7 +515,7 @@ def create_approval_todo(qualification_name: str, supplier: str):
             "description": description,
             "reference_type": "Supplier Qualification",
             "reference_name": qualification_name,
-            "assigned_to": assigned_to,
+            "allocated_to": allocated_to,
             "priority": "High",
             "date": frappe.utils.nowdate(),
             "role": assigned_role
