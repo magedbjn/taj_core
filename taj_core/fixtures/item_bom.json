@@ -434,7 +434,7 @@
   "mandatory_depends_on": null,
   "modified": "2026-02-10 15:36:10.886973",
   "module": null,
-  "name": "BOM Operation-custom_split_batch",
+  "name": "BOM Operation-taj_split_batch",
   "no_copy": 0,
   "non_negative": 0,
   "options": null,

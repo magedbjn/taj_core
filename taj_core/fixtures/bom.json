@@ -149,7 +149,7 @@
   "mandatory_depends_on": null,
   "modified": "2025-12-05 16:26:01.799544",
   "module": null,
-  "name": "BOM-taj_viscosity",
+  "name": "BOM-taj_liquid_viscosity",
   "no_copy": 0,
   "non_negative": 0,
   "options": null,
