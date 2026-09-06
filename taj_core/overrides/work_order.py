@@ -139,7 +139,6 @@ def create_pick_list(source_name, target_doc=None, for_qty=None):
 # 2. The Manufacturing Settings field "taj_keep_rm_qty" is enabled.
 #
 # Custom changes when taj_keep_rm_qty is enabled:
-# 1. Mark the generated Stock Entry with taj_from_finish_button = 1.
 # 2. Rebuild raw material rows and keep their quantities based on
 #    Work Order required_items.
 # 3. Preserve finished item rows and scrap item rows.
@@ -233,7 +232,6 @@ def make_stock_entry(
 	stock_entry = frappe.get_doc(result)
 
 	# This flag identifies that the document was generated from the Finish button.
-	stock_entry.taj_from_finish_button = 1
 
 	# Rebuild raw material rows only when taj_keep_rm_qty is enabled.
 	rebuild_manufacture_rm_rows(stock_entry, work_order)
