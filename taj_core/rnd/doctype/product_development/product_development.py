@@ -63,12 +63,17 @@ def product_name_distinct_query(doctype, txt, searchfield, start, page_len, filt
                 SELECT product_name, MAX(modified) AS max_modified
                 FROM `tabProduct Proposal`
                 WHERE docstatus != 2
+                  AND is_default = 1
+                  AND sensory_decision != 'Reject'
                   AND IFNULL(product_name, '') != ''
                   AND (product_name LIKE %(txt)s OR name LIKE %(txt)s)
                 GROUP BY product_name
             ) latest
               ON latest.product_name = pp2.product_name
              AND latest.max_modified = pp2.modified
+            WHERE pp2.docstatus != 2
+              AND pp2.is_default = 1
+              AND pp2.sensory_decision != 'Reject'
             ORDER BY pp2.product_name ASC
             LIMIT %(start)s, %(page_len)s
             """,
