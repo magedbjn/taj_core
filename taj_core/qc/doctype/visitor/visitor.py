@@ -100,7 +100,6 @@ def create_new_visitor_notification():
         notif.append("recipients", {"receiver_by_role": "Quality Manager"})
 
         notif.insert(ignore_permissions=True)
-        frappe.db.commit()
         frappe.msgprint(_("Notification 'New Visitor' created successfully."))
     else:
         frappe.msgprint(_("Notification 'New Visitor' already exists."))
