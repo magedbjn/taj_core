@@ -1225,20 +1225,21 @@ def get_raw_materials_from_job_card(job_card, selected_rows=None):
         _as_list(selected_rows),
     )
 
-    # المسار الأول: استخدم منطق الملصقات الحالي إذا نجح
-    try:
-        labels = _build_all_labels(
-            work_order_doc,
-            selected_item_filters=selected_item_filters,
-            source_job_card=jc.name,
-        )
-        items = _aggregate_labels_by_item(labels)
-        if items:
-            return {"items": items}
-    except Exception:
-        pass
+    # المسار الأول: استخدم منطق الملصقات الحالي.
+    # الأخطاء الحقيقية يجب أن تظهر للمستخدم بدل إخفائها
+    # والتحول بصمت إلى نتيجة مختلفة.
+    labels = _build_all_labels(
+        work_order_doc,
+        selected_item_filters=selected_item_filters,
+        source_job_card=jc.name,
+    )
 
-    # fallback: تجاهل merge/source resolution بالكامل
+    items = _aggregate_labels_by_item(labels)
+
+    if items:
+        return {"items": items}
+
+    # fallback فقط عندما لا ينتج المسار الأساسي أي عناصر.
     # وارجع required_items بالكميات الكاملة الحالية
     selected_lookup = _build_selected_lookup(selected_item_filters or [])
     direct_rows = []
