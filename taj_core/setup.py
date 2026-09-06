@@ -39,23 +39,12 @@ def create_all_custom_fields():
 
 
 def create_custom_fields_safely(custom_fields: dict):
-    """ينشئ الحقول فقط إذا لم تكن موجودة مسبقاً"""
-    for doctype, fields in custom_fields.items():
-        existing_fields = frappe.get_all("Custom Field", 
-            filters={"dt": doctype}, 
-            pluck="fieldname"
-        )
-        
-        fields_to_create = [
-            field for field in fields 
-            if field.get("fieldname") not in existing_fields
-        ]
-        
-        if fields_to_create:
-            create_custom_fields({doctype: fields_to_create}, ignore_validate=True)
-            frappe.db.commit()
-            click.secho(f"✅ Created {len(fields_to_create)} fields in {doctype}", fg="green")
-
+    """Create missing custom fields and sync metadata for existing fields."""
+    create_custom_fields(
+        custom_fields,
+        ignore_validate=True,
+        update=True,
+    )
 
 def merge_field_dicts(dict1: dict, dict2: dict) -> dict:
     """يدمج قاموسين للحقول"""
