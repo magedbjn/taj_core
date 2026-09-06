@@ -9,53 +9,85 @@ except ImportError:
     from frappe.workflow.doctype.workflow.workflow import get_transitions  # لمسارات الإصدارات الأقدم
 
 
+def _apply_transition_to_state(claim, target_state):
+    """Apply an available workflow transition to the requested state."""
+    transitions = get_transitions(claim)
+
+    transition = next(
+        (
+            row
+            for row in transitions
+            if row.get("next_state") == target_state
+        ),
+        None,
+    )
+
+    if not transition:
+        return False
+
+    apply_workflow(
+        claim,
+        transition["action"],
+    )
+    return True
+
+
 def update_expense_claim_status_on_payment(doc, method):
     """
-    Hook: Called on_submit of Payment Entry or Journal Entry
+    Hook: Called on_submit of Payment Entry or Journal Entry.
     """
     related_expense_claims = _get_related_expense_claims(doc)
     if not related_expense_claims:
         return
 
     updated_claims = []
+
     for claim_name in related_expense_claims:
         try:
-            claim = frappe.get_doc("Expense Claim", claim_name)
+            claim = frappe.get_doc(
+                "Expense Claim",
+                claim_name,
+            )
 
-            # Skip if already Paid
             if claim.workflow_state == "Paid":
                 continue
 
-            if claim.workflow_state in ["Approved", "Unpaid"]:
-                try:
-                    # تحقق من صلاحية الانتقال
-                    transitions = get_transitions(claim)
-                    if any(t["action"] == "Paid" for t in transitions):
-                        apply_workflow(claim, "Paid")
-                    else:
-                        claim.db_set("workflow_state", "Paid", update_modified=True)
-                except Exception as workflow_error:
-                    # Fallback: direct update if workflow fails
-                    claim.db_set("workflow_state", "Paid", update_modified=True)
-                    frappe.log_error(
-                        title="Workflow Transition Failed",
-                        message=f"Fallback used for Expense Claim {claim_name}: {workflow_error}",
-                    )
-
+            # The configured workflow currently allows Paid
+            # only through a valid workflow transition.
+            if _apply_transition_to_state(
+                claim,
+                "Paid",
+            ):
                 updated_claims.append(claim_name)
-                _publish_realtime_refresh(claim_name, claim.owner)
+                _publish_realtime_refresh(
+                    claim_name,
+                    claim.owner,
+                )
 
         except Exception as e:
             frappe.log_error(
                 title="Expense Claim Status Update Error",
-                message=f"Error updating Expense Claim {claim_name} from {doc.doctype} {doc.name}\n\n{str(e)}",
+                message=(
+                    f"Error updating Expense Claim {claim_name} "
+                    f"from {doc.doctype} {doc.name}\n\n{str(e)}"
+                ),
             )
 
-    # Show summary message
     if updated_claims:
-        claims_links = [get_link_to_form("Expense Claim", claim) for claim in updated_claims]
+        claims_links = [
+            get_link_to_form(
+                "Expense Claim",
+                claim,
+            )
+            for claim in updated_claims
+        ]
+
         frappe.msgprint(
-            _("Updated Expense Claims to Paid: {0}").format(", ".join(claims_links)),
+            _(
+                "Updated Expense Claims to Paid: {0}"
+            ).format(
+                ", ".join(claims_links)
+            ),
             alert=True,
             indicator="green",
         )
@@ -63,38 +95,69 @@ def update_expense_claim_status_on_payment(doc, method):
 
 def revert_expense_claim_status_on_cancel(doc, method):
     """
-    Hook: Called on_cancel of Payment Entry or Journal Entry
+    Hook: Called on_cancel of Payment Entry or Journal Entry.
+
+    Revert the workflow state only when the configured workflow
+    exposes a valid transition back to Unpaid.
     """
     related_expense_claims = _get_related_expense_claims(doc)
     if not related_expense_claims:
         return
 
     reverted_claims = []
+
     for claim_name in related_expense_claims:
         try:
-            claim = frappe.get_doc("Expense Claim", claim_name)
-            total_paid = get_total_paid_amount(claim_name)
+            claim = frappe.get_doc(
+                "Expense Claim",
+                claim_name,
+            )
 
-            if total_paid == 0 and claim.workflow_state == "Paid":
-                claim.db_set("workflow_state", "Unpaid", update_modified=True)
+            total_paid = get_total_paid_amount(
+                claim_name
+            )
+
+            if (
+                total_paid == 0
+                and claim.workflow_state == "Paid"
+                and _apply_transition_to_state(
+                    claim,
+                    "Unpaid",
+                )
+            ):
                 reverted_claims.append(claim_name)
-                _publish_realtime_refresh(claim_name, claim.owner)
+                _publish_realtime_refresh(
+                    claim_name,
+                    claim.owner,
+                )
 
         except Exception as e:
             frappe.log_error(
                 title="Expense Claim Status Revert Error",
-                message=f"Error reverting Expense Claim {claim_name} from {doc.doctype} {doc.name}\n\n{str(e)}",
+                message=(
+                    f"Error reverting Expense Claim {claim_name} "
+                    f"from {doc.doctype} {doc.name}\n\n{str(e)}"
+                ),
             )
 
-    # Show summary message
     if reverted_claims:
-        claims_links = [get_link_to_form("Expense Claim", claim) for claim in reverted_claims]
+        claims_links = [
+            get_link_to_form(
+                "Expense Claim",
+                claim,
+            )
+            for claim in reverted_claims
+        ]
+
         frappe.msgprint(
-            _("Reverted Expense Claims to Unpaid: {0}").format(", ".join(claims_links)),
+            _(
+                "Reverted Expense Claims to Unpaid: {0}"
+            ).format(
+                ", ".join(claims_links)
+            ),
             alert=True,
             indicator="yellow",
         )
-
 
 def _get_related_expense_claims(doc):
     """
