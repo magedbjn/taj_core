@@ -19,3 +19,4 @@ taj_core.patches.2026_09_06_fix_sensory_status_typo
 taj_core.patches.2026_09_06_seed_rnd_settings
 taj_core.patches.2026_09_06_seed_pick_list_parent_warehouse
 taj_core.patches.2026_09_07_reorganize_workspaces
+taj_core.patches.2026_09_07_add_bom_trial_source_fields

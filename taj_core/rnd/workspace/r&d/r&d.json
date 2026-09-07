@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"9f_MRlkuk3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">R&amp;D</span>\",\"col\":12}},{\"id\":\"2-W3BBPFck\",\"type\":\"card\",\"data\":{\"card_name\":\"Product\",\"col\":4}},{\"id\":\"Vg4XSqWHp1\",\"type\":\"card\",\"data\":{\"card_name\":\"Manufacturing\",\"col\":4}},{\"id\":\"UcT-HnB0-g\",\"type\":\"card\",\"data\":{\"card_name\":\"Tools\",\"col\":4}},{\"id\":\"cU_C6LyK08\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}}]",
+ "content": "[{\"id\":\"9f_MRlkuk3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">R&amp;D</span>\",\"col\":12}},{\"id\":\"2-W3BBPFck\",\"type\":\"card\",\"data\":{\"card_name\":\"Product Proposal Trial\",\"col\":4}},{\"id\":\"Vg4XSqWHp1\",\"type\":\"card\",\"data\":{\"card_name\":\"Manufacturing\",\"col\":4}},{\"id\":\"UcT-HnB0-g\",\"type\":\"card\",\"data\":{\"card_name\":\"Tools\",\"col\":4}},{\"id\":\"cU_C6LyK08\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}}]",
  "creation": "2025-10-20 13:36:40.677294",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,55 +13,6 @@
  "is_hidden": 0,
  "label": "R&D",
  "links": [
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Product",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Product Proposal",
-   "link_count": 0,
-   "link_to": "Product Proposal",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Product Development",
-   "link_count": 0,
-   "link_to": "Product Development",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Preparation Items",
-   "link_count": 0,
-   "link_to": "Preparation Items",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Sensory Feedback",
-   "link_count": 0,
-   "link_to": "Sensory Feedback",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
   {
    "hidden": 0,
    "is_query_report": 0,
@@ -168,9 +119,68 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Product Proposal Trial",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Product Proposal",
+   "link_count": 0,
+   "link_to": "Product Proposal",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Product Proposal Trial",
+   "link_count": 0,
+   "link_to": "Product Proposal Trial",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Product Development",
+   "link_count": 0,
+   "link_to": "Product Development",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Preparation Items",
+   "link_count": 0,
+   "link_to": "Preparation Items",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sensory Feedback",
+   "link_count": 0,
+   "link_to": "Sensory Feedback",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-04-09 10:51:01.076240",
+ "modified": "2026-09-07 14:16:58.058244",
  "modified_by": "Administrator",
  "module": "RND",
  "name": "R&D",

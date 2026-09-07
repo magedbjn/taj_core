@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import today, getdate, formatdate
 
@@ -28,8 +29,37 @@ def sync_to_product_proposal(doc: "SensoryFeedback", method=None):
     except Exception:
         eval_date_str = eval_date
 
+    trial_document = getattr(
+        doc,
+        "trial_document",
+        None,
+    )
+
+    if trial_document:
+        trial_proposal = frappe.db.get_value(
+            "Product Proposal Trial",
+            trial_document,
+            "product_proposal",
+        )
+
+        if not trial_proposal:
+            frappe.throw(
+                _(
+                    "Selected Trial Cooking does not exist."
+                )
+            )
+
+        if trial_proposal != item_name:
+            frappe.throw(
+                _(
+                    "Selected Trial Cooking does not belong "
+                    "to this Product Proposal."
+                )
+            )
+
     row_values = {
         "evaluation_date": eval_date_str,
+        "trial_document": trial_document,
         "your_name": doc.your_name,
         "appearance": doc.appearance,
         "texture": doc.texture,

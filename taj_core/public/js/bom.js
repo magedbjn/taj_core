@@ -186,85 +186,172 @@ function validatePPItems(pp_items) {
 // -------------------------------
 // 5) Fetch flow
 // -------------------------------
-async function simpleFetchFromProductProposal(frm) {
-  // تحذير قبل استبدال items
-  const proceed = () => open_pp_dialog_and_fetch(frm);
+function simpleFetchFromProductProposal(frm) {
+  const pp_name =
+    frm.doc.custom_product_proposal ||
+    frm._pp_cache?.source_pp;
 
-  if (frm.doc.items && frm.doc.items.length > 0) {
-    frappe.confirm(
-      __('This will replace all existing items. Continue?'),
-      () => proceed(),
-      () => null
+  const trial_name =
+    frm.doc.custom_product_proposal_trial ||
+    frm._pp_cache?.source_trial;
+
+  if (pp_name && trial_name) {
+    refetchFromProductProposal(
+      frm,
+      pp_name,
+      trial_name
     );
-  } else {
-    proceed();
+    return;
   }
+
+  open_pp_dialog_and_fetch(frm);
+}
+
+async function fetchTrialSnapshotForBOM(
+  pp_name,
+  trial_name = null
+) {
+  const r = await frappe.call({
+    method:
+      'taj_core.rnd.doctype.product_proposal_trial.product_proposal_trial.get_bom_trial_snapshot',
+    args: {
+      product_proposal: pp_name,
+      trial_name: trial_name || null
+    }
+  });
+
+  if (!r.message) {
+    throw new Error(
+      __('Unable to load Product Proposal Trial')
+    );
+  }
+
+  return r.message;
 }
 
 function open_pp_dialog_and_fetch(frm) {
   const d = new frappe.ui.Dialog({
-    title: __('Enter Product Proposal Name'),
+    title: __('Fetch Approved Final Trial'),
     fields: [
       {
         fieldname: 'pp_name',
-        label: __('Product Proposal Name'),
+        label: __('Product Proposal'),
         fieldtype: 'Link',
         options: 'Product Proposal',
         reqd: 1,
+        default:
+          frm.doc.custom_product_proposal || '',
         get_query() {
           return {
-            filters: { item_code: frm.doc.item, docstatus: 1 }
+            filters: {
+              item_code: frm.doc.item,
+              docstatus: 1
+            }
           };
         }
       }
     ],
-    primary_action_label: __('Fetch Data'),
+    primary_action_label: __('Fetch Final Trial'),
     primary_action: async () => {
       const values = d.get_values();
       if (!values) return;
 
-      // اقفل الزر أثناء التنفيذ
-      d.get_primary_btn().prop('disabled', true);
+      d.get_primary_btn().prop(
+        'disabled',
+        true
+      );
 
       try {
-        if (!frm._pp_cache) frm._pp_cache = {};
-        frm._pp_cache.source_pp = values.pp_name;
+        frappe.show_progress(
+          __('Fetching Data'),
+          10,
+          100,
+          __('Loading Final Trial...')
+        );
 
-        frappe.show_progress(__('Fetching Data'), 10, 100, __('Loading Product Proposal...'));
+        const snapshot =
+          await fetchTrialSnapshotForBOM(
+            values.pp_name
+          );
 
-        const r = await frappe.call({
-          method: 'frappe.client.get',
-          args: { doctype: 'Product Proposal', name: values.pp_name }
-        });
-
-        if (!r.message) {
+        if (
+          !validatePPItems(snapshot.items)
+        ) {
           frappe.hide_progress();
-          frappe.msgprint(__('Error loading Product Proposal'));
-          d.get_primary_btn().prop('disabled', false);
+          d.get_primary_btn().prop(
+            'disabled',
+            false
+          );
           return;
         }
 
-        const pp_doc = r.message;
+        const source_doc = {
+          name: snapshot.trial_name,
+          source_label:
+            `${snapshot.product_proposal} / ` +
+            `${snapshot.trial_name}`,
+          quantity: snapshot.quantity,
+          pp_items: snapshot.items
+        };
 
-        if (!validatePPItems(pp_doc.pp_items)) {
-          frappe.hide_progress();
-          d.get_primary_btn().prop('disabled', false);
-          return;
+        frappe.show_progress(
+          __('Fetching Data'),
+          35,
+          100,
+          __(
+            'Preparing Trial formulation...'
+          )
+        );
+
+        await processProductProposalDataOptimized(
+          frm,
+          source_doc
+        );
+
+        await frm.set_value(
+          'custom_product_proposal',
+          snapshot.product_proposal
+        );
+
+        await frm.set_value(
+          'custom_product_proposal_trial',
+          snapshot.trial_name
+        );
+
+        if (!frm._pp_cache) {
+          frm._pp_cache = {};
         }
 
-        frm._pp_cache.pp_doc_quantity = pp_doc.quantity;
+        frm._pp_cache.source_pp =
+          snapshot.product_proposal;
 
-        frappe.show_progress(__('Fetching Data'), 35, 100, __('Preparing data...'));
-        await processProductProposalDataOptimized(frm, pp_doc);
+        frm._pp_cache.source_trial =
+          snapshot.trial_name;
 
-        // ✅ بعد النجاح: اقفل النافذة تلقائيًا
+        frm._pp_cache.pp_doc_quantity =
+          snapshot.quantity;
+
+        frappe.show_alert(
+          {
+            message: __(
+              'BOM formulation loaded from Final Trial {0}',
+              [snapshot.trial_name]
+            ),
+            indicator: 'green'
+          },
+          7
+        );
+
         d.hide();
 
       } catch (e) {
         console.error(e);
         frappe.hide_progress();
-        showPermissionError();
-        d.get_primary_btn().prop('disabled', false);
+
+        d.get_primary_btn().prop(
+          'disabled',
+          false
+        );
       }
     }
   });
@@ -272,44 +359,92 @@ function open_pp_dialog_and_fetch(frm) {
   d.show();
 }
 
-
-async function refetchFromProductProposal(frm, pp_name) {
+async function refetchFromProductProposal(
+  frm,
+  pp_name,
+  trial_name
+) {
   if (frm._pp_is_refreshing) return;
+
   frm._pp_is_refreshing = true;
 
-  frappe.show_progress(__('Refreshing'), 10, 100, __('Updating quantities...'));
+  frappe.show_progress(
+    __('Refreshing'),
+    10,
+    100,
+    __('Reloading Trial formulation...')
+  );
 
   try {
-    const r = await frappe.call({
-      method: 'frappe.client.get',
-      args: { doctype: 'Product Proposal', name: pp_name }
-    });
+    const snapshot =
+      await fetchTrialSnapshotForBOM(
+        pp_name,
+        trial_name
+      );
 
-    if (!r.message) {
-      frappe.msgprint(__('Error loading Product Proposal'));
+    if (
+      !validatePPItems(snapshot.items)
+    ) {
       return;
     }
 
-    const pp_doc = r.message;
+    const source_doc = {
+      name: snapshot.trial_name,
+      source_label:
+        `${snapshot.product_proposal} / ` +
+        `${snapshot.trial_name}`,
+      quantity: snapshot.quantity,
+      pp_items: snapshot.items
+    };
 
-    frappe.show_progress(__('Refreshing'), 35, 100, __('Preparing data...'));
-    await processProductProposalDataOptimized(frm, pp_doc);
+    frappe.show_progress(
+      __('Refreshing'),
+      35,
+      100,
+      __('Preparing Trial formulation...')
+    );
 
-    if (!frm._pp_cache) frm._pp_cache = {};
-    frm._pp_cache.pp_doc_quantity = pp_doc.quantity;
+    await processProductProposalDataOptimized(
+      frm,
+      source_doc
+    );
+
+    await frm.set_value(
+      'custom_product_proposal',
+      snapshot.product_proposal
+    );
+
+    await frm.set_value(
+      'custom_product_proposal_trial',
+      snapshot.trial_name
+    );
+
+    if (!frm._pp_cache) {
+      frm._pp_cache = {};
+    }
+
+    frm._pp_cache.source_pp =
+      snapshot.product_proposal;
+
+    frm._pp_cache.source_trial =
+      snapshot.trial_name;
+
+    frm._pp_cache.pp_doc_quantity =
+      snapshot.quantity;
 
   } catch (e) {
-    showPermissionError();
     console.error(e);
+
   } finally {
     frm._pp_is_refreshing = false;
-    setTimeout(() => frappe.hide_progress(), 500);
+
+    setTimeout(
+      () => frappe.hide_progress(),
+      500
+    );
   }
 }
 
-// -------------------------------
-// 6) Optimized processing (Batch Fetch + single refresh)
-// -------------------------------
 async function processProductProposalDataOptimized(frm, pp_doc) {
   try {
     const bom_qty = flt(frm.doc.quantity);
@@ -404,7 +539,12 @@ async function processProductProposalDataOptimized(frm, pp_doc) {
     });
 
     frappe.show_progress(__('Complete'), 100, 100, __('Finalizing...'));
-    frappe.show_alert({ message: __('Data fetched from {0}', [pp_doc.name]), indicator: 'green' });
+    frappe.show_alert({
+      message: __('Data fetched from {0}', [
+        pp_doc.source_label || pp_doc.name
+      ]),
+      indicator: 'green'
+    });
     setTimeout(() => frappe.hide_progress(), 700);
 
   } catch (error) {
@@ -493,4 +633,3 @@ function getConversionRate(from_uom, to_uom, item_code) {
 
     return 1;
 }
-

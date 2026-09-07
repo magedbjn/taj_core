@@ -49,6 +49,10 @@ frappe.ui.form.on('Product Proposal', {
         // صلاحيات Trial Cooking من الواجهة
         set_trial_cooking_permission(frm);
 
+        // Independent Trial snapshots
+        set_trial_document_filters(frm);
+        add_trial_management_buttons(frm);
+
         // فلتر Preparation BOM
         set_preparation_bom_filter(frm);
 
@@ -459,4 +463,417 @@ function set_trial_cooking_permission(frm) {
         grid.wrapper.find('.grid-delete-row').toggle(allowed);
         grid.wrapper.find('.grid-row-check').toggle(allowed);
     }, 300);
+}
+
+// -----------------------------------------------------------------------------
+// Independent Trial Documents
+// -----------------------------------------------------------------------------
+
+function set_trial_document_filters(frm) {
+    if (!frm.doc.name || frm.is_new()) {
+        return;
+    }
+
+    frm.set_query(
+        'trial_document',
+        'trial_cooking',
+        () => {
+            return {
+                filters: {
+                    product_proposal: frm.doc.name
+                }
+            };
+        }
+    );
+
+    frm.set_query(
+        'trial_document',
+        'pp_sensory_evaluation',
+        () => {
+            return {
+                filters: {
+                    product_proposal: frm.doc.name
+                }
+            };
+        }
+    );
+}
+
+
+function add_trial_management_buttons(frm) {
+    if (
+        frm.is_new()
+        || frm.doc.docstatus === 2
+    ) {
+        return;
+    }
+
+    const group = __('Trial Cooking');
+
+    if (user_can_edit_trial_cooking()) {
+        frm.add_custom_button(
+            __('New Trial'),
+            () => create_new_trial(frm),
+            group
+        );
+    }
+
+    frm.add_custom_button(
+        __('View Trials'),
+        () => {
+            frappe.route_options = {
+                product_proposal: frm.doc.name
+            };
+
+            frappe.set_route(
+                'List',
+                'Product Proposal Trial'
+            );
+        },
+        group
+    );
+
+    frm.add_custom_button(
+        __('Compare Trials'),
+        () => compare_product_trials(frm),
+        group
+    );
+}
+
+
+function create_new_trial(frm) {
+    frappe.prompt(
+        [
+            {
+                fieldname: 'source_label',
+                fieldtype: 'Select',
+                label: __('Copy Items From'),
+                options: [
+                    'Previous Trial',
+                    'Current Product Proposal Items',
+                    'Empty Trial'
+                ].join('\n'),
+                default: 'Previous Trial',
+                reqd: 1
+            }
+        ],
+        async values => {
+            const source_map = {
+                'Previous Trial': 'previous',
+                'Current Product Proposal Items': 'proposal',
+                'Empty Trial': 'empty'
+            };
+
+            const source = (
+                source_map[values.source_label]
+                || 'previous'
+            );
+
+            const response = await frappe.call({
+                method: [
+                    'taj_core.rnd.doctype.',
+                    'product_proposal_trial.',
+                    'product_proposal_trial.',
+                    'create_trial'
+                ].join(''),
+                args: {
+                    product_proposal: frm.doc.name,
+                    source: source
+                },
+                freeze: true,
+                freeze_message: __('Creating Trial...')
+            });
+
+            if (
+                !response.message
+                || !response.message.name
+            ) {
+                return;
+            }
+
+            const cost_summary = (
+                response.message.cost_summary
+                || {}
+            );
+
+            let creation_message = __(
+                'Trial {0} created with {1} Items.',
+                [
+                    response.message.trial_no,
+                    response.message.items
+                ]
+            );
+
+            if (cost_summary.missing_conversion) {
+                creation_message += ' ' + __(
+                    '{0} item(s) were excluded from costing because no UOM conversion to Stock UOM was found.',
+                    [cost_summary.missing_conversion]
+                );
+            }
+
+            frappe.show_alert(
+                {
+                    message: creation_message,
+                    indicator: (
+                        cost_summary.missing_conversion
+                        ? 'orange'
+                        : 'green'
+                    )
+                },
+                7
+            );
+
+            frappe.set_route(
+                'Form',
+                'Product Proposal Trial',
+                response.message.name
+            );
+        },
+        __('New Trial Cooking'),
+        __('Create')
+    );
+}
+
+
+function compare_product_trials(frm) {
+    const get_query = () => {
+        return {
+            filters: {
+                product_proposal: frm.doc.name
+            }
+        };
+    };
+
+    frappe.prompt(
+        [
+            {
+                fieldname: 'first_trial',
+                fieldtype: 'Link',
+                options: 'Product Proposal Trial',
+                label: __('First Trial'),
+                reqd: 1,
+                get_query: get_query
+            },
+            {
+                fieldname: 'second_trial',
+                fieldtype: 'Link',
+                options: 'Product Proposal Trial',
+                label: __('Second Trial'),
+                reqd: 1,
+                get_query: get_query
+            }
+        ],
+        async values => {
+            if (
+                values.first_trial
+                === values.second_trial
+            ) {
+                frappe.msgprint(
+                    __('Please select two different Trials.')
+                );
+                return;
+            }
+
+            const response = await frappe.call({
+                method: [
+                    'taj_core.rnd.doctype.',
+                    'product_proposal_trial.',
+                    'product_proposal_trial.',
+                    'compare_trials'
+                ].join(''),
+                args: {
+                    first_trial: values.first_trial,
+                    second_trial: values.second_trial
+                },
+                freeze: true,
+                freeze_message: __('Comparing Trials...')
+            });
+
+            if (!response.message) {
+                return;
+            }
+
+            show_trial_comparison(
+                response.message
+            );
+        },
+        __('Compare Trials'),
+        __('Compare')
+    );
+}
+
+
+function trial_escape(value) {
+    if (
+        value === null
+        || value === undefined
+        || value === ''
+    ) {
+        return '-';
+    }
+
+    return frappe.utils.escape_html(
+        String(value)
+    );
+}
+
+
+function sensory_status_text(summary) {
+    const counts = (
+        summary.final_status_counts
+        || {}
+    );
+
+    const values = Object.entries(counts)
+        .map(([status, count]) => {
+            return (
+                `${trial_escape(status)} (${count})`
+            );
+        });
+
+    return values.length
+        ? values.join(', ')
+        : '-';
+}
+
+
+function sensory_summary_row(label, trial) {
+    const sensory = (
+        trial.sensory
+        || {}
+    );
+
+    return `
+        <tr>
+            <td><strong>${trial_escape(label)}</strong></td>
+            <td>${trial_escape(trial.name)}</td>
+            <td>${trial_escape(sensory.count || 0)}</td>
+            <td>${trial_escape(sensory.appearance)}</td>
+            <td>${trial_escape(sensory.texture)}</td>
+            <td>${trial_escape(sensory.taste)}</td>
+            <td>${sensory_status_text(sensory)}</td>
+        </tr>
+    `;
+}
+
+
+function show_trial_comparison(data) {
+    const detail_rows = [];
+
+    (data.changes || []).forEach(row => {
+        if (row.change_type === 'Added') {
+            detail_rows.push(`
+                <tr>
+                    <td>${trial_escape(row.item_code)}</td>
+                    <td>${__('Added')}</td>
+                    <td>${__('Qty')}</td>
+                    <td>-</td>
+                    <td>${trial_escape(row.new_qty)}</td>
+                </tr>
+            `);
+            return;
+        }
+
+        if (row.change_type === 'Removed') {
+            detail_rows.push(`
+                <tr>
+                    <td>${trial_escape(row.item_code)}</td>
+                    <td>${__('Removed')}</td>
+                    <td>${__('Qty')}</td>
+                    <td>${trial_escape(row.old_qty)}</td>
+                    <td>-</td>
+                </tr>
+            `);
+            return;
+        }
+
+        (row.changes || []).forEach(change => {
+            detail_rows.push(`
+                <tr>
+                    <td>${trial_escape(row.item_code)}</td>
+                    <td>${__('Changed')}</td>
+                    <td>${trial_escape(change.label)}</td>
+                    <td>${trial_escape(change.old)}</td>
+                    <td>${trial_escape(change.new)}</td>
+                </tr>
+            `);
+        });
+    });
+
+    if (!detail_rows.length) {
+        detail_rows.push(`
+            <tr>
+                <td colspan="5" class="text-muted text-center">
+                    ${__('No formulation differences found.')}
+                </td>
+            </tr>
+        `);
+    }
+
+    const html = `
+        <div class="mb-4">
+            <strong>${__('Product Proposal')}:</strong>
+            ${trial_escape(data.product_proposal)}
+        </div>
+
+        <div class="mb-4">
+            <strong>${trial_escape(data.first.name)}</strong>
+            &nbsp;→&nbsp;
+            <strong>${trial_escape(data.second.name)}</strong>
+        </div>
+
+        <h5>${__('Formulation Changes')}</h5>
+
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr>
+                    <th>${__('Item')}</th>
+                    <th>${__('Change')}</th>
+                    <th>${__('Field')}</th>
+                    <th>${__('From')}</th>
+                    <th>${__('To')}</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${detail_rows.join('')}
+            </tbody>
+        </table>
+
+        <p class="text-muted">
+            ${__('Unchanged lines')}:
+            ${trial_escape(data.unchanged_count || 0)}
+        </p>
+
+        <h5>${__('Sensory Evaluation')}</h5>
+
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr>
+                    <th>${__('Trial')}</th>
+                    <th>${__('Document')}</th>
+                    <th>${__('Evaluations')}</th>
+                    <th>${__('Appearance')}</th>
+                    <th>${__('Texture')}</th>
+                    <th>${__('Taste')}</th>
+                    <th>${__('Decision')}</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${sensory_summary_row(
+                    __('First'),
+                    data.first
+                )}
+                ${sensory_summary_row(
+                    __('Second'),
+                    data.second
+                )}
+            </tbody>
+        </table>
+    `;
+
+    frappe.msgprint({
+        title: __('Trial Comparison'),
+        message: html,
+        wide: true
+    });
 }

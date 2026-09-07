@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "evaluation_date",
+  "trial_document",
   "your_name",
   "appearance",
   "texture",
@@ -23,6 +24,13 @@
    "in_list_view": 1,
    "label": "Evaluation Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "trial_document",
+   "fieldtype": "Link",
+   "label": "Trial Cooking",
+   "options": "Product Proposal Trial",
+   "in_list_view": 1
   },
   {
    "fieldname": "appearance",

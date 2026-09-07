@@ -21,6 +21,7 @@ class ProductProposal(Document):
         self.set_trial_cooking_defaults()
         self.validate_trial_cooking_locked_fields()
         self.validate_trial_cooking_permission()
+        self.validate_trial_links()
         self.is_default = cint(
             self.sensory_decision == "Approve"
         )
@@ -29,6 +30,7 @@ class ProductProposal(Document):
         self.set_trial_cooking_defaults()
         self.validate_trial_cooking_locked_fields()
         self.validate_trial_cooking_permission()
+        self.validate_trial_links()
 
     def before_submit(self):
         # 1) منع السبمت لو القرار Open
@@ -140,8 +142,8 @@ class ProductProposal(Document):
         - holding_time = current time if empty
 
         Important:
-        - trial_qty is the actual produced quantity.
-        - trial_qty must be entered by the user after cooking.
+        - actual_produced_qty is the actual produced quantity.
+        - actual_produced_qty must be entered by the user after cooking.
         """
         rows = self.get("trial_cooking") or []
 
@@ -186,7 +188,8 @@ class ProductProposal(Document):
         - trial_user
 
         Editable by allowed users:
-        - trial_qty
+        - planned_cooking_qty
+        - actual_produced_qty
         - pouch_size
         - holding_time
         - remark
@@ -230,13 +233,101 @@ class ProductProposal(Document):
                 "idx": cint(row.idx),
                 "posting_date": cstr(row.posting_date),
                 "trial_user": cstr(row.trial_user),
-                "trial_qty": cint(row.trial_qty),
+                "trial_document": cstr(
+                    row.trial_document
+                ),
+                "planned_cooking_qty": cint(
+                    row.planned_cooking_qty
+                ),
+                "actual_produced_qty": cint(
+                    row.actual_produced_qty
+                ),
                 "pouch_size": cstr(row.pouch_size),
                 "holding_time": cstr(row.holding_time),
                 "remark": cstr(row.remark),
             })
 
         return result
+
+    def validate_trial_links(self):
+        """
+        Trial links in legacy Trial Cooking and Sensory Evaluation
+        must belong to this Product Proposal.
+        """
+        references = []
+
+        for row in (
+            self.get("trial_cooking")
+            or []
+        ):
+            if row.trial_document:
+                references.append(
+                    row.trial_document
+                )
+
+        for row in (
+            self.get(
+                "pp_sensory_evaluation"
+            )
+            or []
+        ):
+            if row.trial_document:
+                references.append(
+                    row.trial_document
+                )
+
+        references = list(
+            dict.fromkeys(references)
+        )
+
+        if not references:
+            return
+
+        records = frappe.get_all(
+            "Product Proposal Trial",
+            filters={
+                "name": [
+                    "in",
+                    references,
+                ],
+            },
+            fields=[
+                "name",
+                "product_proposal",
+            ],
+        )
+
+        mapping = {
+            row.name:
+                row.product_proposal
+            for row in records
+        }
+
+        for trial_name in references:
+            if trial_name not in mapping:
+                frappe.throw(
+                    _(
+                        "Trial Cooking {0} "
+                        "does not exist."
+                    ).format(
+                        trial_name
+                    )
+                )
+
+            if (
+                mapping[trial_name]
+                != self.name
+            ):
+                frappe.throw(
+                    _(
+                        "Trial Cooking {0} "
+                        "does not belong to "
+                        "Product Proposal {1}."
+                    ).format(
+                        trial_name,
+                        self.name,
+                    )
+                )
 
     # -------------------------------------------------------------------------
     # Preparation BOM

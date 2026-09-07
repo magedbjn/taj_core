@@ -8,6 +8,7 @@
   "evaluation_date",
   "your_name",
   "item",
+  "trial_document",
   "appearance",
   "texture",
   "taste",
@@ -23,6 +24,12 @@
    "label": "Item",
    "options": "Product Proposal",
    "reqd": 1
+  },
+  {
+   "fieldname": "trial_document",
+   "fieldtype": "Link",
+   "label": "Trial Cooking",
+   "options": "Product Proposal Trial"
   },
   {
    "fieldname": "appearance",

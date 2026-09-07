@@ -1,0 +1,225 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "trial_tab",
+  "product_proposal",
+  "trial_title",
+  "main_column",
+  "status",
+  "is_final_trial",
+  "system_information",
+  "trial_no",
+  "based_on_trial",
+  "system_column",
+  "posting_date",
+  "trial_user",
+  "formulation_tab",
+  "items",
+  "summary_section",
+  "total_items",
+  "summary_column",
+  "total_cost",
+  "cooking_tab",
+  "planned_cooking_qty",
+  "actual_produced_qty",
+  "cooking_column",
+  "pouch_size",
+  "holding_time",
+  "remark"
+ ],
+ "fields": [
+  {
+   "fieldname": "product_proposal",
+   "fieldtype": "Link",
+   "label": "Product Proposal",
+   "options": "Product Proposal",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "trial_no",
+   "fieldtype": "Int",
+   "label": "Trial No",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "based_on_trial",
+   "fieldtype": "Link",
+   "label": "Based On Trial",
+   "options": "Product Proposal Trial"
+  },
+  {
+   "fieldname": "trial_title",
+   "fieldtype": "Data",
+   "label": "Trial Title"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nCompleted\nApproved\nRejected",
+   "default": "Draft",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_final_trial",
+   "fieldtype": "Check",
+   "label": "Final Trial",
+   "default": "0"
+  },
+  {
+   "fieldname": "trial_details_section",
+   "fieldtype": "Section Break",
+   "label": "Trial Details"
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "default": "Today",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "trial_user",
+   "fieldtype": "Link",
+   "label": "Trial User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trial_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "planned_cooking_qty",
+   "fieldtype": "Int",
+   "label": "Planned Cooking Qty"
+  },
+  {
+   "fieldname": "actual_produced_qty",
+   "fieldtype": "Int",
+   "label": "Actual Produced Qty"
+  },
+  {
+   "fieldname": "pouch_size",
+   "fieldtype": "Data",
+   "label": "Pouch Size"
+  },
+  {
+   "fieldname": "holding_time",
+   "fieldtype": "Time",
+   "label": "Holding Time"
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Small Text",
+   "label": "Remark"
+  },
+  {
+   "fieldname": "items_section",
+   "fieldtype": "Section Break",
+   "label": "Trial Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Product Proposal Trial Item"
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "total_items",
+   "fieldtype": "Int",
+   "label": "Total Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trial_tab",
+   "fieldtype": "Tab Break",
+   "label": "Trial"
+  },
+  {
+   "fieldname": "main_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "system_information",
+   "fieldtype": "Section Break",
+   "label": "System Information",
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:0"
+  },
+  {
+   "fieldname": "system_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "formulation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Formulation"
+  },
+  {
+   "fieldname": "summary_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_cost",
+   "fieldtype": "Currency",
+   "label": "Total Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cooking_tab",
+   "fieldtype": "Tab Break",
+   "label": "Cooking Details"
+  },
+  {
+   "fieldname": "cooking_column",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "module": "RND",
+ "name": "Product Proposal Trial",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "RND Manager"
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "write": 1,
+   "role": "RND Trial Cooking User"
+  },
+  {
+   "read": 1,
+   "role": "RND User"
+  }
+ ],
+ "search_fields": "product_proposal,trial_title",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "trial_title"
+}

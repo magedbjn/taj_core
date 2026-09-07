@@ -1,0 +1,183 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "line_key",
+  "item_code",
+  "item_name",
+  "qty",
+  "uom",
+  "cost_column",
+  "unit_cost",
+  "amount",
+  "operation",
+  "procees_type",
+  "cooking_type",
+  "temperature",
+  "duration",
+  "pre_bom",
+  "notes",
+  "cost_details_section",
+  "stock_uom",
+  "conversion_factor",
+  "stock_qty",
+  "cost_source",
+  "cost_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "line_key",
+   "fieldtype": "Data",
+   "label": "Line Key",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item"
+  },
+  {
+   "columns": 3,
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name"
+  },
+  {
+   "columns": 1,
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity"
+  },
+  {
+   "columns": 1,
+   "default": "Gram",
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Link",
+   "label": "Operation",
+   "options": "Operation"
+  },
+  {
+   "default": "Weight",
+   "fieldname": "procees_type",
+   "fieldtype": "Select",
+   "label": "Procees Type",
+   "options": "Blended\nChop\nClip Fingers\nCubes\nDiced Cubes\nGrated\nMarinade\nPaste\nSlices\nSoak\nWash\nWeight"
+  },
+  {
+   "fieldname": "cooking_type",
+   "fieldtype": "Select",
+   "label": "Cooking Type",
+   "options": "\nBlanch\nBoiled\nFry\nSaute\nSteam"
+  },
+  {
+   "columns": 1,
+   "fieldname": "temperature",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Temperature"
+  },
+  {
+   "columns": 1,
+   "fieldname": "duration",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Duration (minutes)"
+  },
+  {
+   "fieldname": "pre_bom",
+   "fieldtype": "Link",
+   "label": "Preparation BOM",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "cost_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "unit_cost",
+   "fieldtype": "Currency",
+   "label": "Unit Cost",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cost_details_section",
+   "fieldtype": "Section Break",
+   "label": "Cost Details",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "stock_uom",
+   "fieldtype": "Link",
+   "label": "Stock UOM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "conversion_factor",
+   "fieldtype": "Float",
+   "label": "Conversion Factor",
+   "read_only": 1,
+   "precision": "9"
+  },
+  {
+   "fieldname": "stock_qty",
+   "fieldtype": "Float",
+   "label": "Stock Qty",
+   "read_only": 1,
+   "precision": "9"
+  },
+  {
+   "fieldname": "cost_source",
+   "fieldtype": "Select",
+   "label": "Cost Source",
+   "options": "\nValuation Rate\nLast Purchase Rate\nManual",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_status",
+   "fieldtype": "Select",
+   "label": "Cost Status",
+   "options": "\nOK\nMissing Item\nMissing Conversion\nMissing Cost",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "module": "RND",
+ "name": "Product Proposal Trial Item",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

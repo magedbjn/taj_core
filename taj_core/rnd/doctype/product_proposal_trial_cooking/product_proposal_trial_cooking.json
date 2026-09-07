@@ -8,6 +8,7 @@
  "field_order": [
   "posting_date",
   "trial_user",
+  "trial_document",
   "planned_cooking_qty",
   "actual_produced_qty",
   "pouch_size",
@@ -42,6 +43,12 @@
    "label": "Trial User",
    "options": "User",
    "read_only": 1
+  },
+  {
+   "fieldname": "trial_document",
+   "fieldtype": "Link",
+   "label": "Trial Document",
+   "options": "Product Proposal Trial"
   },
   {
    "fieldname": "pouch_size",
