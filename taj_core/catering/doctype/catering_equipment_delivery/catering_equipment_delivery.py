@@ -376,6 +376,12 @@ def get_available_qty(equipment, exclude_delivery=None):
     }
 
     if exclude_delivery:
+        excluded_delivery_doc = frappe.get_doc(
+            "Catering Equipment Delivery",
+            exclude_delivery,
+        )
+        excluded_delivery_doc.check_permission("read")
+
         exclude_condition = "and parent_doc.name != %(exclude_delivery)s"
         values["exclude_delivery"] = exclude_delivery
 
@@ -412,7 +418,11 @@ def get_equipment_info(equipment):
     if not equipment:
         return {}
 
-    doc = frappe.get_doc("Catering Equipment", equipment)
+    doc = frappe.get_doc(
+        "Catering Equipment",
+        equipment,
+    )
+    doc.check_permission("read")
 
     return {
         "equipment": doc.name,

@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -246,6 +246,89 @@ class TestSecurityGuards(TestCase):
             'check_permission("read")',
             source,
         )
+
+
+    def test_catering_equipment_info_checks_read_permission(self):
+        from taj_core.catering.doctype \
+            .catering_equipment_delivery \
+            import catering_equipment_delivery as module
+
+        equipment = SimpleNamespace(
+            name="EQ-TEST",
+            equipment_name_arabic="Test",
+            has_serial_no=0,
+            total_qty=10,
+            disabled=0,
+            check_permission=Mock(),
+        )
+
+        with patch.object(
+            module.frappe,
+            "get_doc",
+            return_value=equipment,
+        ), patch.object(
+            module,
+            "get_available_qty",
+            return_value=10,
+        ):
+            result = module.get_equipment_info(
+                "EQ-TEST"
+            )
+
+        equipment.check_permission.assert_called_once_with(
+            "read"
+        )
+        self.assertEqual(
+            result["equipment"],
+            "EQ-TEST",
+        )
+
+    def test_catering_excluded_delivery_checks_read_permission(self):
+        from taj_core.catering.doctype \
+            .catering_equipment_delivery \
+            import catering_equipment_delivery as module
+
+        equipment = SimpleNamespace(
+            total_qty=10,
+            check_permission=Mock(),
+        )
+
+        delivery = SimpleNamespace(
+            check_permission=Mock(),
+        )
+
+        def get_doc(doctype, name):
+            if doctype == "Catering Equipment":
+                return equipment
+
+            if doctype == "Catering Equipment Delivery":
+                return delivery
+
+            raise AssertionError(
+                f"Unexpected get_doc: {doctype} {name}"
+            )
+
+        with patch.object(
+            module.frappe,
+            "get_doc",
+            side_effect=get_doc,
+        ), patch.object(
+            module.frappe.db,
+            "sql",
+            return_value=[[0]],
+        ):
+            qty = module.get_available_qty(
+                "EQ-TEST",
+                exclude_delivery="DEL-TEST",
+            )
+
+        equipment.check_permission.assert_called_once_with(
+            "read"
+        )
+        delivery.check_permission.assert_called_once_with(
+            "read"
+        )
+        self.assertEqual(qty, 10)
 
 
 class TestSchemaAndMigrationGuards(TestCase):
