@@ -1343,4 +1343,3 @@ def get_bom_trial_snapshot(
         "items":
             items,
     }
-
