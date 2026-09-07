@@ -140,7 +140,7 @@
   "in_list_view": 0,
   "in_preview": 0,
   "in_standard_filter": 0,
-  "insert_after": "rejected_serial_and_batch_bundle",
+  "insert_after": "taj_temperature",
   "is_system_generated": 0,
   "is_virtual": 0,
   "label": "Get RM Specification",

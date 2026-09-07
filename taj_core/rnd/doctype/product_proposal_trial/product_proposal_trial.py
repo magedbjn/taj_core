@@ -40,22 +40,15 @@ COMPARE_FIELDS = (
 
 
 
-def _get_trial_conversion_factor(
+def _get_item_uom_factor_to_stock(
     item_code,
     uom,
     stock_uom,
     variant_of=None,
 ):
-    """
-    Follow ERPNext BOM/UOM conversion logic.
-
-    Difference from get_conversion_factor():
-    missing conversions return None instead of 1.0.
-    """
+    """Return the configured factor from ``uom`` to the Item stock UOM."""
     uom = cstr(uom or "").strip()
-    stock_uom = cstr(
-        stock_uom or ""
-    ).strip()
+    stock_uom = cstr(stock_uom or "").strip()
 
     if not uom or not stock_uom:
         return None
@@ -63,12 +56,9 @@ def _get_trial_conversion_factor(
     if uom == stock_uom:
         return 1.0
 
-    # Same priority used by ERPNext:
-    # Item conversion first, then template conversion.
-    for parent in (
-        item_code,
-        variant_of,
-    ):
+    # ERPNext gives Item-specific conversion details priority, including
+    # the template conversion for variants.
+    for parent in (item_code, variant_of):
         if not parent:
             continue
 
@@ -84,12 +74,81 @@ def _get_trial_conversion_factor(
         if flt(factor) > 0:
             return flt(factor)
 
-    # ERPNext global UOM Conversion Factor:
-    # direct / inverse / intermediate.
-    factor = get_uom_conv_factor(
+    # Fall back to ERPNext global UOM conversions (direct, inverse,
+    # or intermediate). Never invent a factor of 1 for missing data.
+    factor = get_uom_conv_factor(uom, stock_uom)
+
+    if flt(factor) > 0:
+        return flt(factor)
+
+    return None
+
+
+def _get_trial_conversion_factor(
+    item_code,
+    uom,
+    stock_uom,
+    variant_of=None,
+):
+    """Return the Trial-UOM to stock-UOM factor, or ``None`` if absent."""
+    return _get_item_uom_factor_to_stock(
+        item_code,
         uom,
         stock_uom,
+        variant_of,
     )
+
+
+def _get_item_uom_conversion_factor(
+    item_code,
+    from_uom,
+    to_uom,
+    stock_uom=None,
+    variant_of=None,
+):
+    """Return a configured Item UOM conversion without unsafe assumptions."""
+    from_uom = cstr(from_uom or "").strip()
+    to_uom = cstr(to_uom or "").strip()
+
+    if not from_uom or not to_uom:
+        return None
+
+    if from_uom == to_uom:
+        return 1.0
+
+    if not stock_uom:
+        item = frappe.db.get_value(
+            "Item",
+            item_code,
+            ["stock_uom", "variant_of"],
+            as_dict=True,
+        )
+
+        if not item:
+            return None
+
+        stock_uom = item.stock_uom
+        variant_of = variant_of or item.variant_of
+
+    from_factor = _get_item_uom_factor_to_stock(
+        item_code,
+        from_uom,
+        stock_uom,
+        variant_of,
+    )
+    to_factor = _get_item_uom_factor_to_stock(
+        item_code,
+        to_uom,
+        stock_uom,
+        variant_of,
+    )
+
+    if flt(from_factor) > 0 and flt(to_factor) > 0:
+        return flt(from_factor) / flt(to_factor)
+
+    # A direct global conversion can still be valid even if one of the
+    # units is not configured relative to this Item's stock UOM.
+    factor = get_uom_conv_factor(from_uom, to_uom)
 
     if flt(factor) > 0:
         return flt(factor)
@@ -383,6 +442,20 @@ class ProductProposalTrial(Document):
                     "Only an Approved Trial can "
                     "be marked as Final Trial."
                 )
+            )
+
+        proposal_docstatus = frappe.db.get_value(
+            "Product Proposal",
+            self.product_proposal,
+            "docstatus",
+        )
+
+        if cint(proposal_docstatus) != 1:
+            frappe.throw(
+                _(
+                    "Product Proposal {0} must be submitted "
+                    "before a Trial can be marked as Final."
+                ).format(self.product_proposal)
             )
 
         filters = {
@@ -1161,6 +1234,86 @@ def compare_trials(
 
 
 @frappe.whitelist()
+def get_bom_uom_conversion_factors(conversions):
+    """Resolve BOM import UOM conversions using configured ERPNext data."""
+    conversions = frappe.parse_json(conversions)
+
+    if not isinstance(conversions, list):
+        frappe.throw(
+            frappe._("UOM conversions must be provided as a list.")
+        )
+
+    if len(conversions) > 500:
+        frappe.throw(
+            frappe._("A maximum of 500 UOM conversions can be resolved at once.")
+        )
+
+    item_codes = list(
+        dict.fromkeys(
+            cstr(row.get("item_code") or "").strip()
+            for row in conversions
+            if isinstance(row, dict) and row.get("item_code")
+        )
+    )
+
+    items = {}
+
+    if item_codes:
+        items = {
+            row.name: row
+            for row in frappe.get_all(
+                "Item",
+                filters={"name": ["in", item_codes]},
+                fields=["name", "stock_uom", "variant_of"],
+                limit_page_length=len(item_codes),
+            )
+        }
+
+    results = []
+
+    for position, request in enumerate(conversions):
+        if not isinstance(request, dict):
+            request = {}
+
+        item_code = cstr(request.get("item_code") or "").strip()
+        from_uom = cstr(request.get("from_uom") or "").strip()
+        to_uom = cstr(request.get("to_uom") or "").strip()
+        key = request.get("key", position)
+
+        result = {
+            "key": key,
+            "item_code": item_code,
+            "from_uom": from_uom,
+            "to_uom": to_uom,
+            "factor": None,
+            "status": "Missing Conversion",
+        }
+
+        item = items.get(item_code)
+
+        if not item:
+            result["status"] = "Missing Item"
+            results.append(result)
+            continue
+
+        factor = _get_item_uom_conversion_factor(
+            item_code,
+            from_uom,
+            to_uom,
+            item.stock_uom,
+            item.variant_of,
+        )
+
+        if flt(factor) > 0:
+            result["factor"] = flt(factor)
+            result["status"] = "OK"
+
+        results.append(result)
+
+    return results
+
+
+@frappe.whitelist()
 def get_bom_trial_snapshot(
     product_proposal,
     trial_name=None,
@@ -1201,6 +1354,7 @@ def get_bom_trial_snapshot(
             "Product Proposal Trial",
             trial_name,
         )
+        trial.check_permission("read")
 
         if (
             trial.product_proposal
@@ -1263,6 +1417,7 @@ def get_bom_trial_snapshot(
             "Product Proposal Trial",
             trials[0].name,
         )
+        trial.check_permission("read")
 
     source_qty = (
         flt(trial.actual_produced_qty)

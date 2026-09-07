@@ -72,11 +72,6 @@
    "default": "0"
   },
   {
-   "fieldname": "trial_details_section",
-   "fieldtype": "Section Break",
-   "label": "Trial Details"
-  },
-  {
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date",
@@ -90,10 +85,6 @@
    "label": "Trial User",
    "options": "User",
    "read_only": 1
-  },
-  {
-   "fieldname": "trial_column",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "planned_cooking_qty",
@@ -119,11 +110,6 @@
    "fieldname": "remark",
    "fieldtype": "Small Text",
    "label": "Remark"
-  },
-  {
-   "fieldname": "items_section",
-   "fieldtype": "Section Break",
-   "label": "Trial Items"
   },
   {
    "fieldname": "items",
@@ -155,8 +141,7 @@
    "fieldname": "system_information",
    "fieldtype": "Section Break",
    "label": "System Information",
-   "collapsible": 1,
-   "collapsible_depends_on": "eval:0"
+   "collapsible": 1
   },
   {
    "fieldname": "system_column",

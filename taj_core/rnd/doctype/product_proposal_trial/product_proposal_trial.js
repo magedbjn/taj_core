@@ -23,6 +23,14 @@ frappe.ui.form.on('Product Proposal Trial', {
             );
         }
 
+        if (!frm.is_new() && frm.doc.product_proposal) {
+            frm.add_custom_button(
+                __('Sensory Rating Form'),
+                () => open_sensory_rating_form(frm),
+                __('Sensory')
+            );
+        }
+
         set_trial_snapshot_read_only(frm);
 
         if (
@@ -148,5 +156,19 @@ function show_cost_summary_alert(summary) {
                 : 'green'
         },
         7
+    );
+}
+
+
+function open_sensory_rating_form(frm) {
+    const query = new URLSearchParams({
+        item: frm.doc.product_proposal,
+        trial_document: frm.doc.name
+    });
+
+    window.open(
+        `/sensory-rating?${query.toString()}`,
+        '_blank',
+        'noopener'
     );
 }

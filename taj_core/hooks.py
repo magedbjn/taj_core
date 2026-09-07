@@ -136,14 +136,3 @@ doc_events = {
 
 after_install = "taj_core.install.after_install"
 before_uninstall = "taj_core.uninstall.before_uninstall"
-after_migrate = "taj_core.install.after_migrate"
-
-fixtures = [
-    {
-        "dt": "Custom Field",
-        "filters": [
-            ["dt", "in", ["Gratuity Rule"]],
-            ["fieldname", "like", "custom_%"]
-        ]
-    }
-]

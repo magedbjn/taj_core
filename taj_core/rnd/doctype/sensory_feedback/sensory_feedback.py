@@ -4,7 +4,37 @@ from frappe.model.document import Document
 from frappe.utils import today, getdate, formatdate
 
 class SensoryFeedback(Document):
-    pass
+    def validate(self):
+        self.validate_trial_document()
+
+    def validate_trial_document(self):
+        trial_document = getattr(
+            self,
+            "trial_document",
+            None,
+        )
+
+        if not trial_document:
+            return
+
+        trial_proposal = frappe.db.get_value(
+            "Product Proposal Trial",
+            trial_document,
+            "product_proposal",
+        )
+
+        if not trial_proposal:
+            frappe.throw(
+                _("Selected Trial Cooking does not exist.")
+            )
+
+        if trial_proposal != (self.item or "").strip():
+            frappe.throw(
+                _(
+                    "Selected Trial Cooking does not belong "
+                    "to this Product Proposal."
+                )
+            )
 
 
 def sync_to_product_proposal(doc: "SensoryFeedback", method=None):
@@ -34,28 +64,6 @@ def sync_to_product_proposal(doc: "SensoryFeedback", method=None):
         "trial_document",
         None,
     )
-
-    if trial_document:
-        trial_proposal = frappe.db.get_value(
-            "Product Proposal Trial",
-            trial_document,
-            "product_proposal",
-        )
-
-        if not trial_proposal:
-            frappe.throw(
-                _(
-                    "Selected Trial Cooking does not exist."
-                )
-            )
-
-        if trial_proposal != item_name:
-            frappe.throw(
-                _(
-                    "Selected Trial Cooking does not belong "
-                    "to this Product Proposal."
-                )
-            )
 
     row_values = {
         "evaluation_date": eval_date_str,

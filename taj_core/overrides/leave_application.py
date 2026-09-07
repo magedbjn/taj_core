@@ -1,5 +1,5 @@
 # taj_core/overrides/leave_application.py
-# HRMS: v15.55.0
+# HRMS compatibility reviewed against v15.63.3
 #
 # -------------------------------------------------------------------------
 # Customization Note

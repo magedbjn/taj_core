@@ -6,7 +6,6 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_uy4t",
-  "amended_from",
   "buffet",
   "buffet_company",
   "person_qty",
@@ -16,16 +15,6 @@
   {
    "fieldname": "section_break_uy4t",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Catering Center Buffet",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
   },
   {
    "fieldname": "buffet",

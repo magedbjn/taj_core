@@ -47,6 +47,20 @@
   },
   {
    "allow_read_on_all_link_options": 0,
+   "fieldname": "trial_document",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Trial Cooking",
+   "max_length": 0,
+   "max_value": 0,
+   "options": "Product Proposal Trial",
+   "precision": "",
+   "read_only": 1,
+   "reqd": 0,
+   "show_in_filter": 0
+  },
+  {
+   "allow_read_on_all_link_options": 0,
    "default": "Today",
    "fieldname": "evaluation_date",
    "fieldtype": "Date",

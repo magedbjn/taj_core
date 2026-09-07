@@ -2,7 +2,7 @@
 // الهدف:
 // - Fetch من Product Proposal إلى BOM (كل الأصناف) مع الحفاظ على الترتيب
 // - تسريع الأداء عبر Batch Fetch (بدون استعلام لكل صف)
-// - تحويل الوحدات (g/kg/mg فقط) + خيار تحويل دائم
+// - تحويل الوحدات باستخدام إعدادات ERPNext الفعلية فقط
 // - تحسين تجربة المستخدم (Confirm قبل مسح items)
 // - تحسين قابلية الصيانة (ربط حقول الوزن بشكل ديناميكي)
 
@@ -23,12 +23,20 @@
 
   frappe.ui.form.on('BOM', {
     refresh(frm) {
-      if (frm.is_new()) {
-        frm.add_custom_button(__('Fetch from Product Proposal'), () => simpleFetchFromProductProposal(frm));
-      }
-      frm._debounced_refetch = debounce(() => {
-        if (frm._pp_cache?.source_pp) refetchFromProductProposal(frm, frm._pp_cache.source_pp);
-      }, 350);
+      if (frm.doc.docstatus !== 0) return;
+
+      const hasTrialSource = Boolean(
+        frm.doc.taj_product_proposal &&
+        frm.doc.taj_product_proposal_trial
+      );
+
+      frm.add_custom_button(
+        hasTrialSource
+          ? __('Refresh from Trial')
+          : __('Fetch from Product Proposal'),
+        () => simpleFetchFromProductProposal(frm),
+        __('Trial Source')
+      );
     },
 
     validate(frm) {
@@ -66,28 +74,24 @@ function calculate_totals(frm) {
 // -------------------------------
 // 3) Helpers
 // -------------------------------
-function debounce(fn, wait) {
-  let t;
-  return function (...args) {
-    clearTimeout(t);
-    t = setTimeout(() => fn.apply(this, args), wait);
-  };
-}
-
 function flt(n) {
   const x = parseFloat(n);
   return isNaN(x) ? 0 : x;
 }
 
-function showPermissionError() {
-  frappe.msgprint({
-    title: __('Permission Error'),
-    message: __(
-      'You do not have permission to access some resources. ' +
-      'Please contact your system administrator to ensure you have permissions for: ' +
-      'Product Proposal, BOM, and Item'
-    ),
-    indicator: 'red'
+function confirmReplaceBOMItems(frm) {
+  if (!(frm.doc.items || []).length) {
+    return Promise.resolve(true);
+  }
+
+  return new Promise(resolve => {
+    frappe.confirm(
+      __(
+        'Fetching the Trial will replace the current BOM Items. Continue?'
+      ),
+      () => resolve(true),
+      () => resolve(false)
+    );
   });
 }
 
@@ -128,6 +132,24 @@ async function fetchBOMData(bomNames) {
 
   const out = {};
   (r.message || []).forEach(b => { out[b.name] = b; });
+  return out;
+}
+
+async function fetchUomConversionFactors(conversions) {
+  if (!conversions.length) return {};
+
+  const r = await frappe.call({
+    method:
+      'taj_core.rnd.doctype.product_proposal_trial.product_proposal_trial.get_bom_uom_conversion_factors',
+    args: {
+      conversions: JSON.stringify(conversions)
+    }
+  });
+
+  const out = {};
+  (r.message || []).forEach(row => {
+    out[row.key] = row;
+  });
   return out;
 }
 
@@ -188,11 +210,11 @@ function validatePPItems(pp_items) {
 // -------------------------------
 function simpleFetchFromProductProposal(frm) {
   const pp_name =
-    frm.doc.custom_product_proposal ||
+    frm.doc.taj_product_proposal ||
     frm._pp_cache?.source_pp;
 
   const trial_name =
-    frm.doc.custom_product_proposal_trial ||
+    frm.doc.taj_product_proposal_trial ||
     frm._pp_cache?.source_trial;
 
   if (pp_name && trial_name) {
@@ -240,7 +262,7 @@ function open_pp_dialog_and_fetch(frm) {
         options: 'Product Proposal',
         reqd: 1,
         default:
-          frm.doc.custom_product_proposal || '',
+          frm.doc.taj_product_proposal || '',
         get_query() {
           return {
             filters: {
@@ -285,6 +307,15 @@ function open_pp_dialog_and_fetch(frm) {
           return;
         }
 
+        if (!(await confirmReplaceBOMItems(frm))) {
+          frappe.hide_progress();
+          d.get_primary_btn().prop(
+            'disabled',
+            false
+          );
+          return;
+        }
+
         const source_doc = {
           name: snapshot.trial_name,
           source_label:
@@ -309,12 +340,12 @@ function open_pp_dialog_and_fetch(frm) {
         );
 
         await frm.set_value(
-          'custom_product_proposal',
+          'taj_product_proposal',
           snapshot.product_proposal
         );
 
         await frm.set_value(
-          'custom_product_proposal_trial',
+          'taj_product_proposal_trial',
           snapshot.trial_name
         );
 
@@ -388,6 +419,10 @@ async function refetchFromProductProposal(
       return;
     }
 
+    if (!(await confirmReplaceBOMItems(frm))) {
+      return;
+    }
+
     const source_doc = {
       name: snapshot.trial_name,
       source_label:
@@ -410,12 +445,12 @@ async function refetchFromProductProposal(
     );
 
     await frm.set_value(
-      'custom_product_proposal',
+      'taj_product_proposal',
       snapshot.product_proposal
     );
 
     await frm.set_value(
-      'custom_product_proposal_trial',
+      'taj_product_proposal_trial',
       snapshot.trial_name
     );
 
@@ -448,97 +483,199 @@ async function refetchFromProductProposal(
 async function processProductProposalDataOptimized(frm, pp_doc) {
   try {
     const bom_qty = flt(frm.doc.quantity);
-    const pp_qty  = flt(pp_doc.quantity || 1);
-    const ratio   = (bom_qty > 0 && pp_qty > 0) ? (bom_qty / pp_qty) : 1;
+    const pp_qty = flt(pp_doc.quantity || 1);
+    const ratio =
+      (bom_qty > 0 && pp_qty > 0)
+        ? (bom_qty / pp_qty)
+        : 1;
 
-    // دائمًا نحول الوحدة بعد النقل (حسب طلبك)
-    const SHOULD_CONVERT_UNITS = true;
-
-    // اجمع الأكواد و pre_bom للـ batch fetch
     const pp_items = pp_doc.pp_items || [];
-    const preBoms = pp_items.map(x => x.pre_bom).filter(Boolean);
-    const itemCodes = pp_items.map(x => x.item_code).filter(Boolean);
+    const preBoms = pp_items
+      .map(row => row.pre_bom)
+      .filter(Boolean);
+    const itemCodes = pp_items
+      .map(row => row.item_code)
+      .filter(Boolean);
 
-    // جلب البيانات مرة واحدة
-    frappe.show_progress(__('Fetching Data'), 45, 100, __('Fetching Items/BOMs in batch...'));
+    frappe.show_progress(
+      __('Fetching Data'),
+      45,
+      100,
+      __('Fetching Items/BOMs in batch...')
+    );
+
     const [itemsMap, bomsMap] = await Promise.all([
       fetchItemsData(itemCodes),
       fetchBOMData(preBoms)
     ]);
 
-    // امسح الجدول مرة واحدة
+    // Resolve the target Item/UOM first. Do not clear the BOM table until
+    // every required conversion has been validated by ERPNext data.
+    const preparedRows = pp_items.map((pp_item, index) => {
+      const code = (pp_item.item_code || '')
+        .toString()
+        .trim();
+
+      if (!code) return null;
+
+      let resolved_item_code = code;
+      const original_uom = pp_item.uom;
+      let target_uom = original_uom;
+
+      if (
+        pp_item.pre_bom &&
+        bomsMap[pp_item.pre_bom]
+      ) {
+        const sourceBom = bomsMap[pp_item.pre_bom];
+
+        if (sourceBom.item) {
+          resolved_item_code = sourceBom.item;
+        }
+
+        if (sourceBom.uom) {
+          target_uom = sourceBom.uom;
+        }
+      } else {
+        const item = itemsMap[resolved_item_code];
+        if (item?.stock_uom) {
+          target_uom = item.stock_uom;
+        }
+      }
+
+      return {
+        key: index,
+        index,
+        pp_item,
+        resolved_item_code,
+        original_uom,
+        target_uom
+      };
+    }).filter(Boolean);
+
+    const conversionRequests = preparedRows
+      .filter(row => (
+        row.original_uom &&
+        row.target_uom &&
+        row.original_uom !== row.target_uom
+      ))
+      .map(row => ({
+        key: row.key,
+        item_code: row.resolved_item_code,
+        from_uom: row.original_uom,
+        to_uom: row.target_uom
+      }));
+
+    frappe.show_progress(
+      __('Fetching Data'),
+      48,
+      100,
+      __('Validating UOM conversions...')
+    );
+
+    const conversionMap =
+      await fetchUomConversionFactors(
+        conversionRequests
+      );
+
+    const missingConversions = conversionRequests
+      .filter(request => (
+        conversionMap[request.key]?.status !== 'OK' ||
+        flt(conversionMap[request.key]?.factor) <= 0
+      ));
+
+    if (missingConversions.length) {
+      const rows = missingConversions
+        .map(request => (
+          `${request.key + 1}: ${request.item_code} ` +
+          `(${request.from_uom} -> ${request.to_uom})`
+        ))
+        .join(', ');
+
+      throw new Error(
+        __(
+          'Missing configured UOM conversion for: {0}. ' +
+          'Configure the Item/UOM conversion before fetching the Trial.',
+          [rows]
+        )
+      );
+    }
+
     frm.clear_table('items');
 
-    const total = pp_items.length;
+    const total = preparedRows.length;
 
     for (let i = 0; i < total; i++) {
-      const pp_item = pp_items[i];
+      const prepared = preparedRows[i];
+      const pp_item = prepared.pp_item;
 
-      const progress = 50 + Math.floor((i / Math.max(total, 1)) * 40);
-      frappe.show_progress(__('Processing'), progress, 100, __('Processing item {0} of {1}', [i + 1, total]));
+      const progress =
+        50 + Math.floor(
+          (i / Math.max(total, 1)) * 40
+        );
 
-      const code = (pp_item.item_code || '').toString().trim();
-      if (!code) continue;
+      frappe.show_progress(
+        __('Processing'),
+        progress,
+        100,
+        __('Processing item {0} of {1}', [
+          i + 1,
+          total
+        ])
+      );
 
-      // resolve item_code + target_uom
-      let resolved_item_code = code;
-      let original_uom = pp_item.uom;
-      let uom = pp_item.uom;
-      let target_uom = pp_item.uom;
-      let conversion_rate = 1;
+      const didConvert = Boolean(
+        prepared.original_uom &&
+        prepared.target_uom &&
+        prepared.original_uom !==
+          prepared.target_uom
+      );
 
-      // 1) لو pre_bom -> خذ item و uom من BOM
-      if (pp_item.pre_bom && bomsMap[pp_item.pre_bom]) {
-        const b = bomsMap[pp_item.pre_bom];
-        if (b.item) resolved_item_code = b.item;
+      const conversionRate = didConvert
+        ? flt(
+          conversionMap[prepared.key]?.factor
+        )
+        : 1;
 
-        if (SHOULD_CONVERT_UNITS && b.uom) {
-          target_uom = b.uom;
-        }
-      } else if (SHOULD_CONVERT_UNITS) {
-        // 2) بدون pre_bom -> خذ stock_uom من item
-        const it = itemsMap[resolved_item_code];
-        if (it?.stock_uom) target_uom = it.stock_uom;
-      }
-
-      // qty base
-      let final_qty = flt(pp_item.qty) * ratio;
-
-      // conversion (g/kg/mg فقط)
-      if (SHOULD_CONVERT_UNITS && target_uom && target_uom !== uom) {
-        conversion_rate = getConversionRate(original_uom, target_uom, resolved_item_code);
-        final_qty = flt(pp_item.qty) * conversion_rate * ratio;
-        uom = target_uom;
-      }
+      const finalQty =
+        flt(pp_item.qty) *
+        conversionRate *
+        ratio;
 
       await addBOMItemWithConversion(
         frm,
         pp_item,
-        resolved_item_code,
-        uom,
-        final_qty,
-        original_uom,
-        conversion_rate,
-        target_uom,
-        i,
-        SHOULD_CONVERT_UNITS
+        prepared.resolved_item_code,
+        prepared.target_uom ||
+          prepared.original_uom,
+        finalQty,
+        prepared.original_uom,
+        conversionRate,
+        prepared.target_uom,
+        prepared.index,
+        didConvert
       );
     }
 
-    // refresh مرة واحدة فقط
     frm.refresh_field('items');
 
-    // cache
     if (!frm._pp_cache) frm._pp_cache = {};
     frm._pp_cache.pp_doc_quantity = pp_doc.quantity;
     frm._pp_cache.row_lookup = {};
 
     (frm.doc.items || []).forEach(row => {
       const key = `${row.item_code}::${row.idx}`;
-      frm._pp_cache.row_lookup[key] = { pp_qty: row.__pp_qty, pp_uom: row.__pp_uom };
+      frm._pp_cache.row_lookup[key] = {
+        pp_qty: row.__pp_qty,
+        pp_uom: row.__pp_uom
+      };
     });
 
-    frappe.show_progress(__('Complete'), 100, 100, __('Finalizing...'));
+    frappe.show_progress(
+      __('Complete'),
+      100,
+      100,
+      __('Finalizing...')
+    );
     frappe.show_alert({
       message: __('Data fetched from {0}', [
         pp_doc.source_label || pp_doc.name
@@ -546,11 +683,15 @@ async function processProductProposalDataOptimized(frm, pp_doc) {
       indicator: 'green'
     });
     setTimeout(() => frappe.hide_progress(), 700);
-
   } catch (error) {
     console.error(error);
     frappe.hide_progress();
-    frappe.msgprint(__('Error processing data: {0}', [error.message || error]));
+    frappe.msgprint(
+      __('Error processing data: {0}', [
+        error.message || error
+      ])
+    );
+    throw error;
   }
 }
 
@@ -588,48 +729,4 @@ async function addBOMItemWithConversion(frm, pp_item, item_code, uom, final_qty,
   row.__did_convert = !!did_convert;
 
   return row;
-}
-
-// -------------------------------
-// 8) Conversion rates (g/kg/mg only; avoid L↔kg without density)
-// -------------------------------
-function getConversionRate(from_uom, to_uom, item_code) {
-    const norm = (x) => (x || '').toString().trim().toLowerCase();
-
-    const aliases = {
-        // weight
-        'g': 'g', 'gram': 'g', 'grams': 'g', 'جرام': 'g',
-        'kg': 'kg', 'kilogram': 'kg', 'kilograms': 'kg', 'كيلوجرام': 'kg',
-
-        // volume
-        'ml': 'ml', 'milliliter': 'ml', 'millilitre': 'ml', 'مليلتر': 'ml',
-        'l': 'l', 'liter': 'l', 'litre': 'l', 'لتر': 'l'
-    };
-
-    const f = aliases[norm(from_uom)] || norm(from_uom);
-    const t = aliases[norm(to_uom)] || norm(to_uom);
-
-    if (f === t) return 1;
-
-    // gram ⇄ milliliter
-    if (f === 'g' && t === 'ml') return 1;
-    if (f === 'ml' && t === 'g') return 1;
-
-    // kilogram ⇄ liter
-    if (f === 'kg' && t === 'l') return 1;
-    if (f === 'l' && t === 'kg') return 1;
-
-    // gram ⇄ liter
-    if (f === 'g' && t === 'l') return 1 / 1000;
-    if (f === 'l' && t === 'g') return 1000;
-
-    // kilogram ⇄ milliliter
-    if (f === 'kg' && t === 'ml') return 1000;
-    if (f === 'ml' && t === 'kg') return 1 / 1000;
-
-    // gram ⇄ kilogram
-    if (f === 'g' && t === 'kg') return 1 / 1000;
-    if (f === 'kg' && t === 'g') return 1000;
-
-    return 1;
 }
