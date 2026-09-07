@@ -1,22 +1,22 @@
 {
  "charts": [],
- "content": "[{\"id\":\"pzb8J-WM-C\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Checklist</span>\",\"col\":12}},{\"id\":\"A-BpHBE2-5\",\"type\":\"card\",\"data\":{\"card_name\":\"Question/Answer\",\"col\":4}},{\"id\":\"m2HPEI5-VF\",\"type\":\"card\",\"data\":{\"card_name\":\"Dashboard\",\"col\":4}}]",
- "creation": "2026-04-18 02:33:55.820758",
+ "content": "[{\"id\":\"wV-PVKXDEo\",\"type\":\"card\",\"data\":{\"card_name\":\"Catering\",\"col\":4}},{\"id\":\"RXOhHGyy68\",\"type\":\"card\",\"data\":{\"card_name\":\"Equipment\",\"col\":4}}]",
+ "creation": "2026-05-05 15:08:52.248457",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
- "icon": "check",
+ "icon": "customer",
  "idx": 0,
  "indicator_color": "green",
  "is_hidden": 0,
- "label": "Checklist",
+ "label": "Catering",
  "links": [
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Question/Answer",
+   "label": "Catering",
    "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
@@ -25,9 +25,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Checklist Question",
+   "label": "Catering Items",
    "link_count": 0,
-   "link_to": "Checklist Question",
+   "link_to": "Catering Items",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -35,9 +35,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Checklist Question Template",
+   "label": "Catering Menu",
    "link_count": 0,
-   "link_to": "Checklist Question Template",
+   "link_to": "Catering Menu",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -45,9 +45,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Checklist Answer",
+   "label": "Catering Capacity",
    "link_count": 0,
-   "link_to": "Checklist Answer",
+   "link_to": "Catering Capacity",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -55,9 +55,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Checklist Personal",
+   "label": "Catering Center",
    "link_count": 0,
-   "link_to": "Checklist Personal",
+   "link_to": "Catering Center",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -65,8 +65,8 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Dashboard",
-   "link_count": 2,
+   "label": "Equipment",
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -74,35 +74,45 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Checklist User",
+   "label": "Catering Equipment",
    "link_count": 0,
-   "link_to": "checklist-user",
-   "link_type": "Page",
+   "link_to": "Catering Equipment",
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   },
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Checklist Admin",
+   "label": "Catering Equipment Delivery",
    "link_count": 0,
-   "link_to": "checklist-admin",
-   "link_type": "Page",
+   "link_to": "Catering Equipment Delivery",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catering Equipment Return",
+   "link_count": 0,
+   "link_to": "Catering Equipment Return",
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-04-20 08:28:03.886106",
+ "modified": "2026-05-10 14:10:58.082050",
  "modified_by": "Administrator",
- "module": "Company Documents",
- "name": "Checklist",
+ "module": "Catering",
+ "name": "Catering",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "Taj",
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 40.0,
+ "sequence_id": 41.0,
  "shortcuts": [],
- "title": "Checklist"
+ "title": "Catering"
 }

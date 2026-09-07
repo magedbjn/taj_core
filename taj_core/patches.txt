@@ -18,3 +18,4 @@ taj_core.patches.2026_09_06_fix_product_proposal_is_default
 taj_core.patches.2026_09_06_fix_sensory_status_typo
 taj_core.patches.2026_09_06_seed_rnd_settings
 taj_core.patches.2026_09_06_seed_pick_list_parent_warehouse
+taj_core.patches.2026_09_07_reorganize_workspaces
