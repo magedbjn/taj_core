@@ -580,3 +580,131 @@ class TestSchedulerGuards(TestCase):
         )
 
         self.assertIsNone(pattern.search(source))
+
+
+class TestSourceLayoutGuards(TestCase):
+    def test_fixture_custom_fields_use_taj_prefix(self):
+        violations = []
+
+        for path in sorted((PACKAGE_ROOT / "fixtures").glob("*.json")):
+            data = json.loads(path.read_text())
+            rows = data if isinstance(data, list) else [data]
+
+            for row in rows:
+                if row.get("doctype") != "Custom Field":
+                    continue
+
+                fieldname = row.get("fieldname") or ""
+                if not fieldname.startswith("taj_"):
+                    violations.append(
+                        f"{path.name}: {row.get('dt')}.{fieldname}"
+                    )
+
+        self.assertEqual([], violations)
+
+    def test_standard_manufacturing_workspace_is_not_a_fixture(self):
+        self.assertFalse(
+            (PACKAGE_ROOT / "fixtures" / "workspace.json").exists()
+        )
+
+        production = json.loads(
+            (
+                PACKAGE_ROOT
+                / "taj_manufacturing/workspace/production/production.json"
+            ).read_text()
+        )
+        self.assertTrue(
+            any(
+                row.get("link_to") == "job-card-board"
+                for row in production.get("links", [])
+            )
+        )
+
+    def test_workspace_card_link_counts_match(self):
+        violations = []
+
+        for path in PACKAGE_ROOT.rglob("workspace/*/*.json"):
+            data = json.loads(path.read_text())
+            links = data.get("links", [])
+
+            for index, row in enumerate(links):
+                if row.get("type") != "Card Break":
+                    continue
+
+                actual = 0
+                for child in links[index + 1 :]:
+                    if child.get("type") == "Card Break":
+                        break
+                    if child.get("type") == "Link":
+                        actual += 1
+
+                if row.get("link_count", 0) != actual:
+                    violations.append(
+                        f"{path.relative_to(PACKAGE_ROOT)}: "
+                        f"{row.get('label')} "
+                        f"declares {row.get('link_count', 0)}, actual {actual}"
+                    )
+
+        self.assertEqual([], violations)
+
+    def test_trial_fields_are_present_in_field_order(self):
+        path = (
+            PACKAGE_ROOT
+            / "rnd/doctype/product_proposal_trial/product_proposal_trial.json"
+        )
+        data = json.loads(path.read_text())
+        field_order = set(data.get("field_order", []))
+        fieldnames = {
+            row.get("fieldname")
+            for row in data.get("fields", [])
+        }
+
+        self.assertEqual(fieldnames, field_order)
+        self.assertNotIn("trial_details_section", fieldnames)
+        self.assertNotIn("trial_column", fieldnames)
+        self.assertNotIn("items_section", fieldnames)
+
+    def test_bom_trial_source_fields_use_taj_prefix(self):
+        data = json.loads(
+            (PACKAGE_ROOT / "fixtures/bom.json").read_text()
+        )
+        fieldnames = {
+            row.get("fieldname")
+            for row in data
+        }
+
+        self.assertIn("taj_product_proposal", fieldnames)
+        self.assertIn("taj_product_proposal_trial", fieldnames)
+        self.assertNotIn("custom_product_proposal", fieldnames)
+        self.assertNotIn("custom_product_proposal_trial", fieldnames)
+
+        source = read("public/js/bom.js")
+        self.assertNotIn("custom_product_proposal", source)
+        self.assertNotIn("getConversionRate", source)
+        self.assertIn("get_bom_uom_conversion_factors", source)
+
+        trial_source = read(
+            "rnd/doctype/product_proposal_trial/"
+            "product_proposal_trial.py"
+        )
+        self.assertGreaterEqual(
+            trial_source.count('trial.check_permission("read")'),
+            2,
+        )
+
+    def test_custom_fields_have_one_deployment_source(self):
+        hooks = read("hooks.py")
+        setup = read("setup.py")
+
+        self.assertNotIn("fixtures =", hooks)
+        self.assertNotIn("create_custom_fields", setup)
+
+    def test_legacy_unregistered_patch_files_are_removed(self):
+        for filename in (
+            "bom_rename_fields.py",
+            "fix_workspaces.py",
+            "remove_field4.py",
+        ):
+            self.assertFalse(
+                (PACKAGE_ROOT / "patches" / filename).exists()
+            )

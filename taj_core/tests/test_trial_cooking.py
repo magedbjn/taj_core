@@ -7,6 +7,7 @@ import frappe
 from taj_core.rnd.doctype.product_proposal_trial.product_proposal_trial import (
     ProductProposalTrial,
     _compare_item_rows,
+    _get_item_uom_conversion_factor,
 )
 
 
@@ -190,6 +191,74 @@ class TestTrialCooking(unittest.TestCase):
             ProductProposalTrial.validate_frozen_snapshot(
                 FakeTrial()
             )
+
+
+    def test_final_trial_requires_submitted_product_proposal(self):
+        fake = SimpleNamespace(
+            is_final_trial=1,
+            status="Approved",
+            product_proposal="PP-TEST",
+        )
+
+        module = (
+            "taj_core.rnd.doctype."
+            "product_proposal_trial."
+            "product_proposal_trial"
+        )
+
+        with patch(
+            f"{module}.frappe.db.get_value",
+            return_value=0,
+        ):
+            with self.assertRaises(
+                frappe.ValidationError
+            ):
+                ProductProposalTrial.validate_final_trial(
+                    fake
+                )
+
+    def test_item_uom_conversion_uses_stock_uom_ratio(self):
+        module = (
+            "taj_core.rnd.doctype."
+            "product_proposal_trial."
+            "product_proposal_trial"
+        )
+
+        with patch(
+            f"{module}._get_item_uom_factor_to_stock",
+            side_effect=[0.001, 1],
+        ):
+            factor = _get_item_uom_conversion_factor(
+                "ITEM-A",
+                "Gram",
+                "Kg",
+                "Kg",
+            )
+
+        self.assertAlmostEqual(factor, 0.001)
+
+    def test_item_uom_conversion_does_not_invent_missing_factor(self):
+        module = (
+            "taj_core.rnd.doctype."
+            "product_proposal_trial."
+            "product_proposal_trial"
+        )
+
+        with patch(
+            f"{module}._get_item_uom_factor_to_stock",
+            return_value=None,
+        ), patch(
+            f"{module}.get_uom_conv_factor",
+            return_value=None,
+        ):
+            factor = _get_item_uom_conversion_factor(
+                "ITEM-A",
+                "Gram",
+                "Litre",
+                "Kg",
+            )
+
+        self.assertIsNone(factor)
 
 
     def test_cost_uses_valuation_rate_when_uom_matches(self):
@@ -528,6 +597,35 @@ class TestTrialCooking(unittest.TestCase):
         )
 
         valuation_mock.assert_not_called()
+
+
+class TestSensoryTrialLink(unittest.TestCase):
+    def test_trial_link_must_match_product_proposal(self):
+        from taj_core.rnd.doctype.sensory_feedback.sensory_feedback import (
+            SensoryFeedback,
+        )
+
+        fake = SimpleNamespace(
+            trial_document="PP-OTHER-TRIAL-01",
+            item="PP-TEST",
+        )
+
+        module = (
+            "taj_core.rnd.doctype."
+            "sensory_feedback.sensory_feedback"
+        )
+
+        with patch(
+            f"{module}.frappe.db.get_value",
+            return_value="PP-OTHER",
+        ):
+            with self.assertRaises(
+                frappe.ValidationError
+            ):
+                SensoryFeedback.validate_trial_document(
+                    fake
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -272,3 +272,48 @@ class TestLiveSchemaIntegration(TestCase):
             [],
             missing,
         )
+
+
+class TestLiveDeploymentLayout(TestCase):
+    def test_bom_trial_source_fields_use_taj_names(self):
+        meta = frappe.get_meta("BOM")
+
+        self.assertTrue(meta.has_field("taj_product_proposal"))
+        self.assertTrue(
+            meta.has_field("taj_product_proposal_trial")
+        )
+        self.assertFalse(
+            meta.has_field("custom_product_proposal")
+        )
+        self.assertFalse(
+            meta.has_field("custom_product_proposal_trial")
+        )
+
+    def test_job_card_board_lives_in_taj_production_workspace(self):
+        production = frappe.get_doc("Workspace", "Production")
+        manufacturing = frappe.get_doc(
+            "Workspace",
+            "Manufacturing",
+        )
+
+        self.assertTrue(
+            any(
+                row.link_to == "job-card-board"
+                for row in production.links
+            )
+        )
+        self.assertFalse(
+            any(
+                row.link_to == "job-card-board"
+                for row in manufacturing.links
+            )
+        )
+
+    def test_checklist_workspace_has_no_dangling_personal_doctype(self):
+        checklist = frappe.get_doc("Workspace", "Checklist")
+        self.assertFalse(
+            any(
+                row.link_to == "Checklist Personal"
+                for row in checklist.links
+            )
+        )
