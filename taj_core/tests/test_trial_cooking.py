@@ -213,39 +213,68 @@ class TestTrialCooking(unittest.TestCase):
         )
 
         fake.set_totals = lambda: (
-            ProductProposalTrial.set_totals(
-                fake
-            )
+            ProductProposalTrial.set_totals(fake)
+        )
+
+        module = (
+            "taj_core.rnd.doctype."
+            "product_proposal_trial."
+            "product_proposal_trial"
         )
 
         with patch(
-            "taj_core.rnd.doctype."
-            "product_proposal_trial."
-            "product_proposal_trial."
-            "frappe.get_all",
+            f"{module}.frappe.db.get_single_value",
+            return_value="Taj Foods",
+        ), patch(
+            f"{module}.frappe.get_all",
             return_value=[
                 frappe._dict({
                     "name": "ITEM-A",
                     "stock_uom": "Kg",
-                    "valuation_rate": 5,
                     "last_purchase_rate": 8,
+                    "variant_of": "",
                 })
             ],
+        ), patch(
+            f"{module}._get_trial_conversion_factor",
+            return_value=1,
+        ), patch(
+            f"{module}.get_valuation_rate",
+            return_value=5,
         ):
             summary = (
                 ProductProposalTrial
-                .refresh_costs_from_items(
-                    fake
-                )
+                .refresh_costs_from_items(fake)
             )
 
+        self.assertEqual(summary["costed"], 1)
         self.assertEqual(
-            summary["costed"],
-            1,
+            summary["missing_conversion"],
+            0,
         )
         self.assertEqual(
             row.cost_source,
             "Valuation Rate",
+        )
+        self.assertEqual(
+            row.cost_status,
+            "OK",
+        )
+        self.assertEqual(
+            row.stock_uom,
+            "Kg",
+        )
+        self.assertEqual(
+            row.conversion_factor,
+            1,
+        )
+        self.assertEqual(
+            row.stock_qty,
+            2,
+        )
+        self.assertEqual(
+            row.unit_cost,
+            5,
         )
         self.assertEqual(
             row.amount,
@@ -277,39 +306,63 @@ class TestTrialCooking(unittest.TestCase):
         )
 
         fake.set_totals = lambda: (
-            ProductProposalTrial.set_totals(
-                fake
-            )
+            ProductProposalTrial.set_totals(fake)
+        )
+
+        module = (
+            "taj_core.rnd.doctype."
+            "product_proposal_trial."
+            "product_proposal_trial"
         )
 
         with patch(
-            "taj_core.rnd.doctype."
-            "product_proposal_trial."
-            "product_proposal_trial."
-            "frappe.get_all",
+            f"{module}.frappe.db.get_single_value",
+            return_value="Taj Foods",
+        ), patch(
+            f"{module}.frappe.get_all",
             return_value=[
                 frappe._dict({
                     "name": "ITEM-A",
                     "stock_uom": "Kg",
-                    "valuation_rate": 0,
                     "last_purchase_rate": 7,
+                    "variant_of": "",
                 })
             ],
+        ), patch(
+            f"{module}._get_trial_conversion_factor",
+            return_value=1,
+        ), patch(
+            f"{module}.get_valuation_rate",
+            return_value=0,
         ):
-            ProductProposalTrial.refresh_costs_from_items(
-                fake
+            summary = (
+                ProductProposalTrial
+                .refresh_costs_from_items(fake)
             )
 
+        self.assertEqual(summary["costed"], 1)
         self.assertEqual(
             row.cost_source,
             "Last Purchase Rate",
         )
         self.assertEqual(
+            row.cost_status,
+            "OK",
+        )
+        self.assertEqual(
+            row.unit_cost,
+            7,
+        )
+        self.assertEqual(
             row.amount,
             21,
         )
+        self.assertEqual(
+            fake.total_cost,
+            21,
+        )
 
-    def test_cost_ignores_uom_mismatch(self):
+    def test_cost_uses_uom_conversion(self):
         row = frappe._dict({
             "item_code": "ITEM-A",
             "qty": 500,
@@ -330,39 +383,140 @@ class TestTrialCooking(unittest.TestCase):
         )
 
         fake.set_totals = lambda: (
-            ProductProposalTrial.set_totals(
-                fake
-            )
+            ProductProposalTrial.set_totals(fake)
+        )
+
+        module = (
+            "taj_core.rnd.doctype."
+            "product_proposal_trial."
+            "product_proposal_trial"
         )
 
         with patch(
-            "taj_core.rnd.doctype."
-            "product_proposal_trial."
-            "product_proposal_trial."
-            "frappe.get_all",
+            f"{module}.frappe.db.get_single_value",
+            return_value="Taj Foods",
+        ), patch(
+            f"{module}.frappe.get_all",
             return_value=[
                 frappe._dict({
                     "name": "ITEM-A",
                     "stock_uom": "Kg",
-                    "valuation_rate": 10,
                     "last_purchase_rate": 12,
+                    "variant_of": "",
                 })
             ],
+        ), patch(
+            f"{module}._get_trial_conversion_factor",
+            return_value=0.001,
+        ), patch(
+            f"{module}.get_valuation_rate",
+            return_value=10,
         ):
             summary = (
                 ProductProposalTrial
-                .refresh_costs_from_items(
-                    fake
-                )
+                .refresh_costs_from_items(fake)
             )
 
+        self.assertEqual(summary["costed"], 1)
         self.assertEqual(
-            summary["uom_mismatch"],
+            row.cost_status,
+            "OK",
+        )
+        self.assertAlmostEqual(
+            row.conversion_factor,
+            0.001,
+        )
+        self.assertAlmostEqual(
+            row.stock_qty,
+            0.5,
+        )
+        self.assertAlmostEqual(
+            row.unit_cost,
+            0.01,
+        )
+        self.assertAlmostEqual(
+            row.amount,
+            5,
+        )
+        self.assertAlmostEqual(
+            fake.total_cost,
+            5,
+        )
+
+    def test_cost_marks_missing_conversion(self):
+        row = frappe._dict({
+            "item_code": "ITEM-A",
+            "qty": 500,
+            "uom": "Gram",
+            "stock_uom": None,
+            "conversion_factor": 0,
+            "stock_qty": 0,
+            "unit_cost": 0,
+            "amount": 0,
+            "cost_source": "",
+            "cost_status": "",
+        })
+
+        fake = SimpleNamespace(
+            items=[row],
+            total_items=0,
+            total_cost=0,
+        )
+
+        fake.set_totals = lambda: (
+            ProductProposalTrial.set_totals(fake)
+        )
+
+        module = (
+            "taj_core.rnd.doctype."
+            "product_proposal_trial."
+            "product_proposal_trial"
+        )
+
+        with patch(
+            f"{module}.frappe.db.get_single_value",
+            return_value="Taj Foods",
+        ), patch(
+            f"{module}.frappe.get_all",
+            return_value=[
+                frappe._dict({
+                    "name": "ITEM-A",
+                    "stock_uom": "Litre",
+                    "last_purchase_rate": 12,
+                    "variant_of": "",
+                })
+            ],
+        ), patch(
+            f"{module}._get_trial_conversion_factor",
+            return_value=None,
+        ), patch(
+            f"{module}.get_valuation_rate",
+        ) as valuation_mock:
+            summary = (
+                ProductProposalTrial
+                .refresh_costs_from_items(fake)
+            )
+
+        self.assertEqual(summary["costed"], 0)
+        self.assertEqual(
+            summary["missing_conversion"],
             1,
         )
         self.assertEqual(
             row.cost_status,
-            "UOM Mismatch",
+            "Missing Conversion",
+        )
+        self.assertEqual(
+            row.conversion_factor,
+            0,
+        )
+        self.assertEqual(
+            row.stock_qty,
+            0,
+        )
+        self.assertEqual(
+            row.unit_cost,
+            0,
         )
         self.assertEqual(
             row.amount,
@@ -373,6 +527,7 @@ class TestTrialCooking(unittest.TestCase):
             0,
         )
 
+        valuation_mock.assert_not_called()
 
 if __name__ == "__main__":
     unittest.main()
