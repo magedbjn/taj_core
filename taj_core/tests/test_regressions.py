@@ -134,3 +134,66 @@ class TestExpenseClaimWorkflowTransition(TestCase):
             claim,
             "Paid",
         )
+
+
+class TestProductProposalWritePermissions(TestCase):
+    def test_link_existing_item_requires_write_permission(self):
+        import frappe
+        from unittest.mock import Mock
+
+        from taj_core.rnd.doctype.product_proposal.product_proposal import (
+            ProductProposal,
+        )
+
+        proposal = Mock()
+        proposal.check_permission.side_effect = frappe.PermissionError
+
+        with self.assertRaises(frappe.PermissionError):
+            ProductProposal.link_existing_item(
+                proposal,
+                "TEST-ITEM-001",
+            )
+
+        proposal.check_permission.assert_called_once_with("write")
+        proposal.db_set.assert_not_called()
+
+    def test_sync_preparation_bom_requires_write_permission(self):
+        import frappe
+        from types import SimpleNamespace
+        from unittest.mock import Mock, patch
+
+        from taj_core.rnd.doctype.product_proposal.product_proposal import (
+            ProductProposal,
+        )
+
+        proposal = Mock()
+        proposal.check_permission.side_effect = frappe.PermissionError
+        proposal.get.return_value = [
+            SimpleNamespace(
+                name="TEST-ROW-001",
+                item_code="TEST-RAW-001",
+                pre_bom=None,
+            )
+        ]
+
+        with (
+            patch(
+                "taj_core.rnd.doctype.product_proposal."
+                "product_proposal.frappe.get_all"
+            ) as mock_get_all,
+            patch(
+                "taj_core.rnd.doctype.product_proposal."
+                "product_proposal.frappe.db.set_value"
+            ) as mock_set_value,
+        ):
+            mock_get_all.return_value = [
+                ("TEST-RAW-001", "TEST-BOM-001")
+            ]
+
+            with self.assertRaises(frappe.PermissionError):
+                ProductProposal.sync_preparation_bom(
+                    proposal,
+                )
+
+        proposal.check_permission.assert_called_once_with("write")
+        mock_set_value.assert_not_called()

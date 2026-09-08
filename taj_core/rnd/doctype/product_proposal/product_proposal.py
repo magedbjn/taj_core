@@ -366,6 +366,8 @@ class ProductProposal(Document):
     @frappe.whitelist()
     def sync_preparation_bom(self):
         """Sync Preparation BOM on pp_items from Preparation Items."""
+        self.check_permission("write")
+
         child_table_field = "pp_items"
         rows = self.get(child_table_field) or []
 
@@ -437,6 +439,8 @@ class ProductProposal(Document):
 
     @frappe.whitelist()
     def link_existing_item(self, item_code: str):
+        self.check_permission("write")
+
         if not item_code:
             frappe.throw(_("Missing Item Code."))
 
