@@ -52,31 +52,13 @@ class TestRemainingHighAuditFixes(TestCase):
         self.assertIn("proposal_item", source)
         self.assertIn("bom_item", source)
 
-    def test_h08_split_rm_rows_preserve_group_total(self):
-        from taj_core.overrides.work_order import rebuild_manufacture_rm_rows
+    def test_h08_manufacture_stock_entry_uses_erpnext_standard(self):
+        hooks = read("hooks.py")
 
-        work_order = SimpleNamespace(
-            required_items=[
-                frappe._dict(
-                    item_code="RM",
-                    original_item=None,
-                    source_warehouse="WIP",
-                    required_qty=10,
-                    include_item_in_manufacturing=1,
-                )
-            ]
+        self.assertNotIn(
+            '"erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry"',
+            hooks,
         )
-        entry = SimpleNamespace(
-            items=[
-                frappe._dict(item_code="RM", s_warehouse="WIP", qty=6, transfer_qty=6),
-                frappe._dict(item_code="RM", s_warehouse="WIP", qty=4, transfer_qty=4),
-            ]
-        )
-
-        rebuild_manufacture_rm_rows(entry, work_order)
-
-        self.assertEqual([row.qty for row in entry.items], [6, 4])
-        self.assertEqual(sum(row.qty for row in entry.items), 10)
 
     def test_h09_partial_expense_payment_does_not_mark_paid(self):
         from taj_core.custom import expenses_claim as module
