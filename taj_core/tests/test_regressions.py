@@ -328,3 +328,126 @@ class TestSupplierQualificationDateHandling(TestCase):
                 )
 
         self.assertIsNone(result)
+
+
+
+class TestSupplierQualificationValidityWindow(TestCase):
+    def test_future_valid_from_is_not_accepted(self):
+        import frappe
+        from datetime import date
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from taj_core.qc.doctype.supplier_qualification import (
+            supplier_qualification as module,
+        )
+
+        doc = SimpleNamespace(
+            supplier="SUP-FUTURE",
+            items=[],
+        )
+
+        with (
+            patch(
+                "taj_core.integrations.supplier_hooks."
+                "is_qualified_supplier_group",
+                return_value=True,
+            ),
+            patch.object(
+                module,
+                "get_active_qualification",
+                return_value=None,
+            ),
+            patch.object(
+                module.frappe.db,
+                "get_value",
+                return_value="Food",
+            ),
+            patch.object(
+                module,
+                "today",
+                return_value="2026-09-08",
+            ),
+            patch.object(
+                module.frappe,
+                "get_all",
+                return_value=[
+                    {
+                        "name": "SQ-FUTURE",
+                        "approval_status": "Approved",
+                        "valid_from": date(2099, 1, 1),
+                        "valid_to": None,
+                    }
+                ],
+            ),
+        ):
+            with self.assertRaises(frappe.ValidationError):
+                module.validate_items_against_qualification(doc)
+
+
+    def test_active_qualification_is_used_when_newer_record_is_pending(self):
+        from datetime import date
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from taj_core.qc.doctype.supplier_qualification import (
+            supplier_qualification as module,
+        )
+
+        doc = SimpleNamespace(
+            supplier="SUP-ACTIVE",
+            items=[],
+        )
+
+        def get_value(doctype, name, fieldname=None, *args, **kwargs):
+            if doctype == "Supplier":
+                return "Food"
+
+            if (
+                doctype == "Supplier Qualification"
+                and name == "SQ-ACTIVE"
+                and fieldname == "approval_status"
+            ):
+                return "Approved"
+
+            raise AssertionError(
+                f"Unexpected get_value: {doctype}, {name}, {fieldname}"
+            )
+
+        with (
+            patch(
+                "taj_core.integrations.supplier_hooks."
+                "is_qualified_supplier_group",
+                return_value=True,
+            ),
+            patch.object(
+                module,
+                "get_active_qualification",
+                return_value="SQ-ACTIVE",
+            ),
+            patch.object(
+                module.frappe.db,
+                "get_value",
+                side_effect=get_value,
+            ),
+            patch.object(
+                module,
+                "today",
+                return_value="2026-09-08",
+            ),
+            patch.object(
+                module.frappe,
+                "get_all",
+                return_value=[
+                    {
+                        "name": "SQ-PENDING",
+                        "approval_status": "Request Approval",
+                        "valid_from": date(2026, 9, 8),
+                        "valid_to": None,
+                    }
+                ],
+            ),
+        ):
+            result = module.validate_items_against_qualification(doc)
+
+        self.assertIsNone(result)

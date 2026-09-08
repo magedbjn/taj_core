@@ -82,15 +82,46 @@ def validate_items_against_qualification(doc, method=None) -> None:
     if not is_qualified_supplier_group(supplier_group):
         return
 
-    # البحث عن آخر مؤهلية بجميع حالاتها
+    # Use the same active-qualification rule used elsewhere.
+    # An active older qualification must not be hidden by a newer
+    # pending/future/inactive record.
+    active_qualification = get_active_qualification(supplier)
+
+    if active_qualification:
+        active_status = (
+            frappe.db.get_value(
+                "Supplier Qualification",
+                active_qualification,
+                "approval_status",
+            )
+            or ""
+        ).strip()
+
+        if active_status == "Partially Approved":
+            validate_partial_approval_items(
+                doc,
+                active_qualification,
+            )
+            return
+
+        if active_status == "Approved":
+            return
+
+    # No active qualification: inspect the latest record only to
+    # provide the appropriate rejection / pending / validity message.
     last_qual = frappe.get_all(
         "Supplier Qualification",
         filters={"supplier": supplier},
-        fields=["name", "approval_status", "valid_to"],
+        fields=[
+            "name",
+            "approval_status",
+            "valid_from",
+            "valid_to",
+        ],
         order_by="creation DESC",
-        limit=1
+        limit=1,
     )
-    
+
     if not last_qual:
         try:
             queue_auto_qualification_request(
@@ -117,27 +148,59 @@ def validate_items_against_qualification(doc, method=None) -> None:
             )
         )
 
-    status = (last_qual[0]["approval_status"] or "").strip()
-    
-    # التحقق إذا كانت المؤهلية منتهية الصلاحية
-    is_expired = False
-    if last_qual[0]["valid_to"]:
-        if getdate(last_qual[0]["valid_to"]) < getdate(today()):
-            is_expired = True
+    qualification = last_qual[0]
+    status = (
+        qualification["approval_status"] or ""
+    ).strip()
 
-    # إظهار الرسالة المناسبة
+    current_date = getdate(today())
+
+    is_not_started = bool(
+        qualification.get("valid_from")
+        and getdate(qualification["valid_from"]) > current_date
+    )
+
+    is_expired = bool(
+        qualification.get("valid_to")
+        and getdate(qualification["valid_to"]) < current_date
+    )
+
     if status == "Rejected":
-        frappe.throw(_("❌ Supplier rejected by quality team"))
-    elif status == "Request Approval":
-        frappe.throw(_("❌ Awaiting quality team approval")) 
-    elif status == "Partially Approved" and not is_expired:
-        validate_partial_approval_items(doc, last_qual[0]["name"])
-    elif status == "Approved" and not is_expired:
-        return  # السماح بالاعتماد
-    else:
-        # حالات أخرى أو منتهية الصلاحية
-        frappe.throw(_("❌ Supplier qualification issue - contact quality team"))
-      
+        frappe.throw(
+            _("❌ Supplier rejected by quality team")
+        )
+
+    if status == "Request Approval":
+        frappe.throw(
+            _("❌ Awaiting quality team approval")
+        )
+
+    if (
+        status == "Partially Approved"
+        and not is_not_started
+        and not is_expired
+    ):
+        validate_partial_approval_items(
+            doc,
+            qualification["name"],
+        )
+        return
+
+    if (
+        status == "Approved"
+        and not is_not_started
+        and not is_expired
+    ):
+        return
+
+    frappe.throw(
+        _(
+            "❌ Supplier qualification issue - "
+            "contact quality team"
+        )
+    )
+
+
 def validate_partial_approval_items(doc, qualification: str):
     """التحقق من الأصناف مع أولوية Pending approval"""
     doc_items = getattr(doc, "items", []) or []
