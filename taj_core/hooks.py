@@ -53,6 +53,9 @@ override_whitelisted_methods = {
 }
 
 doc_events = {
+    "BOM": {
+        "validate": "taj_core.rnd.doctype.product_proposal_trial.product_proposal_trial.validate_bom_trial_source",
+    },
     "Sensory Feedback": {
         "after_insert": "taj_core.rnd.doctype.sensory_feedback.sensory_feedback.sync_to_product_proposal"
     },

@@ -870,20 +870,16 @@ def sort_value(dt):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def production_plan_query(doctype, txt, searchfield, start, page_len, filters):
-	return frappe.db.sql(
-		"""
-		SELECT name
-		FROM `tabProduction Plan`
-		WHERE docstatus < 2
-			AND name LIKE %(txt)s
-		ORDER BY modified DESC
-		LIMIT %(start)s, %(page_len)s
-		""",
-		{
-			"txt": f"%{txt}%",
-			"start": start,
-			"page_len": page_len,
+	return frappe.get_list(
+		"Production Plan",
+		filters={
+			"docstatus": ["<", 2],
+			"name": ["like", f"%{txt}%"],
 		},
+		fields=["name"],
+		order_by="modified desc",
+		limit_start=start,
+		limit_page_length=page_len,
 		as_list=True,
 	)
 
@@ -892,6 +888,9 @@ def production_plan_query(doctype, txt, searchfield, start, page_len, filters):
 def get_sub_assembly_item_options(txt="", production_plan=None):
 	if not production_plan:
 		return []
+
+	plan = frappe.get_doc("Production Plan", production_plan)
+	plan.check_permission("read")
 
 	return frappe.db.sql(
 		"""

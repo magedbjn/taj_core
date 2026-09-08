@@ -616,7 +616,13 @@ def get_holiday_map_per_employee(employees, year: int, month: int):
 def get_leave_map_per_employee(emp_list, year: int, month: int):
     """Return {(emp, date): 'L'} for leave days."""
     LeaveApplication = frappe.qb.DocType("Leave Application")
-    
+    month_start = date(int(year), int(month), 1)
+    month_end = date(
+        int(year),
+        int(month),
+        calendar.monthrange(int(year), int(month))[1],
+    )
+
     rows = (
         frappe.qb.from_(LeaveApplication)
         .select(LeaveApplication.employee, LeaveApplication.from_date, LeaveApplication.to_date)
@@ -624,14 +630,8 @@ def get_leave_map_per_employee(emp_list, year: int, month: int):
             (LeaveApplication.docstatus == 1)
             & (LeaveApplication.employee.isin(emp_list))
             & (LeaveApplication.status == "Approved")
-            & (
-                (Extract("month", LeaveApplication.from_date) == int(month)) |
-                (Extract("month", LeaveApplication.to_date) == int(month))
-            )
-            & (
-                (Extract("year", LeaveApplication.from_date) == int(year)) |
-                (Extract("year", LeaveApplication.to_date) == int(year))
-            )
+            & (LeaveApplication.from_date <= month_end)
+            & (LeaveApplication.to_date >= month_start)
         )
     ).run(as_dict=True)
 

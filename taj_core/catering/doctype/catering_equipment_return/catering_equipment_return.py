@@ -21,6 +21,7 @@ class CateringEquipmentReturn(Document):
         update_delivery_status(self.delivery)
 
     def before_cancel(self):
+        self.validate_bulk_cancel_capacity()
         self.lock_return_resources()
 
     def on_cancel(self):
@@ -384,6 +385,49 @@ class CateringEquipmentReturn(Document):
                         "current_center": None,
                     },
                     update_modified=False,
+                )
+
+    def validate_bulk_cancel_capacity(self):
+        required_by_equipment = {}
+
+        for row in self.items:
+            if cint(row.has_serial_no):
+                continue
+            if not row.equipment:
+                continue
+
+            required_by_equipment[row.equipment] = (
+                cint(required_by_equipment.get(row.equipment, 0))
+                + cint(row.return_qty)
+            )
+
+        if not required_by_equipment:
+            return
+
+        from taj_core.catering.doctype.catering_equipment_delivery.catering_equipment_delivery import (
+            _get_available_qty_current,
+            _lock_equipment_for_update,
+        )
+
+        for equipment in sorted(required_by_equipment):
+            total_qty = _lock_equipment_for_update(equipment)
+            available_qty = _get_available_qty_current(
+                equipment=equipment,
+                total_qty=total_qty,
+            )
+            required_qty = cint(required_by_equipment[equipment])
+
+            if required_qty > available_qty:
+                frappe.throw(
+                    _(
+                        "Cannot cancel this return for {0}. "
+                        "Reopening {1} unit(s) requires free capacity, "
+                        "but only {2} unit(s) are currently available."
+                    ).format(
+                        equipment,
+                        required_qty,
+                        available_qty,
+                    )
                 )
 
     def reverse_return(self):

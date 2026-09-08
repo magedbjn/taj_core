@@ -444,13 +444,21 @@ class ProductProposalTrial(Document):
                 )
             )
 
-        proposal_docstatus = frappe.db.get_value(
-            "Product Proposal",
-            self.product_proposal,
-            "docstatus",
+        parent_rows = frappe.db.sql(
+            """
+            select docstatus
+            from `tabProduct Proposal`
+            where name = %s
+            for update
+            """,
+            (self.product_proposal,),
+            as_dict=True,
         )
 
-        if cint(proposal_docstatus) != 1:
+        if (
+            not parent_rows
+            or cint(parent_rows[0].docstatus) != 1
+        ):
             frappe.throw(
                 _(
                     "Product Proposal {0} must be submitted "
@@ -458,29 +466,33 @@ class ProductProposalTrial(Document):
                 ).format(self.product_proposal)
             )
 
-        filters = {
-            "product_proposal":
-                self.product_proposal,
-            "is_final_trial": 1,
-        }
+        values = [self.product_proposal]
+        name_condition = ""
 
         if self.name:
-            filters["name"] = [
-                "!=",
-                self.name,
-            ]
+            name_condition = "and name != %s"
+            values.append(self.name)
 
-        existing = frappe.db.get_value(
-            "Product Proposal Trial",
-            filters,
-            "name",
+        existing_rows = frappe.db.sql(
+            f"""
+            select name
+            from `tabProduct Proposal Trial`
+            where product_proposal = %s
+              and is_final_trial = 1
+              {name_condition}
+            order by name
+            limit 1
+            for update
+            """,
+            tuple(values),
+            as_dict=True,
         )
 
-        if existing:
+        if existing_rows:
             frappe.throw(
                 _(
                     "Final Trial already exists: {0}"
-                ).format(existing)
+                ).format(existing_rows[0].name)
             )
 
     @staticmethod
@@ -1311,6 +1323,72 @@ def get_bom_uom_conversion_factors(conversions):
         results.append(result)
 
     return results
+
+
+def validate_bom_trial_source(doc, method=None):
+    proposal_name = cstr(
+        getattr(doc, "taj_product_proposal", None)
+    ).strip()
+    trial_name = cstr(
+        getattr(doc, "taj_product_proposal_trial", None)
+    ).strip()
+
+    if not proposal_name and not trial_name:
+        return
+
+    if not proposal_name or not trial_name:
+        frappe.throw(
+            _(
+                "Both Product Proposal and Product Proposal Trial "
+                "are required for a Taj-sourced BOM."
+            )
+        )
+
+    proposal = frappe.get_doc(
+        "Product Proposal", proposal_name
+    )
+    proposal.check_permission("read")
+
+    if cint(proposal.docstatus) != 1:
+        frappe.throw(
+            _(
+                "Product Proposal {0} must be submitted "
+                "before it can be linked to a BOM."
+            ).format(proposal.name)
+        )
+
+    trial = frappe.get_doc(
+        "Product Proposal Trial", trial_name
+    )
+    trial.check_permission("read")
+
+    if trial.product_proposal != proposal.name:
+        frappe.throw(
+            _(
+                "Trial {0} does not belong to Product Proposal {1}."
+            ).format(trial.name, proposal.name)
+        )
+
+    if trial.status != "Approved":
+        frappe.throw(
+            _(
+                "Trial {0} must be Approved before it can be "
+                "linked to a BOM."
+            ).format(trial.name)
+        )
+
+    proposal_item = cstr(
+        getattr(proposal, "item_code", None)
+    ).strip()
+    bom_item = cstr(getattr(doc, "item", None)).strip()
+
+    if proposal_item and bom_item != proposal_item:
+        frappe.throw(
+            _(
+                "BOM Item {0} does not match Product Proposal "
+                "Item {1}."
+            ).format(bom_item, proposal_item)
+        )
 
 
 @frappe.whitelist()

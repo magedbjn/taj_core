@@ -66,8 +66,10 @@ class DepartmentOvertimeRequest(Document):
                     title=_("Validation Error"),
                 )
 
-            if row_date == today and row.from_time and row.to_time:
-                start, end = self._get_interval(row.overtime_date, row.from_time, row.to_time)
+            if row.from_time and row.to_time:
+                start, end = self._get_interval(
+                    row.overtime_date, row.from_time, row.to_time
+                )
                 if (start and start > now_dt) or (end and end > now_dt):
                     frappe.throw(
                         _("Overtime time cannot be in the future. Employee: {0}. Start: {1}, End: {2}, Now: {3}")

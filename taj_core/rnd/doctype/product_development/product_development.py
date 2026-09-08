@@ -11,111 +11,69 @@ class ProductDevelopment(Document):
 
 @frappe.whitelist()
 def product_name_distinct_query(doctype, txt, searchfield, start, page_len, filters):
-    """
-    تُرجّع أحدث سجل لكل product_name من Doctype "Product Proposal"
-    بالشكل المتوقع للـ Link: [[name, product_name], ...]
-    - تحاول أولاً استخدام Window Functions (ROW_NUMBER)
-    - إن لم تتوفر (DB قديمة)، تسقط لفولباك يضمن عدم التكرار
-    """
+    """Return the newest readable Product Proposal for each product name."""
     search_term = f"%{cstr(txt or '').strip()}%" if txt else "%%"
     start = max(int(start or 0), 0)
     page_len = min(int(page_len or 20), 100)
 
-    params = {"txt": search_term, "start": start, "page_len": page_len}
+    rows = frappe.get_list(
+        "Product Proposal",
+        filters={
+            "docstatus": ["!=", 2],
+            "is_default": 1,
+            "sensory_decision": ["!=", "Reject"],
+            "product_name": ["!=", ""],
+        },
+        or_filters=[
+            ["product_name", "like", search_term],
+            ["name", "like", search_term],
+        ],
+        fields=["name", "product_name", "modified"],
+        order_by="modified desc",
+        limit_page_length=0,
+    )
 
-    # محاولة: CTE + ROW_NUMBER()
-    try:
-        rows = frappe.db.sql(
-            """
-            WITH RankedProposals AS (
-                SELECT
-                    name,
-                    product_name,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY product_name
-                        ORDER BY modified DESC
-                    ) AS rn
-                FROM `tabProduct Proposal`
-                WHERE docstatus != 2
-                  AND is_default = 1
-                  AND sensory_decision != 'Reject'
-                  AND IFNULL(product_name, '') != ''
-                  AND (product_name LIKE %(txt)s OR name LIKE %(txt)s)
-            )
-            SELECT name, product_name
-            FROM RankedProposals
-            WHERE rn = 1
-            ORDER BY product_name ASC
-            LIMIT %(start)s, %(page_len)s
-            """,
-            params,
-            as_list=True,
-        )
-        return rows
+    newest_by_product = {}
+    for row in rows:
+        product_name = cstr(row.get("product_name") or "").strip()
+        if product_name and product_name not in newest_by_product:
+            newest_by_product[product_name] = row.get("name")
 
-    except Exception:
-        # فولباك: الأحدث لكل product_name عبر join على MAX(modified)
-        rows = frappe.db.sql(
-            """
-            SELECT pp2.name, pp2.product_name
-            FROM `tabProduct Proposal` pp2
-            INNER JOIN (
-                SELECT product_name, MAX(modified) AS max_modified
-                FROM `tabProduct Proposal`
-                WHERE docstatus != 2
-                  AND is_default = 1
-                  AND sensory_decision != 'Reject'
-                  AND IFNULL(product_name, '') != ''
-                  AND (product_name LIKE %(txt)s OR name LIKE %(txt)s)
-                GROUP BY product_name
-            ) latest
-              ON latest.product_name = pp2.product_name
-             AND latest.max_modified = pp2.modified
-            WHERE pp2.docstatus != 2
-              AND pp2.is_default = 1
-              AND pp2.sensory_decision != 'Reject'
-            ORDER BY pp2.product_name ASC
-            LIMIT %(start)s, %(page_len)s
-            """,
-            params,
-            as_list=True,
-        )
-        return rows
+    result = [
+        [name, product_name]
+        for product_name, name in newest_by_product.items()
+    ]
+    result.sort(key=lambda row: cstr(row[1]).casefold())
+    return result[start:start + page_len]
 
 
 @frappe.whitelist()
 def proposal_versions_query(doctype, txt, searchfield, start, page_len, filters):
-    """
-    تُرجّع جميع سجلات Product Proposal لاسم product_name معيّن (إن وُجد)
-    بالشكل: [[name, product_name], ...] مرتّبة بالأحدث تعديلًا.
-    """
+    """Return readable Product Proposal versions for a product name."""
     pn = ""
     if isinstance(filters, dict):
         pn = cstr(filters.get("product_name") or "").strip()
 
     like_txt = f"%{cstr(txt or '').strip()}%"
-    params = {
-        "pn": pn,
-        "txt": like_txt,
-        "start": int(start or 0),
-        "page_len": min(int(page_len or 20), 100),
+    start = max(int(start or 0), 0)
+    page_len = min(int(page_len or 20), 100)
+
+    list_filters = {
+        "docstatus": ["!=", 2],
     }
-
-    where = ["pp.docstatus != 2"]
     if pn:
-        where.append("pp.product_name = %(pn)s")
-    where_sql = " AND ".join(where)
+        list_filters["product_name"] = pn
 
-    rows = frappe.db.sql(
-        f"""
-        SELECT pp.name, pp.product_name
-        FROM `tabProduct Proposal` pp
-        WHERE {where_sql}
-          AND (pp.name LIKE %(txt)s OR pp.product_name LIKE %(txt)s)
-        ORDER BY pp.modified DESC
-        LIMIT %(start)s, %(page_len)s
-        """,
-        params,
+    return frappe.get_list(
+        "Product Proposal",
+        filters=list_filters,
+        or_filters=[
+            ["name", "like", like_txt],
+            ["product_name", "like", like_txt],
+        ],
+        fields=["name", "product_name"],
+        order_by="modified desc",
+        limit_start=start,
+        limit_page_length=page_len,
         as_list=True,
     )
-    return rows

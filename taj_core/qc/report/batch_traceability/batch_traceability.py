@@ -745,6 +745,7 @@ def explode_bom_tree(
         })
         return
 
+    visited = set(visited or set())
     visited.add(bom)
     bom_doc = frappe.get_doc("BOM", bom)
 
@@ -920,6 +921,7 @@ def explode_bom_level_order(
         })
         return
 
+    visited = set(visited or set())
     visited.add(bom)
     bom_doc = frappe.get_doc("BOM", bom)
 
@@ -1146,13 +1148,28 @@ def get_consumed_batches_from_work_order(work_order: str):
         "Stock Entry",
         filters={
             "work_order": work_order,
-            "docstatus": 1
+            "docstatus": 1,
+            "purpose": [
+                "in",
+                [
+                    "Manufacture",
+                    "Material Consumption for Manufacture",
+                ],
+            ],
         },
         pluck="name"
     )
 
+    allowed_purposes = {
+        "Manufacture",
+        "Material Consumption for Manufacture",
+    }
+
     for se_name in se_names:
         se = frappe.get_doc("Stock Entry", se_name)
+
+        if getattr(se, "purpose", None) not in allowed_purposes:
+            continue
 
         for row in se.items:
             if not row.s_warehouse:

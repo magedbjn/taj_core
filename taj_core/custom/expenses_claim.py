@@ -1,7 +1,10 @@
 import frappe
 from frappe import _
 from frappe.model.workflow import apply_workflow
-from frappe.utils import get_link_to_form
+from frappe.utils import get_link_to_form, flt
+from hrms.hr.doctype.expense_claim.expense_claim import (
+    get_outstanding_amount_for_claim,
+)
 
 try:
     from frappe.model.workflow import get_transitions  # لمسار فريبي 15
@@ -48,6 +51,13 @@ def update_expense_claim_status_on_payment(doc, method):
                 "Expense Claim",
                 claim_name,
             )
+
+            outstanding_amount = flt(
+                get_outstanding_amount_for_claim(claim.name)
+            )
+
+            if outstanding_amount > 0:
+                continue
 
             if claim.workflow_state == "Paid":
                 continue
@@ -113,12 +123,12 @@ def revert_expense_claim_status_on_cancel(doc, method):
                 claim_name,
             )
 
-            total_paid = get_total_paid_amount(
-                claim_name
+            outstanding_amount = flt(
+                get_outstanding_amount_for_claim(claim.name)
             )
 
             if (
-                total_paid == 0
+                outstanding_amount > 0
                 and claim.workflow_state == "Paid"
                 and _apply_transition_to_state(
                     claim,

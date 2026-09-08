@@ -16,6 +16,12 @@
   },
   {
    "role": "IT Manager"
+  },
+  {
+   "role": "Checklist Manager"
+  },
+  {
+   "role": "Employee"
   }
  ],
  "script": null,

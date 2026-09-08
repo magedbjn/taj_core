@@ -14,6 +14,7 @@ class CateringEquipmentDelivery(Document):
     def before_submit(self):
         self.validate_available_qty(lock=True)
         self.validate_serial_items(lock=True)
+        self.status = "Delivered"
 
     def on_submit(self):
         self.prepare_items()
@@ -24,8 +25,6 @@ class CateringEquipmentDelivery(Document):
                     unit=row.serial_no,
                     center=self.center
                 )
-
-        self.status = "Delivered"
 
     def on_cancel(self):
         serials = sorted({

@@ -492,23 +492,24 @@ class TestSchemaAndMigrationGuards(TestCase):
 
         self.assertEqual(fake.visits_count, 2)
 
-    def test_product_development_fallback_has_same_filters(self):
+    def test_product_development_query_preserves_filters(self):
         source = function_source(
             "rnd/doctype/product_development/"
             "product_development.py",
             "product_name_distinct_query",
         )
 
-        self.assertGreaterEqual(
-            source.count("is_default = 1"),
-            2,
+        self.assertIn(
+            "frappe.get_list",
+            source,
         )
-
-        self.assertGreaterEqual(
-            source.count(
-                "sensory_decision != 'Reject'"
-            ),
-            2,
+        self.assertIn(
+            '"is_default": 1',
+            source,
+        )
+        self.assertIn(
+            '"sensory_decision": ["!=", "Reject"]',
+            source,
         )
 
     def test_rms_flag_is_restored(self):

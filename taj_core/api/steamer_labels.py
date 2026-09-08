@@ -304,6 +304,11 @@ def _build_labels_for_source(ctx, selected_item_codes=None):
 @frappe.whitelist()
 def get_label_html(work_order, job_card=None):
     wo = frappe.get_doc("Work Order", work_order)
+    wo.check_permission("read")
+
+    if job_card:
+        job_card_doc = frappe.get_doc("Job Card", job_card)
+        job_card_doc.check_permission("read")
 
     selected_item_codes = _get_selected_item_codes_from_work_order(wo)
     source_contexts = _get_source_contexts_from_work_order(wo)

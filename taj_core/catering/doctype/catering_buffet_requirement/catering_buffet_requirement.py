@@ -175,7 +175,7 @@ def get_catering_centers_for_year(catering_year=None):
     if center_meta.has_field("posting_date"):
         filters["posting_date"] = ["between", [start_date, end_date]]
 
-    centers = frappe.get_all(
+    centers = frappe.get_list(
         "Catering Center",
         filters=filters,
         fields=[
@@ -308,7 +308,7 @@ def get_buffet_plan(catering_year=None, catering_centers=None):
         if center_meta.has_field("posting_date"):
             center_filters["posting_date"] = ["between", [start_date, end_date]]
 
-    centers = frappe.get_all(
+    centers = frappe.get_list(
         "Catering Center",
         filters=center_filters,
         fields=[
@@ -327,12 +327,14 @@ def get_buffet_plan(catering_year=None, catering_centers=None):
             continue
 
         menu_doc = frappe.get_doc("Catering Menu", center.catering_menu)
+        menu_doc.check_permission("read")
         service_meals = get_menu_service_meals(menu_doc)
 
         if not service_meals:
             continue
 
         center_doc = frappe.get_doc("Catering Center", center.name)
+        center_doc.check_permission("read")
         buffet_rows = list(center_doc.get("buffet") or [])
 
         if buffet_rows:
@@ -429,7 +431,9 @@ def get_buffet_requirements(buffets=None):
             continue
 
         if catering_menu not in menu_cache:
-            menu_cache[catering_menu] = frappe.get_doc("Catering Menu", catering_menu)
+            menu_doc = frappe.get_doc("Catering Menu", catering_menu)
+            menu_doc.check_permission("read")
+            menu_cache[catering_menu] = menu_doc
 
         menu_doc = menu_cache[catering_menu]
         menu_person_qty = flt(menu_doc.get("qty") or menu_doc.get("quantity") or 0)

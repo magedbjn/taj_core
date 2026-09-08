@@ -34,6 +34,8 @@ def collect_similar_items(docname):
                 item.uom or "",
                 flt(item.conversion_factor or 0),
                 str(item.schedule_date or ""),
+                getattr(item, "production_plan", None) or "",
+                getattr(item, "production_plan_item", None) or "",
             )
 
         # Collect data for compatible item rows.

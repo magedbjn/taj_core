@@ -159,8 +159,8 @@ def is_keep_rm_qty_enabled() -> bool:
 	return cint(frappe.db.get_single_value("Manufacturing Settings", SETTING_FIELD) or 0) == 1
 
 def rebuild_manufacture_rm_rows(stock_entry, work_order):
-	# Keep ERPNext standard generated rows unchanged.
-	# Only update raw material quantities from Work Order required_items.
+	# Keep ERPNext standard generated rows and batch splits, but make
+	# each item/warehouse group total match Work Order required_items.
 
 	required_qty_map = {}
 
@@ -173,19 +173,19 @@ def rebuild_manufacture_rm_rows(stock_entry, work_order):
 			continue
 
 		original_item = getattr(req, "original_item", None) or req.item_code
+		aliases = {req.item_code, original_item}
 
-		required_qty_map[(req.item_code, req.source_warehouse)] = req_qty
-		required_qty_map[(req.item_code, None)] = req_qty
-		required_qty_map[(original_item, req.source_warehouse)] = req_qty
-		required_qty_map[(original_item, None)] = req_qty
+		for alias in aliases:
+			if not alias:
+				continue
+			for key in ((alias, req.source_warehouse), (alias, None)):
+				required_qty_map[key] = flt(required_qty_map.get(key, 0) + req_qty)
+
+	groups = {}
 
 	for row in stock_entry.items:
-		if row.get("is_finished_item"):
+		if row.get("is_finished_item") or row.get("is_scrap_item"):
 			continue
-
-		if row.get("is_scrap_item"):
-			continue
-
 		if not row.get("s_warehouse"):
 			continue
 
@@ -193,19 +193,48 @@ def rebuild_manufacture_rm_rows(stock_entry, work_order):
 		original_item = row.get("original_item") or item_code
 		source_warehouse = row.get("s_warehouse")
 
-		req_qty = (
-			required_qty_map.get((item_code, source_warehouse))
-			or required_qty_map.get((item_code, None))
-			or required_qty_map.get((original_item, source_warehouse))
-			or required_qty_map.get((original_item, None))
+		candidates = (
+			(item_code, source_warehouse),
+			(item_code, None),
+			(original_item, source_warehouse),
+			(original_item, None),
 		)
 
-		if req_qty is None:
-			continue
+		matched_key = next(
+			(key for key in candidates if key in required_qty_map),
+			None,
+		)
 
-		row.qty = req_qty
-		row.transfer_qty = req_qty
-		
+		if matched_key is not None:
+			groups.setdefault(matched_key, []).append(row)
+
+	for key, rows in groups.items():
+		required_qty = flt(required_qty_map[key])
+		current_total = sum(flt(row.get("qty")) for row in rows)
+
+		if current_total > 0:
+			remaining = required_qty
+			for index, row in enumerate(rows):
+				old_qty = flt(row.get("qty"))
+				old_transfer_qty = flt(row.get("transfer_qty"))
+				transfer_ratio = (
+					old_transfer_qty / old_qty if old_qty else 1
+				)
+
+				if index == len(rows) - 1:
+					allocated_qty = remaining
+				else:
+					allocated_qty = required_qty * old_qty / current_total
+					remaining -= allocated_qty
+
+				row.qty = allocated_qty
+				row.transfer_qty = allocated_qty * transfer_ratio
+		else:
+			for index, row in enumerate(rows):
+				allocated_qty = required_qty if index == 0 else 0
+				row.qty = allocated_qty
+				row.transfer_qty = allocated_qty
+
 @frappe.whitelist()
 def make_stock_entry(
 	work_order_id: str,

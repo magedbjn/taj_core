@@ -1763,6 +1763,7 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
     requires_temperature = 0
     min_temp = 0.0
     max_temp = 0.0
+    temp_val = None
 
     if operation_name and frappe.db.exists("Operation", operation_name):
         if _has_col("Operation", "taj_requires_temperature"):
@@ -1789,7 +1790,11 @@ def board_complete_job(job_card: str, qty: float, taj_temperature=None):
 
             temp_val = flt(raw_temp)
 
-        if not (min_temp == 0 and max_temp == 0):
+        if (
+            requires_temperature
+            and temp_val is not None
+            and not (min_temp == 0 and max_temp == 0)
+        ):
             low = min(min_temp, max_temp)
             high = max(min_temp, max_temp)
 
