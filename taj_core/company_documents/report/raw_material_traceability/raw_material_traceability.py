@@ -193,7 +193,7 @@ def get_data(filters=None):
                     new_row["finished_batch"] = finished_batch
                     new_row["raw_batch"] = raw_batch
                     new_row["qty"] = (
-                        float(raw_entry.get("qty") or 0)
+                        abs(float(raw_entry.get("qty") or 0))
                         * finished_ratio
                     )
                     new_row["supplier"] = (

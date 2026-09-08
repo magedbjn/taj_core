@@ -372,3 +372,79 @@ class TestH15MaterialRequestSourceReference(TestCase):
             [row.material_request_plan_item for row in doc.items],
             ["PLAN-ITEM-A", "PLAN-ITEM-B"],
         )
+
+class TestH12RawMaterialBundleQuantity(TestCase):
+    def test_h12_consumed_bundle_quantity_is_positive(self):
+        from taj_core.company_documents.report.raw_material_traceability import (
+            raw_material_traceability as report,
+        )
+
+        main_rows = [
+            frappe._dict({
+                "stock_entry": "TEST-STE",
+                "finished_product": "FG-TEST",
+                "direct_finished_batch": "",
+                "finished_serial_and_batch_bundle": "FIN-BUNDLE",
+                "raw_material": "RAW-TEST",
+                "direct_batch_no": "",
+                "serial_and_batch_bundle": "RAW-BUNDLE",
+                "stock_entry_qty": 10.0,
+                "uom": "Kg",
+                "purchase_receipt_supplier": "",
+                "purchase_receipt": "",
+            })
+        ]
+
+        def bundle_data(bundle):
+            if bundle == "FIN-BUNDLE":
+                return [
+                    frappe._dict({
+                        "batch_no": "FG-BATCH-A",
+                        "qty": 50.0,
+                    }),
+                    frappe._dict({
+                        "batch_no": "FG-BATCH-B",
+                        "qty": 50.0,
+                    }),
+                ]
+
+            if bundle == "RAW-BUNDLE":
+                return [
+                    frappe._dict({
+                        "batch_no": "RAW-BATCH",
+                        "qty": -10.0,
+                    })
+                ]
+
+            return []
+
+        with (
+            patch.object(
+                report.frappe.db,
+                "sql",
+                return_value=main_rows,
+            ),
+            patch.object(
+                report,
+                "get_serial_batch_bundle_data",
+                side_effect=bundle_data,
+            ),
+            patch.object(
+                report,
+                "get_batch_details",
+                return_value={},
+            ),
+        ):
+            data = report.get_data({
+                "finished_batch": "FG-BATCH-A",
+            })
+
+        item_rows = [
+            row
+            for row in data
+            if not row.get("is_group")
+        ]
+
+        self.assertEqual(len(item_rows), 1)
+        self.assertEqual(item_rows[0]["raw_batch"], "RAW-BATCH")
+        self.assertEqual(item_rows[0]["qty"], 5.0)
