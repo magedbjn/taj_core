@@ -5,7 +5,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import today, add_days, nowdate
+from frappe.utils import today, add_days, getdate, nowdate
 
 
 class SupplierQualification(Document):
@@ -122,8 +122,7 @@ def validate_items_against_qualification(doc, method=None) -> None:
     # التحقق إذا كانت المؤهلية منتهية الصلاحية
     is_expired = False
     if last_qual[0]["valid_to"]:
-        from frappe.utils import today
-        if last_qual[0]["valid_to"] < today():
+        if getdate(last_qual[0]["valid_to"]) < getdate(today()):
             is_expired = True
 
     # إظهار الرسالة المناسبة

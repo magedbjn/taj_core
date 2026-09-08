@@ -271,3 +271,60 @@ class TestNewBulkCateringDelivery(TestCase):
         )
 
         excluded_delivery.check_permission.assert_not_called()
+
+
+
+class TestSupplierQualificationDateHandling(TestCase):
+    def test_future_valid_to_date_object_is_accepted(self):
+        from datetime import date
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from taj_core.qc.doctype.supplier_qualification import (
+            supplier_qualification as module,
+        )
+
+        doc = SimpleNamespace(
+            supplier="SUP-TEST",
+            items=[],
+        )
+
+        with (
+            patch(
+                "taj_core.integrations.supplier_hooks."
+                "is_qualified_supplier_group",
+                return_value=True,
+            ),
+            patch.object(
+                module.frappe.db,
+                "get_value",
+                return_value="Food",
+            ),
+            patch.object(
+                module,
+                "today",
+                return_value="2026-09-08",
+            ),
+            patch.object(
+                module.frappe,
+                "get_all",
+                return_value=[
+                    {
+                        "name": "SQ-TEST",
+                        "approval_status": "Approved",
+                        "valid_to": date(2099, 12, 31),
+                    }
+                ],
+            ),
+        ):
+            try:
+                result = module.validate_items_against_qualification(
+                    doc
+                )
+            except TypeError as exc:
+                self.fail(
+                    "valid_to date must be compared safely: "
+                    f"{exc}"
+                )
+
+        self.assertIsNone(result)
