@@ -451,3 +451,115 @@ class TestSupplierQualificationValidityWindow(TestCase):
             result = module.validate_items_against_qualification(doc)
 
         self.assertIsNone(result)
+
+
+
+class TestSupplierQualificationPolicyCache(TestCase):
+    def test_policy_change_is_not_hidden_by_process_local_cache(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from taj_core.integrations import supplier_hooks as module
+
+        fn = module.is_qualified_supplier_group
+
+        clear_cache = getattr(fn, "cache_clear", None)
+        if clear_cache:
+            clear_cache()
+
+        state = {
+            "groups": [],
+        }
+
+        def get_cached_doc(doctype):
+            self.assertEqual(
+                doctype,
+                "Supplier Qualification Settings",
+            )
+            return {
+                "supplier_group": [
+                    SimpleNamespace(supplier_group=group)
+                    for group in state["groups"]
+                ]
+            }
+
+        try:
+            with (
+                patch.object(
+                    module.frappe,
+                    "get_cached_doc",
+                    side_effect=get_cached_doc,
+                ),
+                patch.object(
+                    module,
+                    "check_group_hierarchy",
+                    return_value=False,
+                ),
+            ):
+                self.assertFalse(fn("Food"))
+
+                # Simulates settings changed by another worker.
+                state["groups"] = ["Food"]
+
+                self.assertTrue(fn("Food"))
+        finally:
+            clear_cache = getattr(fn, "cache_clear", None)
+            if clear_cache:
+                clear_cache()
+
+    def test_policy_cache_does_not_cross_site_contexts(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from taj_core.integrations import supplier_hooks as module
+
+        fn = module.is_qualified_supplier_group
+
+        clear_cache = getattr(fn, "cache_clear", None)
+        if clear_cache:
+            clear_cache()
+
+        state = {
+            "site": "site-a",
+        }
+
+        groups_by_site = {
+            "site-a": [],
+            "site-b": ["Food"],
+        }
+
+        def get_cached_doc(doctype):
+            self.assertEqual(
+                doctype,
+                "Supplier Qualification Settings",
+            )
+
+            return {
+                "supplier_group": [
+                    SimpleNamespace(supplier_group=group)
+                    for group in groups_by_site[state["site"]]
+                ]
+            }
+
+        try:
+            with (
+                patch.object(
+                    module.frappe,
+                    "get_cached_doc",
+                    side_effect=get_cached_doc,
+                ),
+                patch.object(
+                    module,
+                    "check_group_hierarchy",
+                    return_value=False,
+                ),
+            ):
+                state["site"] = "site-a"
+                self.assertFalse(fn("Food"))
+
+                state["site"] = "site-b"
+                self.assertTrue(fn("Food"))
+        finally:
+            clear_cache = getattr(fn, "cache_clear", None)
+            if clear_cache:
+                clear_cache()

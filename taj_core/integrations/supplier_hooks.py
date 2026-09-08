@@ -3,10 +3,8 @@
 from __future__ import annotations
 import frappe
 from frappe import _
-from functools import lru_cache
 from typing import Optional
 
-@lru_cache(maxsize=256)
 def is_qualified_supplier_group(group: str | None) -> bool:
     """
     Return whether a supplier group requires qualification.
@@ -69,14 +67,9 @@ def _check_group_hierarchy_recursive(group: str, qualified_groups: list, visited
     return _check_group_hierarchy_recursive(parent, qualified_groups, visited)
 
 def _clear_qualified_groups_cache(doc=None, method=None):
-    """مسح جميع أنواع الـ Cache المتعلقة بالمجموعات"""
+    """مسح Cache العلاقات الهرمية عند تغيير إعدادات المجموعات."""
     try:
-        # مسح LRU Cache
-        is_qualified_supplier_group.cache_clear()
-        
-        # مسح Frappe Cache للعلاقات الهرمية
         frappe.cache().delete_keys("group_hierarchy_*")
-        
     except Exception as e:
         frappe.log_error(f"Error clearing groups cache: {str(e)}")
 
