@@ -1,4 +1,5 @@
 import re
+import secrets
 import frappe
 from frappe.model.document import Document
 from frappe.utils import cint, cstr
@@ -22,6 +23,8 @@ class ProductProposal(Document):
         self.validate_trial_cooking_locked_fields()
         self.validate_trial_cooking_permission()
         self.validate_trial_links()
+        self.set_customer_sample_tokens()
+        self.validate_customer_samples()
         self.is_default = cint(
             self.sensory_decision == "Approve"
         )
@@ -31,6 +34,8 @@ class ProductProposal(Document):
         self.validate_trial_cooking_locked_fields()
         self.validate_trial_cooking_permission()
         self.validate_trial_links()
+        self.set_customer_sample_tokens()
+        self.validate_customer_samples()
 
     def before_submit(self):
         # 1) منع السبمت لو القرار Open
@@ -129,6 +134,43 @@ class ProductProposal(Document):
 
         indexes = [cint(p[-1]) for p in valid]
         return max(indexes) + 1
+
+    # -------------------------------------------------------------------------
+    # Customer Samples
+    # -------------------------------------------------------------------------
+
+    def set_customer_sample_tokens(self):
+        for row in self.get("customer_samples") or []:
+            if cstr(row.evaluation_token).strip():
+                continue
+
+            row.evaluation_token = secrets.token_urlsafe(24)
+
+    def validate_customer_samples(self):
+        for row in self.get("customer_samples") or []:
+            if frappe.utils.flt(row.sample_qty) <= 0:
+                frappe.throw(
+                    _("Customer Sample Qty must be greater than zero.")
+                )
+
+            trial_proposal = frappe.db.get_value(
+                "Product Proposal Trial",
+                row.trial_document,
+                "product_proposal",
+            )
+
+            if not trial_proposal:
+                frappe.throw(
+                    _("Selected Customer Sample Trial does not exist.")
+                )
+
+            if trial_proposal != self.name:
+                frappe.throw(
+                    _(
+                        "Customer Sample Trial {0} does not belong "
+                        "to this Product Proposal."
+                    ).format(row.trial_document)
+                )
 
     # -------------------------------------------------------------------------
     # Trial Cooking

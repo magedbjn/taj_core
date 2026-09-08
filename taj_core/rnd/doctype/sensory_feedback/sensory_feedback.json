@@ -9,6 +9,8 @@
   "your_name",
   "item",
   "trial_document",
+  "customer",
+  "sample_token",
   "appearance",
   "texture",
   "taste",
@@ -82,6 +84,21 @@
    "fieldtype": "Select",
    "label": "Final Status",
    "options": "Accept\nNeed Improvement"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sample_token",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Sample Token",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

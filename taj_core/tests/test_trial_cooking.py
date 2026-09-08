@@ -8,6 +8,7 @@ from taj_core.rnd.doctype.product_proposal_trial.product_proposal_trial import (
     ProductProposalTrial,
     _compare_item_rows,
     _get_item_uom_conversion_factor,
+    _scale_snapshot_qty,
 )
 
 
@@ -45,6 +46,43 @@ def make_row(
 
 
 class TestTrialCooking(unittest.TestCase):
+    def test_scale_snapshot_qty(self):
+        self.assertAlmostEqual(
+            _scale_snapshot_qty(100, 10, 50),
+            5,
+        )
+
+    def test_scale_snapshot_qty_rejects_zero_source(self):
+        with self.assertRaises(frappe.ValidationError):
+            _scale_snapshot_qty(0, 10, 50)
+
+    def test_scale_snapshot_qty_rejects_zero_target(self):
+        with self.assertRaises(frappe.ValidationError):
+            _scale_snapshot_qty(100, 0, 50)
+
+    def test_planned_cooking_qty_is_locked_after_insert(self):
+        old_doc = frappe._dict({
+            "product_proposal": "PP-TEST",
+            "trial_no": 1,
+            "based_on_trial": None,
+            "posting_date": "2026-09-08",
+            "trial_user": "Administrator",
+            "planned_cooking_qty": 10,
+        })
+
+        fake = frappe._dict({
+            "product_proposal": "PP-TEST",
+            "trial_no": 1,
+            "based_on_trial": None,
+            "posting_date": "2026-09-08",
+            "trial_user": "Administrator",
+            "planned_cooking_qty": 20,
+        })
+        fake.get_doc_before_save = lambda: old_doc
+
+        with self.assertRaises(frappe.ValidationError):
+            ProductProposalTrial.validate_locked_identity(fake)
+
     def test_comparison_detects_added_removed_changed(self):
         first = SimpleNamespace(
             items=[

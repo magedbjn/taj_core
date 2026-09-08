@@ -16,6 +16,11 @@
   "system_column",
   "posting_date",
   "trial_user",
+  "sensory_availability_section",
+  "enable_sensory_rating",
+  "sensory_from_date",
+  "sensory_column",
+  "sensory_until_date",
   "formulation_tab",
   "items",
   "summary_section",
@@ -170,6 +175,31 @@
   {
    "fieldname": "cooking_column",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sensory_availability_section",
+   "fieldtype": "Section Break",
+   "label": "Sensory Availability"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_sensory_rating",
+   "fieldtype": "Check",
+   "label": "Enable Sensory Rating"
+  },
+  {
+   "fieldname": "sensory_from_date",
+   "fieldtype": "Date",
+   "label": "Sensory From Date"
+  },
+  {
+   "fieldname": "sensory_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sensory_until_date",
+   "fieldtype": "Date",
+   "label": "Sensory Until Date"
   }
  ],
  "index_web_pages_for_search": 1,

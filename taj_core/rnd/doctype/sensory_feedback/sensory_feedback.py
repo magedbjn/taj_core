@@ -5,7 +5,38 @@ from frappe.utils import today, getdate, formatdate
 
 class SensoryFeedback(Document):
     def validate(self):
+        self.apply_sample_context()
         self.validate_trial_document()
+        self.validate_public_sensory_availability()
+
+    def apply_sample_context(self):
+        sample_token = (getattr(self, "sample_token", None) or "").strip()
+
+        if not sample_token:
+            return
+
+        from taj_core.rnd.web_form.sensory_rating.sensory_rating import (
+            resolve_sample_evaluation_context,
+        )
+
+        context = resolve_sample_evaluation_context(sample_token)
+        self.item = context.product_proposal
+        self.trial_document = context.trial_document
+        self.customer = context.customer
+        self.your_name = context.customer_name or context.customer
+
+    def validate_public_sensory_availability(self):
+        if (getattr(self, "sample_token", None) or "").strip():
+            return
+
+        if not self.trial_document:
+            frappe.throw(_("Please select a Product / Trial."))
+
+        from taj_core.rnd.web_form.sensory_rating.sensory_rating import (
+            get_trial_evaluation_context,
+        )
+
+        get_trial_evaluation_context(self.trial_document)
 
     def validate_trial_document(self):
         trial_document = getattr(

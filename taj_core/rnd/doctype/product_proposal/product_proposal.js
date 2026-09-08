@@ -53,6 +53,9 @@ frappe.ui.form.on('Product Proposal', {
         set_trial_document_filters(frm);
         add_trial_management_buttons(frm);
 
+        // Customer Samples
+        set_customer_sample_filter(frm);
+
         // فلتر Preparation BOM
         set_preparation_bom_filter(frm);
 
@@ -129,9 +132,53 @@ frappe.ui.form.on('Product Proposal Raw Material', {
 });
 
 
+frappe.ui.form.on('Product Proposal Sample', {
+    evaluation_link(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+
+        if (!row.evaluation_token) {
+            frappe.msgprint(
+                __('Save the Product Proposal first to generate the evaluation link.')
+            );
+            return;
+        }
+
+        const url = [
+            window.location.origin,
+            '/sensory-rating?sample=',
+            encodeURIComponent(row.evaluation_token)
+        ].join('');
+
+        window.open(url, '_blank', 'noopener');
+    }
+});
+
+
 // -----------------------------------------------------------------------------
 // Helper Functions
 // -----------------------------------------------------------------------------
+
+function set_customer_sample_filter(frm) {
+    if (!frm.fields_dict.customer_samples) {
+        return;
+    }
+
+    const grid = frm.fields_dict.customer_samples.grid;
+    const trial_field = grid && grid.get_field('trial_document');
+
+    if (!trial_field) {
+        return;
+    }
+
+    trial_field.get_query = function() {
+        return {
+            filters: {
+                product_proposal: frm.doc.name || ''
+            }
+        };
+    };
+}
+
 
 function set_preparation_bom_filter(frm) {
     if (!frm.fields_dict['pp_items']) {
@@ -542,8 +589,8 @@ function add_trial_management_buttons(frm) {
 
 
 function create_new_trial(frm) {
-    frappe.prompt(
-        [
+    const dialog = new frappe.ui.Dialog({
+        fields: [
             {
                 fieldname: 'source_label',
                 fieldtype: 'Select',
@@ -555,9 +602,19 @@ function create_new_trial(frm) {
                 ].join('\n'),
                 default: 'Previous Trial',
                 reqd: 1
+            },
+            {
+                fieldname: 'planned_cooking_qty',
+                fieldtype: 'Int',
+                label: __('Planned Cooking Qty'),
+                reqd: 1
             }
         ],
-        async values => {
+        title: __('New Trial Cooking'),
+        primary_action_label: __('Create'),
+        primary_action: async values => {
+            dialog.hide();
+
             const source_map = {
                 'Previous Trial': 'previous',
                 'Current Product Proposal Items': 'proposal',
@@ -578,7 +635,8 @@ function create_new_trial(frm) {
                 ].join(''),
                 args: {
                     product_proposal: frm.doc.name,
-                    source: source
+                    source: source,
+                    planned_cooking_qty: values.planned_cooking_qty
                 },
                 freeze: true,
                 freeze_message: __('Creating Trial...')
@@ -628,10 +686,10 @@ function create_new_trial(frm) {
                 'Product Proposal Trial',
                 response.message.name
             );
-        },
-        __('New Trial Cooking'),
-        __('Create')
-    );
+        }
+    });
+
+    dialog.show();
 }
 
 

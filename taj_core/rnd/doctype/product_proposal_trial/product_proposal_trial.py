@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, cstr, flt, nowtime, today
+from frappe.utils import add_months, cint, cstr, flt, getdate, nowtime, today
 
 from erpnext.manufacturing.doctype.bom.bom import get_valuation_rate
 from erpnext.stock.doctype.item.item import get_uom_conv_factor
@@ -38,6 +38,41 @@ COMPARE_FIELDS = (
 
 
 
+def _scale_snapshot_qty(source_qty, target_qty, row_qty):
+    source_qty = flt(source_qty)
+    target_qty = flt(target_qty)
+
+    if target_qty <= 0:
+        frappe.throw(
+            _("Planned Cooking Qty must be greater than zero.")
+        )
+
+    if source_qty <= 0:
+        frappe.throw(
+            _(
+                "Source quantity must be greater than zero "
+                "to scale Trial Items."
+            )
+        )
+
+    return flt(row_qty) * target_qty / source_qty
+
+
+def _is_sensory_window_active(
+    enabled,
+    from_date,
+    until_date,
+    reference_date=None,
+):
+    if not cint(enabled) or not from_date or not until_date:
+        return False
+
+    reference_date = getdate(reference_date or today())
+    return (
+        getdate(from_date)
+        <= reference_date
+        <= getdate(until_date)
+    )
 
 
 def _get_item_uom_factor_to_stock(
@@ -214,6 +249,8 @@ class ProductProposalTrial(Document):
     def validate(self):
         self.validate_product_proposal()
         self.validate_based_on_trial()
+        self.set_sensory_availability_defaults()
+        self.validate_sensory_availability()
 
         self.ensure_line_keys()
         self.validate_line_keys_immutable()
@@ -224,6 +261,36 @@ class ProductProposalTrial(Document):
         self.validate_final_trial()
 
         self.set_totals()
+
+    def set_sensory_availability_defaults(self):
+        if not cint(self.enable_sensory_rating):
+            return
+
+        if not self.sensory_from_date:
+            self.sensory_from_date = today()
+
+        if not self.sensory_until_date:
+            self.sensory_until_date = add_months(
+                self.sensory_from_date,
+                3,
+            )
+
+    def validate_sensory_availability(self):
+        if not cint(self.enable_sensory_rating):
+            return
+
+        if not self.sensory_from_date or not self.sensory_until_date:
+            frappe.throw(
+                _(
+                    "Sensory From Date and Sensory Until Date "
+                    "are required when Sensory Rating is enabled."
+                )
+            )
+
+        if getdate(self.sensory_until_date) < getdate(self.sensory_from_date):
+            frappe.throw(
+                _("Sensory Until Date cannot be before Sensory From Date.")
+            )
 
     def validate_product_proposal(self):
         docstatus = frappe.db.get_value(
@@ -333,6 +400,7 @@ class ProductProposalTrial(Document):
             ("based_on_trial", "Based On Trial"),
             ("posting_date", "Posting Date"),
             ("trial_user", "Trial User"),
+            ("planned_cooking_qty", "Planned Cooking Qty"),
         )
 
         for fieldname, label in locked:
@@ -762,6 +830,7 @@ def _append_snapshot_row(
     trial,
     source_row,
     line_key=None,
+    qty=None,
 ):
     values = {
         fieldname: getattr(
@@ -771,6 +840,9 @@ def _append_snapshot_row(
         )
         for fieldname in SNAPSHOT_FIELDS
     }
+
+    if qty is not None:
+        values["qty"] = flt(qty)
 
     values["line_key"] = (
         line_key
@@ -795,7 +867,15 @@ def create_trial(
     product_proposal,
     source="previous",
     based_on_trial=None,
+    planned_cooking_qty=None,
 ):
+    target_qty = flt(planned_cooking_qty)
+
+    if target_qty <= 0:
+        frappe.throw(
+            _("Planned Cooking Qty must be greater than zero.")
+        )
+
     if source not in {
         "previous",
         "proposal",
@@ -873,13 +953,11 @@ def create_trial(
         product_proposal
     )
 
+    trial.planned_cooking_qty = target_qty
+
     if base_trial:
         trial.based_on_trial = (
             base_trial.name
-        )
-
-        trial.planned_cooking_qty = (
-            base_trial.planned_cooking_qty
         )
 
         trial.pouch_size = (
@@ -891,13 +969,14 @@ def create_trial(
                 trial,
                 row,
                 line_key=row.line_key,
+                qty=_scale_snapshot_qty(
+                    base_trial.planned_cooking_qty,
+                    target_qty,
+                    row.qty,
+                ),
             )
 
     elif source == "proposal":
-        trial.planned_cooking_qty = cint(
-            proposal.quantity or 0
-        )
-
         for row in proposal.pp_items or []:
             _append_snapshot_row(
                 trial,
@@ -906,6 +985,11 @@ def create_trial(
                     f"PP:{row.name}"
                     if row.name
                     else None
+                ),
+                qty=_scale_snapshot_qty(
+                    proposal.quantity,
+                    target_qty,
+                    row.qty,
                 ),
             )
 

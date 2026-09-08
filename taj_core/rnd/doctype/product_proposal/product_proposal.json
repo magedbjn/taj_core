@@ -45,7 +45,9 @@
   "note",
   "trial_cooking_tab",
   "section_break_ljby",
-  "trial_cooking"
+  "trial_cooking",
+  "customer_samples_tab",
+  "customer_samples"
  ],
  "fields": [
   {
@@ -274,6 +276,18 @@
    "fieldname": "section_break_ljby",
    "fieldtype": "Section Break",
    "no_copy": 1
+  },
+  {
+   "fieldname": "customer_samples_tab",
+   "fieldtype": "Tab Break",
+   "label": "Customer Samples"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "customer_samples",
+   "fieldtype": "Table",
+   "label": "Customer Samples",
+   "options": "Product Proposal Sample"
   }
  ],
  "grid_page_length": 50,

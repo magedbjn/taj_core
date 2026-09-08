@@ -29,6 +29,12 @@ frappe.ui.form.on('Product Proposal Trial', {
                 () => open_sensory_rating_form(frm),
                 __('Sensory')
             );
+
+            frm.add_custom_button(
+                __('Print Trial Label'),
+                () => print_trial_label(frm),
+                __('Print')
+            );
         }
 
         set_trial_snapshot_read_only(frm);
@@ -54,9 +60,14 @@ function set_trial_snapshot_read_only(frm) {
         && frm.doc.status !== 'Draft'
     );
 
+    frm.set_df_property(
+        'planned_cooking_qty',
+        'read_only',
+        !frm.is_new() ? 1 : 0
+    );
+
     const fields = [
         'trial_title',
-        'planned_cooking_qty',
         'actual_produced_qty',
         'pouch_size',
         'holding_time',
@@ -168,6 +179,23 @@ function open_sensory_rating_form(frm) {
 
     window.open(
         `/sensory-rating?${query.toString()}`,
+        '_blank',
+        'noopener'
+    );
+}
+
+
+function print_trial_label(frm) {
+    const query = new URLSearchParams({
+        doctype: frm.doctype,
+        name: frm.doc.name,
+        trigger_print: '1',
+        format: 'Product Proposal Trial Label 6x4',
+        no_letterhead: '1'
+    });
+
+    window.open(
+        `/printview?${query.toString()}`,
         '_blank',
         'noopener'
     );
