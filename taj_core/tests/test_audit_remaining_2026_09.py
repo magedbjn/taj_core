@@ -448,3 +448,25 @@ class TestH12RawMaterialBundleQuantity(TestCase):
         self.assertEqual(len(item_rows), 1)
         self.assertEqual(item_rows[0]["raw_batch"], "RAW-BATCH")
         self.assertEqual(item_rows[0]["qty"], 5.0)
+
+class TestH16ChecklistRuntimeRoleAlignment(TestCase):
+    def test_h16_it_manager_matches_checklist_admin_page_access(self):
+        from taj_core.checklist import permissions as module
+
+        with (
+            patch.object(
+                module.frappe,
+                "get_roles",
+                return_value=["IT Manager"],
+            ),
+            patch.object(
+                module.frappe.db,
+                "exists",
+                return_value=False,
+            ),
+        ):
+            self.assertTrue(
+                module.is_checklist_manager(
+                    "test-it-manager@example.com"
+                )
+            )

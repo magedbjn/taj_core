@@ -3,6 +3,7 @@ import frappe
 DEFAULT_MANAGER_ROLES = {
     "Checklist Manager",
     "System Manager",
+    "IT Manager",
 }
 
 
