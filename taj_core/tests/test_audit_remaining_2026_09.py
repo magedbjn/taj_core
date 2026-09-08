@@ -315,3 +315,60 @@ class TestRemainingMediumAuditFixes(TestCase):
             )
         )
         self.assertEqual(report.get("disabled"), 1)
+
+class TestH15MaterialRequestSourceReference(TestCase):
+    def test_h15_does_not_merge_different_material_request_plan_items(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from taj_core.custom.material_request import collect_similar_items
+
+        def make_row(ref, qty):
+            return SimpleNamespace(
+                item_code="RAW-0000228",
+                warehouse="Raw Materials - Taj",
+                from_warehouse=None,
+                uom="Kg",
+                conversion_factor=1,
+                schedule_date="2026-09-08",
+                production_plan="MFG-PP-26-014",
+                material_request_plan_item=ref,
+                qty=qty,
+                stock_qty=qty,
+            )
+
+        class FakeMaterialRequest:
+            def __init__(self):
+                self.docstatus = 0
+                self.items = [
+                    make_row("PLAN-ITEM-A", 12.006),
+                    make_row("PLAN-ITEM-B", 51.104),
+                ]
+
+            def remove(self, row):
+                self.items.remove(row)
+
+            def save(self):
+                pass
+
+            def as_dict(self):
+                return {"items": self.items}
+
+        doc = FakeMaterialRequest()
+
+        with (
+            patch(
+                "taj_core.custom.material_request.frappe.get_doc",
+                return_value=doc,
+            ),
+            patch(
+                "taj_core.custom.material_request.frappe.msgprint",
+            ),
+        ):
+            collect_similar_items("TEST-MR")
+
+        self.assertEqual(len(doc.items), 2)
+        self.assertEqual(
+            [row.material_request_plan_item for row in doc.items],
+            ["PLAN-ITEM-A", "PLAN-ITEM-B"],
+        )
