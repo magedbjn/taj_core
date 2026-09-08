@@ -125,6 +125,8 @@ class CateringEquipmentDelivery(Document):
             required_qty_by_equipment.setdefault(row.equipment, 0)
             required_qty_by_equipment[row.equipment] += cint(row.qty)
 
+        exclude_delivery = None if self.is_new() else self.name
+
         for equipment in sorted(required_qty_by_equipment):
             required_qty = required_qty_by_equipment[equipment]
 
@@ -136,12 +138,12 @@ class CateringEquipmentDelivery(Document):
                 available_qty = _get_available_qty_current(
                     equipment=equipment,
                     total_qty=total_qty,
-                    exclude_delivery=self.name,
+                    exclude_delivery=exclude_delivery,
                 )
             else:
                 available_qty = get_available_qty(
                     equipment=equipment,
-                    exclude_delivery=self.name
+                    exclude_delivery=exclude_delivery,
                 )
 
             if required_qty > available_qty:

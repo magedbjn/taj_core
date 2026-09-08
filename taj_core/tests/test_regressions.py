@@ -197,3 +197,77 @@ class TestProductProposalWritePermissions(TestCase):
 
         proposal.check_permission.assert_called_once_with("write")
         mock_set_value.assert_not_called()
+
+
+
+class TestNewBulkCateringDelivery(TestCase):
+    def test_new_bulk_delivery_does_not_read_itself_before_insert(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock, patch
+
+        from taj_core.catering.doctype.catering_equipment_delivery import (
+            catering_equipment_delivery as module,
+        )
+
+        equipment = SimpleNamespace(
+            has_serial_no=0,
+            total_qty=10,
+            equipment_name_arabic="Test Equipment",
+            check_permission=Mock(),
+        )
+
+        excluded_delivery = SimpleNamespace(
+            check_permission=Mock(),
+        )
+
+        get_doc_calls = []
+
+        def get_doc(doctype, name):
+            get_doc_calls.append((doctype, name))
+
+            if doctype == "Catering Equipment":
+                return equipment
+
+            if doctype == "Catering Equipment Delivery":
+                return excluded_delivery
+
+            raise AssertionError(
+                f"Unexpected get_doc: {doctype} {name}"
+            )
+
+        delivery = SimpleNamespace(
+            name="DEL-NEW",
+            items=[
+                SimpleNamespace(
+                    equipment="EQ-TEST",
+                    qty=1,
+                )
+            ],
+            is_new=lambda: True,
+        )
+
+        with (
+            patch.object(
+                module.frappe,
+                "get_doc",
+                side_effect=get_doc,
+            ),
+            patch.object(
+                module.frappe.db,
+                "sql",
+                return_value=[[0]],
+            ),
+        ):
+            module.CateringEquipmentDelivery.validate_available_qty(
+                delivery
+            )
+
+        self.assertNotIn(
+            (
+                "Catering Equipment Delivery",
+                "DEL-NEW",
+            ),
+            get_doc_calls,
+        )
+
+        excluded_delivery.check_permission.assert_not_called()
