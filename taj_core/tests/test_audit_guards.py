@@ -119,8 +119,6 @@ class TestTransactionGuards(TestCase):
     def test_supplier_group_errors_fail_closed(self):
         from taj_core.integrations import supplier_hooks
 
-        supplier_hooks.is_qualified_supplier_group.cache_clear()
-
         with patch.object(
             supplier_hooks.frappe,
             "get_cached_doc",
@@ -133,8 +131,6 @@ class TestTransactionGuards(TestCase):
                 supplier_hooks.is_qualified_supplier_group(
                     "_Test Group"
                 )
-
-        supplier_hooks.is_qualified_supplier_group.cache_clear()
 
     def test_license_type_does_not_invent_expiry_date(self):
         from taj_core.company_documents.doctype.license_type \
