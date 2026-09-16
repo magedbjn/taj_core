@@ -2,6 +2,11 @@
 import frappe
 from math import ceil
 from frappe.utils import flt, cint
+from taj_core.taj_manufacturing.production_plan_helpers import (
+    existing_fields as _existing_fields,
+    get_sub_assembly_row_fields as _get_sub_assembly_row_fields,
+    resolve_pp_item_reference as _resolve_pp_item_reference,
+)
 
 
 TEMPLATE_PATH = "taj_manufacturing/templates/preparation_label.html"
@@ -89,12 +94,6 @@ def _get_item_stock_uom(item_code):
 
 def _get_item_shelf_life(item_code):
     return cint(frappe.db.get_value("Item", item_code, "shelf_life_in_days") or 0)
-
-
-def _existing_fields(doctype, wanted_fields):
-    meta = frappe.get_meta(doctype)
-    existing = {"name", "parent"} | {df.fieldname for df in meta.fields}
-    return [f for f in wanted_fields if f in existing]
 
 
 def _get_job_card_stage(source_job_card=None):
@@ -493,47 +492,6 @@ def _build_source_from_pp_item(pp_item_name, linked_item_code=None, linked_bom_h
         "linked_bom_hint": _norm_txt(linked_bom_hint),
         "linked_operation_hint": _norm_txt(linked_operation_hint),
     }
-
-
-def _resolve_pp_item_reference(production_plan, pp_item_ref):
-    if not pp_item_ref:
-        return None
-
-    if frappe.db.exists("Production Plan Item", pp_item_ref):
-        return pp_item_ref
-
-    return frappe.db.get_value(
-        "Production Plan Item",
-        {
-            "parent": production_plan,
-            "temporary_name": pp_item_ref,
-        },
-        "name",
-    )
-
-
-def _get_sub_assembly_row_fields():
-    return _existing_fields(
-        "Production Plan Sub Assembly Item",
-        [
-            "name",
-            "parent",
-            "production_item",
-            "bom_no",
-            "planned_start_date",
-            "schedule_date",
-            "operation",
-            "qty",
-            "stock_qty",
-            "planned_qty",
-            "required_qty",
-            "sub_assembly_qty",
-            "production_qty",
-            "taj_merge_group_id",
-            "production_plan_item",
-            "parent_item_code",
-        ],
-    )
 
 
 def _get_current_sub_assembly_row(doc):

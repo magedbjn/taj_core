@@ -3,7 +3,6 @@
 from __future__ import annotations
 import frappe
 from frappe import _
-from typing import Optional
 
 def is_qualified_supplier_group(group: str | None) -> bool:
     """

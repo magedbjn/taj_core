@@ -102,7 +102,6 @@ Rancid,متأكسد
 Salty,مالح
 Sweet,حلو
 Mild,خفيف
-Medium,متوسط
 Hot,حار
 Extra Hot,حار جدًا
 Needs Improvement,يحتاج تحسين
@@ -111,17 +110,12 @@ Solid,صلب
 Liquid,سائل
 Product Info,معلومات المنتج
 Product Proposal,مقترح المنتج
-Product Name,اسم المنتج
 Product Name Arabic,اسم المنتج بالعربية
-Cuisine,المطبخ
 Source of Proposal,مصدر المقترح
 Target Segment,الفئة المستهدفة
-Expected Market Size,حجم السوق المتوقع
 Expected Quantity,الكمية المتوقعة
 Compatibility with Current Production Capabilities,التوافق مع قدرات الإنتاج الحالية
 Selling Price,سعر البيع
-Aligns with Company Vision & Goals,يتماشى مع رؤية وأهداف الشركة
-Special Requirements,متطلبات خاصة
 Pouches that can be produced from the Raw Materials,الأكياس التي يمكن إنتاجها من المواد الخام
 Holding Time,مدة الحفظ
 Component Name,اسم المكوّن
@@ -130,33 +124,11 @@ Duration (minutes),المدة (بالدقائق)
 Preparation BOM,BOM
 Process Type,نوع العملية
 Cooking Type,نوع الطهي
-Mild,خفيف
-Hot,حار
-Extra Hot,حار جدًا
 Accept,مقبول
 Need Improvement,يحتاج تحسين
 Sensory Evaluation,التقييم الحسي
-Sensory Evaluation Decision,قرار التقييم الحسي
 Spicy,متبل / حار
 Final Status,الحالة النهائية
-Asian,آسيوي
-Chinese,صيني
-Fusion,مزيج
-Indian,هندي
-Italian,إيطالي
-Japanese,ياباني
-Korean,كوري
-Local,محلي
-Mediterranean,متوسطي
-Mexican,مكسيكي
-Middle Eastern,شرق أوسطي
-Thai,تايلاندي
-Traditional,تقليدي
-Turkish,تركي
-Western,غربي
-Low,منخفض
-Medium,متوسط
-High,مرتفع
 Compatible,متوافق
 Minor Adjustments,تعديلات بسيطة
 Major Changes,تغييرات جوهرية
@@ -194,7 +166,6 @@ Grand Total Cost,إجمالي التكلفة الكلي,
 "Report shows positive movement quantity and cost for {0}, converted to {1}.","يعرض التقرير الكمية والتكلفة للحركات الموجبة لـ {0} بعد التحويل إلى {1}."
 "Report shows positive movement quantity and cost for {0}, converted to {1}. The following items were skipped because they cannot be converted to weight reliably: {2}{3}","يعرض التقرير الكمية والتكلفة للحركات الموجبة لـ {0} بعد التحويل إلى {1}. تم تجاوز الأصناف التالية لأنه لا يمكن تحويلها إلى وزن بشكل موثوق: {2}{3}"
 "Total Quantity ({0})","إجمالي الكمية ({0})"
-Total Cost,إجمالي التكلفة
 "This report shows purchased and manufactured quantities and costs for the selected period, converted to {0}.","يعرض هذا التقرير كميات وتكاليف المواد المشتراة والأصناف المصنعة خلال الفترة المحددة، بعد التحويل إلى {0}."
 "This report shows purchased material quantities and costs for the selected period, converted to {0}.","يعرض هذا التقرير كميات وتكاليف المواد المشتراة خلال الفترة المحددة، بعد التحويل إلى {0}."
 "This report shows manufactured item quantities and costs for the selected period, converted to {0}.","يعرض هذا التقرير كميات وتكاليف الأصناف المصنعة خلال الفترة المحددة، بعد التحويل إلى {0}."
@@ -211,29 +182,12 @@ Total Cost,إجمالي التكلفة
 "This report shows purchased and manufactured quantities and costs for the selected period, converted to the selected unit and grouped by Item Group.","يعرض هذا التقرير كميات وتكاليف المواد المشتراة والأصناف المصنعة خلال الفترة المحددة، مع تحويل الكمية إلى الوحدة المختارة وتجميعها حسب مجموعة الصنف.",""
 "Collapse All","طي الكل",""
 "Expand All","توسيع الكل",""
-"Transaction Scope","نوع العملية",""
-"Purchased Materials","مواد مشتراة",""
-"Manufactured Items","أصناف تم تصنيعها",""
-"Total Quantity ({0})","إجمالي الكمية ({0})",""
-"Total Cost","إجمالي التكلفة",""
-"Reason","السبب",""
-"Missing stock UOM.","الوحدة الأساسية للصنف غير مُدخلة.",""
 "No standard UOM conversion from {0} to {1}, and item weight data is missing.","لا يوجد تحويل قياسي للوحدة من {0} إلى {1}، وبيانات وزن الصنف غير موجودة.",""
 "No standard UOM conversion from {0} to {1}, and weight_per_unit is missing.","لا يوجد تحويل قياسي للوحدة من {0} إلى {1}، والحقل weight_per_unit غير مُدخل.",""
 "No standard UOM conversion from {0} to {1}, and weight_uom is missing.","لا يوجد تحويل قياسي للوحدة من {0} إلى {1}، والحقل weight_uom غير مُدخل.",""
 "No standard UOM conversion from {0} to {1}, and weight_uom ({2}) is unsupported.","لا يوجد تحويل قياسي للوحدة من {0} إلى {1}، ووحدة الوزن ({2}) غير مدعومة.",""
 "Unknown reason.","سبب غير معروف.",""
-"No Item Group","بدون مجموعة صنف",""
 "Grand Total","الإجمالي الكلي",""
-"Unit Cost / {0}","تكلفة الوحدة / {0}",""
-"Item / Group","الصنف / المجموعة",""
-"Qty ({0})","الكمية ({0})",""
-"From Date and To Date are required for Custom mode.","يجب إدخال من تاريخ وإلى تاريخ عند اختيار الوضع المخصص.",""
-"From Date cannot be after To Date.","لا يمكن أن يكون من تاريخ بعد إلى تاريخ.",""
-"Month is required.","الشهر مطلوب.",""
-"Year is required.","السنة مطلوبة.",""
-"Year option is required.","خيار السنة مطلوب.",""
-"Invalid month.","الشهر غير صحيح.",""
 "Conversion Basis","أساس التحويل",""
 "Stock UOM","الوحدة الأساسية للصنف",""
 "Standard UOM Conversion","تحويل وحدة قياسي",""
@@ -244,3 +198,47 @@ Total Cost,إجمالي التكلفة
 "Used business rule: Liter = Kg.","تم استخدام قاعدة العمل: اللتر = الكيلو.",""
 "Used business rule: Milliliter = Gram.","تم استخدام قاعدة العمل: الملليلتر = الجرام.",""
 "No conversion rule found from {0} to {1}.","لا توجد قاعدة تحويل من {0} إلى {1}.",""
+"Default Required Worker Count (Optional)","العدد الافتراضي المطلوب من العمال (اختياري)"
+"Required Worker Count (Production)","العدد المطلوب من العمال (الإنتاج)"
+"Required Workers (Production)","العمال المطلوبون (الإنتاج)"
+"Set by Production for this checklist run.","يحدده الإنتاج لهذا الفحص."
+"Required worker count updated.","تم تحديث العدد المطلوب من العمال."
+"External Workforce Attendance","حضور العمالة الخارجية"
+"Worker Company","شركة العمالة"
+"Badge / Worker No.","رقم العامل / البطاقة"
+"Staffing Status","حالة العدد المطلوب"
+"You do not have access to External Workforce Attendance.","ليس لديك صلاحية للوصول إلى تقرير حضور العمالة الخارجية."
+"Required Worker Count cannot be negative.","لا يمكن أن يكون العدد المطلوب من العمال سالبًا."
+"Cycle & Deadline Behavior","سلوك الدورة والموعد"
+"Cycle Behavior","سلوك الدورة"
+"Fresh Every Cycle","جديد في كل دورة"
+"Continue Until Completed","استمرار حتى الاكتمال"
+"Required Before Production","مطلوب قبل الإنتاج"
+"Notify When Overdue","تنبيه عند التأخير"
+"Escalate After Minutes","التصعيد بعد (دقائق)"
+"Escalation User","مستخدم التصعيد"
+"Cycle & Production Audit","تدقيق الدورة وبدء الإنتاج"
+"Overdue Notified At","تم تنبيه التأخير في"
+"Escalated At","تم التصعيد في"
+"Production Started Before Completion","بدأ الإنتاج قبل اكتمال الفحص"
+"Production Started At","بدأ الإنتاج في"
+"Production Work Order","أمر الإنتاج"
+"Completion % At Production Start","نسبة الاكتمال عند بدء الإنتاج"
+"Incomplete Items At Production Start","البنود غير المكتملة عند بدء الإنتاج"
+"Auto Closed - Incomplete","أغلق تلقائياً - غير مكتمل"
+"Missed","لم يتم التنفيذ"
+"Production Started Early","بدأ الإنتاج قبل اكتمال المتطلبات"
+"Production Started Before Checklist Completion","بدأ الإنتاج قبل اكتمال قائمة الفحص"
+"Completion At Production Start","الاكتمال عند بدء الإنتاج"
+"Incomplete At Production Start","غير المكتمل عند بدء الإنتاج"
+"Checklist Overdue: {0}","قائمة الفحص متأخرة: {0}"
+"Checklist Escalated: {0}","تم تصعيد قائمة الفحص: {0}"
+"A checklist required before production must use Fresh Every Cycle behavior.","قائمة الفحص المطلوبة قبل الإنتاج يجب أن تكون جديدة في كل دورة."
+"Overdue notification must be enabled before escalation can be configured.","يجب تفعيل تنبيه التأخير قبل إعداد التصعيد."
+"Escalate After Minutes is required when an Escalation User is configured.","يجب تحديد مدة التصعيد بالدقائق عند تحديد مستخدم للتصعيد."
+"Checklist not submitted","لم يتم إرسال قائمة الفحص"
+"Checklist cannot be started before its scheduled start time: {0}.","لا يمكن بدء قائمة الفحص قبل وقت البدء المجدول: {0}."
+"Scheduled start","وقت البدء المجدول"
+"This checklist is view-only until its scheduled start time.","قائمة الفحص للعرض فقط حتى يحين وقت البدء المجدول."
+"Asset","الأصل"
+"Optional physical equipment scope. Use this when multiple assets share the same maintenance template.","ربط اختياري بالمعدة الفعلية لتمييز الأصول التي تستخدم نفس نموذج الصيانة."

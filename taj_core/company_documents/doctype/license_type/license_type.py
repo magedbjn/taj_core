@@ -1,7 +1,6 @@
 # license_type.py
 import frappe
 from frappe.model.document import Document
-from frappe import _
 
 class LicenseType(Document):
     def on_update(self):

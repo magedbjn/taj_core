@@ -1,4 +1,3 @@
-import re
 import frappe
 
 MODULE_NAME = "Slnee"

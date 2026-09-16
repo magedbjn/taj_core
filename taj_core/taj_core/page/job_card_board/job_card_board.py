@@ -7,6 +7,11 @@ from typing import List, Set, Optional, Dict, Any, Tuple
 import frappe
 from frappe.utils import flt, cint, get_datetime, today
 from taj_core.taj_manufacturing.api.preparation_labels import get_raw_materials_from_job_card
+from taj_core.taj_manufacturing.production_plan_helpers import (
+    existing_fields as _existing_fields,
+    get_sub_assembly_row_fields as _get_sub_assembly_row_fields,
+    resolve_pp_item_reference as _resolve_pp_item_reference,
+)
 
 OVERDUE_TOLERANCE_SEC = 120
 
@@ -23,12 +28,6 @@ def _has_col(doctype: str, fieldname: str) -> bool:
     if key not in _COL_CACHE:
       _COL_CACHE[key] = bool(frappe.db.has_column(doctype, fieldname))
     return _COL_CACHE[key]
-
-
-def _existing_fields(doctype: str, wanted_fields):
-    meta = frappe.get_meta(doctype)
-    existing = {"name", "parent"} | {df.fieldname for df in meta.fields}
-    return [f for f in wanted_fields if f in existing]
 
 
 def _safe_fields() -> List[str]:
@@ -487,47 +486,6 @@ def _assert_user_can_access_job_card_pf(job_card_name: str):
 # -------------------------
 # Filling helpers
 # -------------------------
-def _resolve_pp_item_reference(production_plan, pp_item_ref):
-    if not pp_item_ref:
-        return None
-
-    if frappe.db.exists("Production Plan Item", pp_item_ref):
-        return pp_item_ref
-
-    return frappe.db.get_value(
-        "Production Plan Item",
-        {
-            "parent": production_plan,
-            "temporary_name": pp_item_ref,
-        },
-        "name",
-    )
-
-
-def _get_sub_assembly_row_fields():
-    return _existing_fields(
-        "Production Plan Sub Assembly Item",
-        [
-            "name",
-            "parent",
-            "production_item",
-            "bom_no",
-            "planned_start_date",
-            "schedule_date",
-            "operation",
-            "qty",
-            "stock_qty",
-            "planned_qty",
-            "required_qty",
-            "sub_assembly_qty",
-            "production_qty",
-            "taj_merge_group_id",
-            "production_plan_item",
-            "parent_item_code",
-        ],
-    )
-
-
 def _get_current_sub_assembly_row_from_work_order(work_order: str):
     if not work_order:
         return None
