@@ -43,9 +43,6 @@
   "amended_from",
   "column_break_flof",
   "note",
-  "trial_cooking_tab",
-  "section_break_ljby",
-  "trial_cooking",
   "customer_samples_tab",
   "customer_samples"
  ],
@@ -215,7 +212,7 @@
   {
    "description": "Pouches that can be produced from the Raw Materials",
    "fieldname": "quantity",
-   "fieldtype": "Int",
+   "fieldtype": "Float",
    "label": "Quantity"
   },
   {
@@ -259,23 +256,6 @@
    "fieldtype": "Int",
    "hidden": 1,
    "label": "Print Quantity"
-  },
-  {
-   "fieldname": "trial_cooking_tab",
-   "fieldtype": "Tab Break",
-   "label": "Trial Cooking"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "trial_cooking",
-   "fieldtype": "Table",
-   "label": "Trial Cooking",
-   "options": "Product Proposal Trial Cooking"
-  },
-  {
-   "fieldname": "section_break_ljby",
-   "fieldtype": "Section Break",
-   "no_copy": 1
   },
   {
    "fieldname": "customer_samples_tab",

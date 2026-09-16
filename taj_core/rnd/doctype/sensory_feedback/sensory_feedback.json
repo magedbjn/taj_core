@@ -9,6 +9,7 @@
   "your_name",
   "item",
   "trial_document",
+  "trial_run_no",
   "customer",
   "sample_token",
   "appearance",
@@ -62,7 +63,6 @@
    "reqd": 1
   },
   {
-   "default": "Today",
    "fieldname": "evaluation_date",
    "fieldtype": "Date",
    "label": "Evaluation Date",
@@ -98,6 +98,13 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Sample Token",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trial_run_no",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Trial Run No",
    "read_only": 1
   }
  ],

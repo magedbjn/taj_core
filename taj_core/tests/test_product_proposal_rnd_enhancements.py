@@ -57,6 +57,24 @@ class TestProductProposalRNDEnhancements(unittest.TestCase):
             with self.assertRaises(frappe.ValidationError):
                 ProductProposal.validate_customer_samples(fake)
 
+    def test_customer_sample_run_must_belong_to_selected_trial(self):
+        row = frappe._dict(
+            customer="CUST-1",
+            trial_document="TRIAL-1",
+            trial_run_no=2,
+            sample_qty=1,
+            uom="Nos",
+        )
+        fake = SimpleNamespace(name="PP-1", customer_samples=[row])
+        fake.get = lambda fieldname: getattr(fake, fieldname, None)
+        module = "taj_core.rnd.doctype.product_proposal.product_proposal"
+
+        with patch(f"{module}.frappe.db.get_value", return_value="PP-1"), patch(
+            f"{module}.frappe.db.exists", return_value=False
+        ):
+            with self.assertRaises(frappe.ValidationError):
+                ProductProposal.validate_customer_samples(fake)
+
     def test_customer_sample_qty_must_be_positive(self):
         row = frappe._dict(
             {
@@ -143,6 +161,15 @@ class TestProductProposalRNDEnhancements(unittest.TestCase):
         self.assertEqual(fake.item, "PP-1")
         self.assertEqual(fake.trial_document, "PP-1-TRIAL-01")
 
+    def test_sensory_feedback_normalizes_literal_today(self):
+        fake = frappe._dict(evaluation_date="Today")
+        module = "taj_core.rnd.doctype.sensory_feedback.sensory_feedback"
+
+        with patch(f"{module}.today", return_value="2026-09-09"):
+            SensoryFeedback.set_evaluation_date_default(fake)
+
+        self.assertEqual(fake.evaluation_date, "2026-09-09")
+
     def test_sensory_defaults_to_three_month_window(self):
         fake = frappe._dict(
             {
@@ -225,7 +252,7 @@ class TestProductProposalRNDEnhancements(unittest.TestCase):
         fields = {row["fieldname"]: row for row in data["web_form_fields"]}
 
         self.assertEqual(fields["trial_document"]["fieldtype"], "Select")
-        self.assertEqual(fields["item"]["fieldtype"], "Data")
+        self.assertNotIn("item", fields)
         self.assertEqual(fields["customer"]["fieldtype"], "Data")
 
     def test_cancelled_product_proposal_is_not_available_for_sensory(self):
@@ -268,6 +295,107 @@ class TestProductProposalRNDEnhancements(unittest.TestCase):
             "set_df_property('your_name', 'hidden', 1)",
             source,
         )
+
+
+    def test_cooking_run_defaults_only_assign_number_and_date(self):
+        row = frappe._dict(
+            run_no=0,
+            run_date=None,
+            required_qty=100,
+            produced_qty=92,
+            notes="",
+        )
+        fake = frappe._dict(
+            cooking_runs=[row],
+            is_final_trial=0,
+            status="Draft",
+        )
+        fake.get = lambda fieldname: getattr(fake, fieldname, None)
+
+        ProductProposalTrial.set_cooking_run_defaults(fake)
+
+        self.assertEqual(row.run_no, 1)
+        self.assertTrue(row.run_date)
+        self.assertNotIn("purpose", row)
+        self.assertNotIn("yield_percent", row)
+
+    def test_existing_cooking_run_cannot_be_deleted(self):
+        old_row = frappe._dict(
+            name="RUN-ROW-1", run_no=1, run_date="2026-09-09",
+            required_qty=100, produced_qty=95, notes="",
+        )
+        old_doc = frappe._dict(cooking_runs=[old_row])
+        fake = frappe._dict(
+            cooking_runs=[], is_final_trial=0, status="Draft"
+        )
+        fake.get = lambda fieldname: getattr(fake, fieldname, None)
+        fake.get_doc_before_save = lambda: old_doc
+
+        with self.assertRaises(frappe.ValidationError):
+            ProductProposalTrial.validate_cooking_runs(fake)
+
+    def test_final_approved_trial_allows_new_same_recipe_cooking_run(self):
+        new_run = frappe._dict(
+            name=None,
+            run_no=1,
+            run_date="2026-09-09",
+            required_qty=10,
+            produced_qty=0,
+            notes="",
+        )
+        fake = frappe._dict(
+            cooking_runs=[new_run],
+            is_final_trial=1,
+            status="Approved",
+        )
+        fake.get = lambda fieldname: getattr(fake, fieldname, None)
+        fake.get_doc_before_save = lambda: frappe._dict(cooking_runs=[])
+
+        ProductProposalTrial.validate_cooking_runs(fake)
+
+    def test_trial_run_cooking_sheet_scales_without_mutating_trial(self):
+        from taj_core.rnd.doctype.product_proposal_trial.product_proposal_trial import (
+            get_trial_run_cooking_sheet,
+        )
+
+        item = frappe._dict(item_code="ITEM-1", item_name="Item 1", uom="Kg", qty=40)
+        solid = frappe._dict(
+            component_type="Solid 1",
+            component_name="Meat",
+            size="2*2",
+            weight=10,
+            total_weight_cook=200,
+            salt=0,
+            brix=0,
+            ph=6.2,
+            viscosity=0,
+            spindel_type="",
+            rpm=0,
+            temperature=5,
+        )
+        run = frappe._dict(
+            run_no=2, run_date="2026-09-09",
+            required_qty=50, produced_qty=48, notes=""
+        )
+        trial = frappe._dict(
+            name="TRIAL-1", trial_no=1, trial_title="Trial 1",
+            product_proposal="PP-1", planned_cooking_qty=100,
+            items=[item], solid_liquid=[solid], cooking_runs=[run],
+        )
+        trial.get = lambda fieldname: getattr(trial, fieldname, None)
+        trial.check_permission = lambda permission: None
+
+        module = "taj_core.rnd.doctype.product_proposal_trial.product_proposal_trial"
+        with patch(f"{module}.frappe.get_doc", return_value=trial), patch(
+            f"{module}.frappe.db.get_value",
+            return_value=frappe._dict(product_name="Product One"),
+        ):
+            sheet = get_trial_run_cooking_sheet("TRIAL-1", 2)
+
+        self.assertAlmostEqual(sheet["items"][0].required_qty, 20)
+        self.assertAlmostEqual(sheet["solid_liquid"][0].total_weight_cook, 100)
+        self.assertEqual(item.qty, 40)
+        self.assertEqual(solid.total_weight_cook, 200)
 
     def test_trial_label_6x4_print_format_source(self):
         data = _load_app_json(

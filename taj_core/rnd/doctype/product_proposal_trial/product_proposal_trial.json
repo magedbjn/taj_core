@@ -1,6 +1,6 @@
 {
  "actions": [],
- "allow_rename": 0,
+ "creation": "2026-09-11 22:25:42.123283",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -16,12 +16,16 @@
   "system_column",
   "posting_date",
   "trial_user",
+  "approved_on",
+  "formula_approved",
   "sensory_availability_section",
   "enable_sensory_rating",
   "sensory_from_date",
-  "sensory_column",
   "sensory_until_date",
   "formulation_tab",
+  "solid_liquid_section",
+  "solid_liquid",
+  "section_break_hnby",
   "items",
   "summary_section",
   "total_items",
@@ -33,23 +37,59 @@
   "cooking_column",
   "pouch_size",
   "holding_time",
-  "remark"
+  "remark",
+  "cooking_runs_section",
+  "cooking_runs"
  ],
  "fields": [
   {
+   "fieldname": "trial_tab",
+   "fieldtype": "Tab Break",
+   "label": "Trial"
+  },
+  {
    "fieldname": "product_proposal",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Product Proposal",
    "options": "Product Proposal",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
+  },
+  {
+   "fieldname": "trial_title",
+   "fieldtype": "Data",
+   "label": "Trial Title"
+  },
+  {
+   "fieldname": "main_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nIn Progress\nCompleted\nApproved\nRejected"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_final_trial",
+   "fieldtype": "Check",
+   "label": "Final Trial"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "system_information",
+   "fieldtype": "Section Break",
+   "label": "System Information"
   },
   {
    "fieldname": "trial_no",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Trial No",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "based_on_trial",
@@ -58,31 +98,16 @@
    "options": "Product Proposal Trial"
   },
   {
-   "fieldname": "trial_title",
-   "fieldtype": "Data",
-   "label": "Trial Title"
+   "fieldname": "system_column",
+   "fieldtype": "Column Break"
   },
   {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Draft\nCompleted\nApproved\nRejected",
-   "default": "Draft",
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "is_final_trial",
-   "fieldtype": "Check",
-   "label": "Final Trial",
-   "default": "0"
-  },
-  {
+   "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Posting Date",
-   "default": "Today",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "trial_user",
@@ -92,29 +117,62 @@
    "read_only": 1
   },
   {
-   "fieldname": "planned_cooking_qty",
-   "fieldtype": "Int",
-   "label": "Planned Cooking Qty"
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
   },
   {
-   "fieldname": "actual_produced_qty",
-   "fieldtype": "Int",
-   "label": "Actual Produced Qty"
+   "default": "0",
+   "fieldname": "formula_approved",
+   "fieldtype": "Check",
+   "label": "Formula Approved",
+   "read_only": 1
   },
   {
-   "fieldname": "pouch_size",
-   "fieldtype": "Data",
-   "label": "Pouch Size"
+   "fieldname": "sensory_availability_section",
+   "fieldtype": "Section Break",
+   "label": "Sensory Availability"
   },
   {
-   "fieldname": "holding_time",
-   "fieldtype": "Time",
-   "label": "Holding Time"
+   "default": "0",
+   "fieldname": "enable_sensory_rating",
+   "fieldtype": "Check",
+   "label": "Enable Sensory Rating"
   },
   {
-   "fieldname": "remark",
-   "fieldtype": "Small Text",
-   "label": "Remark"
+   "depends_on": "eval:doc.enable_sensory_rating",
+   "fieldname": "sensory_from_date",
+   "fieldtype": "Date",
+   "label": "Sensory From Date"
+  },
+  {
+   "depends_on": "eval:doc.enable_sensory_rating",
+   "fieldname": "sensory_until_date",
+   "fieldtype": "Date",
+   "label": "Sensory Until Date"
+  },
+  {
+   "fieldname": "formulation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Formulation"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "solid_liquid_section",
+   "fieldtype": "Section Break",
+   "label": "Solid / Liquid"
+  },
+  {
+   "fieldname": "solid_liquid",
+   "fieldtype": "Table",
+   "label": "Solid / Liquid",
+   "options": "Product Proposal Trial Solid Liquid"
+  },
+  {
+   "fieldname": "section_break_hnby",
+   "fieldtype": "Section Break",
+   "label": "Items"
   },
   {
    "fieldname": "items",
@@ -134,30 +192,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "trial_tab",
-   "fieldtype": "Tab Break",
-   "label": "Trial"
-  },
-  {
-   "fieldname": "main_column",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "system_information",
-   "fieldtype": "Section Break",
-   "label": "System Information",
-   "collapsible": 1
-  },
-  {
-   "fieldname": "system_column",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "formulation_tab",
-   "fieldtype": "Tab Break",
-   "label": "Formulation"
-  },
-  {
    "fieldname": "summary_column",
    "fieldtype": "Column Break"
   },
@@ -173,65 +207,80 @@
    "label": "Cooking Details"
   },
   {
+   "fieldname": "planned_cooking_qty",
+   "fieldtype": "Int",
+   "label": "Planned Cooking Qty"
+  },
+  {
+   "fieldname": "actual_produced_qty",
+   "fieldtype": "Int",
+   "label": "Actual Produced Qty"
+  },
+  {
    "fieldname": "cooking_column",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "sensory_availability_section",
+   "fieldname": "pouch_size",
+   "fieldtype": "Data",
+   "label": "Pouch Size"
+  },
+  {
+   "fieldname": "holding_time",
+   "fieldtype": "Time",
+   "label": "Holding Time"
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Small Text",
+   "label": "Remark"
+  },
+  {
+   "fieldname": "cooking_runs_section",
    "fieldtype": "Section Break",
-   "label": "Sensory Availability"
+   "label": "Trial Cooking Runs"
   },
   {
-   "default": "0",
-   "fieldname": "enable_sensory_rating",
-   "fieldtype": "Check",
-   "label": "Enable Sensory Rating"
-  },
-  {
-   "fieldname": "sensory_from_date",
-   "fieldtype": "Date",
-   "label": "Sensory From Date"
-  },
-  {
-   "fieldname": "sensory_column",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "sensory_until_date",
-   "fieldtype": "Date",
-   "label": "Sensory Until Date"
+   "fieldname": "cooking_runs",
+   "fieldtype": "Table",
+   "label": "Trial Cooking Runs",
+   "options": "Product Proposal Trial Run"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
+ "modified": "2026-09-16 10:38:26.725694",
+ "modified_by": "m.bajandooh@tajff.sa",
  "module": "RND",
  "name": "Product Proposal Trial",
+ "owner": "Administrator",
  "permissions": [
   {
    "create": 1,
    "delete": 1,
    "read": 1,
-   "write": 1,
-   "role": "System Manager"
+   "role": "System Manager",
+   "write": 1
   },
   {
    "create": 1,
    "delete": 1,
    "read": 1,
-   "write": 1,
-   "role": "RND Manager"
+   "role": "RND Manager",
+   "write": 1
   },
   {
    "create": 1,
    "read": 1,
-   "write": 1,
-   "role": "RND Trial Cooking User"
+   "role": "RND Trial Cooking User",
+   "write": 1
   },
   {
    "read": 1,
    "role": "RND User"
   }
  ],
+ "row_format": "Dynamic",
  "search_fields": "product_proposal,trial_title",
  "sort_field": "modified",
  "sort_order": "DESC",

@@ -5,12 +5,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, cstr
 from frappe import _
 
-
-TRIAL_COOKING_ALLOWED_ROLES = {
-    "System Manager",
-    "RND Manager",
-    "RND Trial Cooking User",
-}
+from taj_core.services.item_uom import validate_item_uom_rows
 
 
 class ProductProposal(Document):
@@ -19,9 +14,7 @@ class ProductProposal(Document):
     # -------------------------------------------------------------------------
 
     def validate(self):
-        self.set_trial_cooking_defaults()
-        self.validate_trial_cooking_locked_fields()
-        self.validate_trial_cooking_permission()
+        self.validate_item_uoms()
         self.validate_trial_links()
         self.set_customer_sample_tokens()
         self.validate_customer_samples()
@@ -30,9 +23,7 @@ class ProductProposal(Document):
         )
 
     def before_update_after_submit(self):
-        self.set_trial_cooking_defaults()
-        self.validate_trial_cooking_locked_fields()
-        self.validate_trial_cooking_permission()
+        self.validate_item_uoms()
         self.validate_trial_links()
         self.set_customer_sample_tokens()
         self.validate_customer_samples()
@@ -135,6 +126,11 @@ class ProductProposal(Document):
         indexes = [cint(p[-1]) for p in valid]
         return max(indexes) + 1
 
+    def validate_item_uoms(self):
+        validate_item_uom_rows(
+            self.get("pp_items") or []
+        )
+
     # -------------------------------------------------------------------------
     # Customer Samples
     # -------------------------------------------------------------------------
@@ -172,202 +168,56 @@ class ProductProposal(Document):
                     ).format(row.trial_document)
                 )
 
+            run_no = cint(getattr(row, "trial_run_no", 0))
+            if run_no:
+                run_exists = frappe.db.exists(
+                    "Product Proposal Trial Run",
+                    {
+                        "parent": row.trial_document,
+                        "parenttype": "Product Proposal Trial",
+                        "parentfield": "cooking_runs",
+                        "run_no": run_no,
+                    },
+                )
+                if not run_exists:
+                    frappe.throw(
+                        _(
+                            "Customer Sample Run {0} does not exist in Trial {1}."
+                        ).format(run_no, row.trial_document)
+                    )
+
     # -------------------------------------------------------------------------
-    # Trial Cooking
+    # Trial Links
     # -------------------------------------------------------------------------
-
-    def set_trial_cooking_defaults(self):
-        """
-        Auto fill Trial Cooking rows:
-        - posting_date = Today
-        - trial_user = current user
-        - holding_time = current time if empty
-
-        Important:
-        - actual_produced_qty is the actual produced quantity.
-        - actual_produced_qty must be entered by the user after cooking.
-        """
-        rows = self.get("trial_cooking") or []
-
-        for row in rows:
-            if not row.posting_date:
-                row.posting_date = frappe.utils.today()
-
-            if not row.trial_user:
-                row.trial_user = frappe.session.user
-
-            # Holding Time يكون تلقائي بالوقت الحالي فقط إذا كان فاضي
-            # المستخدم يستطيع تعديله بعد ذلك
-            if not row.holding_time:
-                row.holding_time = frappe.utils.nowtime()
-
-    def validate_trial_cooking_permission(self):
-        """
-        Only selected roles can add/edit/delete Trial Cooking rows.
-        Other users can only view.
-        """
-        if self.has_trial_cooking_permission():
-            return
-
-        old_doc = self.get_doc_before_save()
-
-        # أثناء إنشاء مستند جديد
-        if not old_doc:
-            if self.get("trial_cooking"):
-                frappe.throw(_("You are not allowed to add Trial Cooking records."))
-            return
-
-        old_rows = self.get_trial_cooking_signature(old_doc)
-        new_rows = self.get_trial_cooking_signature(self)
-
-        if old_rows != new_rows:
-            frappe.throw(_("You are not allowed to add, edit, or delete Trial Cooking records."))
-
-    def validate_trial_cooking_locked_fields(self):
-        """
-        Prevent changing automatic fields after the row is created:
-        - posting_date
-        - trial_user
-
-        Editable by allowed users:
-        - planned_cooking_qty
-        - actual_produced_qty
-        - pouch_size
-        - holding_time
-        - remark
-        """
-        old_doc = self.get_doc_before_save()
-
-        if not old_doc:
-            return
-
-        old_rows_map = {}
-
-        for old_row in (old_doc.get("trial_cooking") or []):
-            old_rows_map[old_row.name] = old_row
-
-        for row in (self.get("trial_cooking") or []):
-            if not row.name or row.name not in old_rows_map:
-                continue
-
-            old_row = old_rows_map[row.name]
-
-            if cstr(row.posting_date) != cstr(old_row.posting_date):
-                frappe.throw(_("Posting Date cannot be changed in Trial Cooking."))
-
-            if cstr(row.trial_user) != cstr(old_row.trial_user):
-                frappe.throw(_("Trial User cannot be changed in Trial Cooking."))
-
-    def has_trial_cooking_permission(self):
-        user_roles = set(frappe.get_roles(frappe.session.user))
-        return bool(user_roles.intersection(TRIAL_COOKING_ALLOWED_ROLES))
-
-    @staticmethod
-    def get_trial_cooking_signature(doc):
-        """
-        Compare Trial Cooking rows to detect changes.
-        """
-        result = []
-
-        for row in (doc.get("trial_cooking") or []):
-            result.append({
-                "name": cstr(row.name),
-                "idx": cint(row.idx),
-                "posting_date": cstr(row.posting_date),
-                "trial_user": cstr(row.trial_user),
-                "trial_document": cstr(
-                    row.trial_document
-                ),
-                "planned_cooking_qty": cint(
-                    row.planned_cooking_qty
-                ),
-                "actual_produced_qty": cint(
-                    row.actual_produced_qty
-                ),
-                "pouch_size": cstr(row.pouch_size),
-                "holding_time": cstr(row.holding_time),
-                "remark": cstr(row.remark),
-            })
-
-        return result
 
     def validate_trial_links(self):
-        """
-        Trial links in legacy Trial Cooking and Sensory Evaluation
-        must belong to this Product Proposal.
-        """
+        """Sensory Evaluation Trial links must belong to this Product Proposal."""
         references = []
 
-        for row in (
-            self.get("trial_cooking")
-            or []
-        ):
+        for row in (self.get("pp_sensory_evaluation") or []):
             if row.trial_document:
-                references.append(
-                    row.trial_document
-                )
+                references.append(row.trial_document)
 
-        for row in (
-            self.get(
-                "pp_sensory_evaluation"
-            )
-            or []
-        ):
-            if row.trial_document:
-                references.append(
-                    row.trial_document
-                )
-
-        references = list(
-            dict.fromkeys(references)
-        )
+        references = list(dict.fromkeys(references))
 
         if not references:
             return
 
         records = frappe.get_all(
             "Product Proposal Trial",
-            filters={
-                "name": [
-                    "in",
-                    references,
-                ],
-            },
-            fields=[
-                "name",
-                "product_proposal",
-            ],
+            filters={"name": ["in", references]},
+            fields=["name", "product_proposal"],
         )
-
-        mapping = {
-            row.name:
-                row.product_proposal
-            for row in records
-        }
+        mapping = {row.name: row.product_proposal for row in records}
 
         for trial_name in references:
             if trial_name not in mapping:
-                frappe.throw(
-                    _(
-                        "Trial Cooking {0} "
-                        "does not exist."
-                    ).format(
-                        trial_name
-                    )
-                )
+                frappe.throw(_("Trial {0} does not exist.").format(trial_name))
 
-            if (
-                mapping[trial_name]
-                != self.name
-            ):
+            if mapping[trial_name] != self.name:
                 frappe.throw(
-                    _(
-                        "Trial Cooking {0} "
-                        "does not belong to "
-                        "Product Proposal {1}."
-                    ).format(
-                        trial_name,
-                        self.name,
+                    _("Trial {0} does not belong to Product Proposal {1}.").format(
+                        trial_name, self.name
                     )
                 )
 

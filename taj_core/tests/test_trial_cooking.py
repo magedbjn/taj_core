@@ -6,43 +6,11 @@ import frappe
 
 from taj_core.rnd.doctype.product_proposal_trial.product_proposal_trial import (
     ProductProposalTrial,
-    _compare_item_rows,
     _get_item_uom_conversion_factor,
     _scale_snapshot_qty,
+    _scale_total_weight_cook,
 )
 
-
-def make_row(
-    line_key,
-    item_code,
-    qty,
-    **kwargs,
-):
-    return frappe._dict({
-        "line_key": line_key,
-        "item_code": item_code,
-        "item_name": kwargs.get(
-            "item_name",
-            item_code,
-        ),
-        "qty": qty,
-        "uom": kwargs.get("uom", "Kg"),
-        "operation": kwargs.get("operation"),
-        "procees_type": kwargs.get(
-            "procees_type"
-        ),
-        "cooking_type": kwargs.get(
-            "cooking_type"
-        ),
-        "temperature": kwargs.get(
-            "temperature"
-        ),
-        "duration": kwargs.get(
-            "duration"
-        ),
-        "pre_bom": kwargs.get("pre_bom"),
-        "notes": kwargs.get("notes"),
-    })
 
 
 class TestTrialCooking(unittest.TestCase):
@@ -50,6 +18,12 @@ class TestTrialCooking(unittest.TestCase):
         self.assertAlmostEqual(
             _scale_snapshot_qty(100, 10, 50),
             5,
+        )
+
+    def test_scale_total_weight_cook(self):
+        self.assertAlmostEqual(
+            _scale_total_weight_cook(23, 46, 100),
+            200,
         )
 
     def test_scale_snapshot_qty_rejects_zero_source(self):
@@ -82,98 +56,6 @@ class TestTrialCooking(unittest.TestCase):
 
         with self.assertRaises(frappe.ValidationError):
             ProductProposalTrial.validate_locked_identity(fake)
-
-    def test_comparison_detects_added_removed_changed(self):
-        first = SimpleNamespace(
-            items=[
-                make_row("A", "ITEM-A", 10),
-                make_row("B", "ITEM-B", 20),
-                make_row("C", "ITEM-C", 30),
-            ]
-        )
-
-        second = SimpleNamespace(
-            items=[
-                make_row("A", "ITEM-A", 10),
-                make_row("B", "ITEM-B", 25),
-                make_row("D", "ITEM-D", 40),
-            ]
-        )
-
-        changes, unchanged = _compare_item_rows(
-            first,
-            second,
-        )
-
-        by_key = {
-            row["line_key"]: row
-            for row in changes
-        }
-
-        self.assertEqual(unchanged, 1)
-
-        self.assertEqual(
-            by_key["B"]["change_type"],
-            "Changed",
-        )
-        self.assertEqual(
-            by_key["B"]["old_qty"],
-            20,
-        )
-        self.assertEqual(
-            by_key["B"]["new_qty"],
-            25,
-        )
-
-        self.assertEqual(
-            by_key["C"]["change_type"],
-            "Removed",
-        )
-        self.assertEqual(
-            by_key["D"]["change_type"],
-            "Added",
-        )
-
-    def test_comparison_detects_process_change(self):
-        first = SimpleNamespace(
-            items=[
-                make_row(
-                    "A",
-                    "ITEM-A",
-                    10,
-                    cooking_type="Boiled",
-                ),
-            ]
-        )
-
-        second = SimpleNamespace(
-            items=[
-                make_row(
-                    "A",
-                    "ITEM-A",
-                    10,
-                    cooking_type="Steam",
-                ),
-            ]
-        )
-
-        changes, unchanged = _compare_item_rows(
-            first,
-            second,
-        )
-
-        self.assertEqual(unchanged, 0)
-        self.assertEqual(len(changes), 1)
-
-        fields = {
-            change["fieldname"]
-            for change in changes[0]["changes"]
-        }
-
-        self.assertIn(
-            "cooking_type",
-            fields,
-        )
 
     def test_duplicate_line_keys_are_repaired(self):
         rows = [
@@ -231,8 +113,40 @@ class TestTrialCooking(unittest.TestCase):
             )
 
 
-    def test_final_trial_requires_submitted_product_proposal(self):
+    def test_approval_timestamp_is_set_when_status_becomes_approved(self):
+        old_doc = frappe._dict(status="Completed", approved_on=None)
+        fake = frappe._dict(status="Approved", approved_on=None)
+        fake.get_doc_before_save = lambda: old_doc
+
+        module = (
+            "taj_core.rnd.doctype."
+            "product_proposal_trial."
+            "product_proposal_trial"
+        )
+        approved_at = "2026-09-11 15:30:00"
+        with patch(f"{module}.now_datetime", return_value=approved_at):
+            ProductProposalTrial.set_approval_timestamp(fake)
+
+        self.assertEqual(fake.approved_on, approved_at)
+
+    def test_existing_approved_timestamp_cannot_be_rewritten(self):
+        old_doc = frappe._dict(
+            status="Approved",
+            approved_on="2026-09-10 09:00:00",
+        )
+        fake = frappe._dict(
+            status="Approved",
+            approved_on="2099-01-01 00:00:00",
+        )
+        fake.get_doc_before_save = lambda: old_doc
+
+        ProductProposalTrial.set_approval_timestamp(fake)
+
+        self.assertEqual(fake.approved_on, "2026-09-10 09:00:00")
+
+    def test_final_trial_allows_draft_product_proposal(self):
         fake = SimpleNamespace(
+            name="TRIAL-1",
             is_final_trial=1,
             status="Approved",
             product_proposal="PP-TEST",
@@ -245,15 +159,10 @@ class TestTrialCooking(unittest.TestCase):
         )
 
         with patch(
-            f"{module}.frappe.db.get_value",
-            return_value=0,
+            f"{module}.frappe.db.sql",
+            return_value=[],
         ):
-            with self.assertRaises(
-                frappe.ValidationError
-            ):
-                ProductProposalTrial.validate_final_trial(
-                    fake
-                )
+            ProductProposalTrial.validate_final_trial(fake)
 
     def test_item_uom_conversion_uses_stock_uom_ratio(self):
         module = (
@@ -263,7 +172,7 @@ class TestTrialCooking(unittest.TestCase):
         )
 
         with patch(
-            f"{module}._get_item_uom_factor_to_stock",
+            "taj_core.services.item_uom.get_item_uom_factor_to_stock",
             side_effect=[0.001, 1],
         ):
             factor = _get_item_uom_conversion_factor(
@@ -283,10 +192,7 @@ class TestTrialCooking(unittest.TestCase):
         )
 
         with patch(
-            f"{module}._get_item_uom_factor_to_stock",
-            return_value=None,
-        ), patch(
-            f"{module}.get_uom_conv_factor",
+            "taj_core.services.item_uom.get_item_uom_factor_to_stock",
             return_value=None,
         ):
             factor = _get_item_uom_conversion_factor(
@@ -638,7 +544,7 @@ class TestTrialCooking(unittest.TestCase):
 
 
 class TestSensoryTrialLink(unittest.TestCase):
-    def test_trial_link_must_match_product_proposal(self):
+    def test_trial_link_sets_server_managed_product_proposal(self):
         from taj_core.rnd.doctype.sensory_feedback.sensory_feedback import (
             SensoryFeedback,
         )
@@ -657,12 +563,14 @@ class TestSensoryTrialLink(unittest.TestCase):
             f"{module}.frappe.db.get_value",
             return_value="PP-OTHER",
         ):
-            with self.assertRaises(
-                frappe.ValidationError
-            ):
-                SensoryFeedback.validate_trial_document(
-                    fake
-                )
+            SensoryFeedback.validate_trial_document(
+                fake
+            )
+
+        self.assertEqual(
+            fake.item,
+            "PP-OTHER",
+        )
 
 
 if __name__ == "__main__":

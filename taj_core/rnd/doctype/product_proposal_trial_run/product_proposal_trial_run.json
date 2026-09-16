@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "run_no",
+  "run_date",
+  "required_qty",
+  "produced_qty",
+  "notes"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "run_no",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Run No",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "run_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "required_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Required Qty",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "produced_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Produced Qty"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "module": "RND",
+ "name": "Product Proposal Trial Run",
+ "permissions": [],
+ "row_format": "Dynamic"
+}

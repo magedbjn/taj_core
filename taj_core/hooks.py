@@ -7,6 +7,11 @@ app_license = "mit"
 
 required_apps = ["erpnext", "hrms"]
 
+app_include_js = [
+    "/assets/taj_core/js/item_uom.js",
+]
+
+
 doctype_js = {
     "Material Request": "public/js/material_request.js",
     "Purchase Order": "public/js/purchase_order.js",

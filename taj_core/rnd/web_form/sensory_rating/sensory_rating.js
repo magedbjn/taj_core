@@ -54,7 +54,14 @@ async function load_general_trials(selected_trial) {
         args: { txt: '' }
     });
 
-    set_trial_options(response.message || [], selected_trial);
+    const rows = response.message || [];
+    set_trial_options(rows, selected_trial);
+
+    if (!rows.length && !selected_trial) {
+        frappe.msgprint(__(
+            'No Trials are currently open for Sensory Rating.'
+        ));
+    }
 }
 
 
@@ -75,6 +82,7 @@ async function load_sample_context(sample_token) {
     frappe.web_form.set_value('sample_token', sample_token);
     frappe.web_form.set_value('customer', context.customer || '');
     frappe.web_form.set_value('trial_document', context.trial_document || '');
+    frappe.web_form.set_value('trial_run_no', context.trial_run_no || 0);
     frappe.web_form.set_value('item', context.product_proposal || '');
     frappe.web_form.set_df_property('trial_document', 'read_only', 1);
     frappe.web_form.set_df_property('your_name', 'reqd', 0);
@@ -82,7 +90,7 @@ async function load_sample_context(sample_token) {
 }
 
 
-frappe.web_form.after_load = async () => {
+frappe.ready(async () => {
     const params = new URLSearchParams(window.location.search);
     const sample_token = params.get('sample');
     const direct_trial = params.get('trial_document');
@@ -98,7 +106,7 @@ frappe.web_form.after_load = async () => {
         await frappe.web_form.set_value('trial_document', direct_trial);
         await set_trial_context(direct_trial);
     }
-};
+});
 
 
 frappe.web_form.on('trial_document', async (field, value) => {

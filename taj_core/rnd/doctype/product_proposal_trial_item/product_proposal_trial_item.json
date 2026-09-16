@@ -59,7 +59,6 @@
   },
   {
    "columns": 1,
-   "default": "Gram",
    "fieldname": "uom",
    "fieldtype": "Link",
    "in_list_view": 1,

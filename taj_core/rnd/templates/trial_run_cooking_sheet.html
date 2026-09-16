@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{ sheet.product_name }} - Trial {{ sheet.trial_no }} - Run {{ sheet.run_no }}</title>
+<style>
+@page { size: A4; margin: 12mm; }
+body { font-family: Arial, sans-serif; color: #111; font-size: 11px; }
+h1 { font-size: 18px; margin: 0 0 4px; }
+h2 { font-size: 14px; margin: 18px 0 6px; }
+.meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 14px; margin-top: 10px; }
+.meta div { border-bottom: 1px solid #ddd; padding: 4px 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+th, td { border: 1px solid #bbb; padding: 5px 6px; vertical-align: top; }
+th { background: #f3f3f3; text-align: left; }
+.num { text-align: right; }
+.footer-lines { margin-top: 18px; }
+.footer-lines div { margin: 12px 0; border-bottom: 1px solid #777; min-height: 18px; }
+@media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<h1>{{ sheet.product_name }}</h1>
+<div>{{ sheet.trial_title }} — Trial {{ sheet.trial_no }} — Run {{ sheet.run_no }}</div>
+<div class="meta">
+  <div><strong>Date:</strong> {{ sheet.run_date }}</div>
+  <div><strong>Required Qty:</strong> {{ sheet.required_qty }}</div>
+  <div><strong>Produced Qty:</strong> {{ sheet.produced_qty or '' }}</div>
+  <div><strong>Product Proposal:</strong> {{ sheet.product_proposal }}</div>
+</div>
+
+<h2>Solid / Liquid</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th><th>Component</th><th>Size</th><th>Weight</th>
+      <th>Total Weight Cook</th><th>Salt</th><th>Brix</th><th>pH</th>
+      <th>Viscosity</th><th>Spindle</th><th>RPM</th><th>Temperature</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in sheet["solid_liquid"] %}
+    <tr>
+      <td>{{ row.component_type or '' }}</td>
+      <td>{{ row.component_name or '' }}</td>
+      <td>{{ row.size or '' }}</td>
+      <td class="num">{{ row.weight_display }} {{ row.weight_display_uom }}</td>
+      <td class="num">{{ row.total_weight_cook_display }} {{ row.total_weight_cook_display_uom }}</td>
+      <td class="num">{{ row.salt or '' }}</td>
+      <td class="num">{{ row.brix or '' }}</td>
+      <td class="num">{{ row.ph or '' }}</td>
+      <td class="num">{{ row.viscosity or '' }}</td>
+      <td>{{ row.spindel_type or '' }}</td>
+      <td class="num">{{ row.rpm or '' }}</td>
+      <td class="num">{{ row.temperature or '' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>Materials</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>Item</th><th>Item Name</th><th class="num">Required Qty</th></tr>
+  </thead>
+  <tbody>
+  {% for row in sheet["items"] %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ row.item_code or '' }}</td>
+      <td>{{ row.item_name or '' }}</td>
+      <td class="num">{{ row.display_qty }} {{ row.display_uom }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="footer-lines">
+  <div><strong>Actual Produced Qty:</strong> {{ sheet.produced_qty or '' }}</div>
+  <div><strong>Remarks:</strong> {{ sheet.notes or '' }}</div>
+</div>
+</body>
+</html>

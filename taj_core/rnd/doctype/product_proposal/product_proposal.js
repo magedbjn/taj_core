@@ -10,11 +10,8 @@ const PP_CHILD_TABLE = 'pp_items';
 // اسم حقل الكمية داخل جدول pp_items
 const PP_CHILD_QTY_FIELD = 'qty';
 
-// اسم جدول Trial Cooking
-const TRIAL_COOKING_TABLE = 'trial_cooking';
-
-// الصلاحيات المسموح لها بإدخال / تعديل Trial Cooking
-const TRIAL_COOKING_ALLOWED_ROLES = [
+// Roles allowed to create/manage independent Product Proposal Trials.
+const TRIAL_MANAGEMENT_ALLOWED_ROLES = [
     'System Manager',
     'RND Manager',
     'RND Trial Cooking User'
@@ -25,7 +22,33 @@ const TRIAL_COOKING_ALLOWED_ROLES = [
 // Product Proposal
 // -----------------------------------------------------------------------------
 
+function set_raw_material_item_query(frm, table_fieldname) {
+    frm.set_query('item_code', table_fieldname, () => ({
+        query: 'taj_core.rnd.item_queries.raw_material_item_query'
+    }));
+}
+
+
 frappe.ui.form.on('Product Proposal', {
+    setup(frm) {
+        set_raw_material_item_query(frm, 'pp_items');
+        frappe.require(
+            '/assets/taj_core/js/item_uom.js',
+            () => {
+                if (
+                    window.taj_core
+                    && taj_core.item_uom
+                    && taj_core.item_uom.setup_grid
+                ) {
+                    taj_core.item_uom.setup_grid(
+                        frm,
+                        'pp_items'
+                    );
+                }
+            }
+        );
+    },
+
     onload: function(frm) {
         // حفظ كمية الرأس عند فتح المستند
         frm._old_quantity = flt(frm.doc.quantity || 0);
@@ -45,9 +68,6 @@ frappe.ui.form.on('Product Proposal', {
 
         // منع تعديل اسم المنتج بعد إنشاء Item
         frm.set_df_property('product_name', 'read_only', frm.doc.item_code ? 1 : 0);
-
-        // صلاحيات Trial Cooking من الواجهة
-        set_trial_cooking_permission(frm);
 
         // Independent Trial snapshots
         set_trial_document_filters(frm);
@@ -69,26 +89,6 @@ frappe.ui.form.on('Product Proposal', {
         add_sync_preparation_bom_button(frm);
     },
 
-    trial_cooking_add: function(frm, cdt, cdn) {
-        const row = locals[cdt][cdn];
-
-        // التاريخ تلقائي = اليوم
-        row.posting_date = frappe.datetime.get_today();
-
-        // المستخدم تلقائي = المستخدم الحالي
-        row.trial_user = frappe.session.user;
-
-        // Trial Qty لا يتم تعبئته تلقائيًا
-        // لأنه يمثل الكمية التي أُنتجت فعليًا بعد الطبخ
-        // المستخدم يدخلها بنفسه
-
-        // Holding Time تلقائي = الوقت الحالي
-        // المستخدم يستطيع تعديله بعد ذلك
-        row.holding_time = frappe.datetime.now_time();
-
-        frm.refresh_field(TRIAL_COOKING_TABLE);
-    },
-
     quantity: function(frm) {
         handle_quantity_change(frm);
     }
@@ -100,8 +100,37 @@ frappe.ui.form.on('Product Proposal', {
 // -----------------------------------------------------------------------------
 
 frappe.ui.form.on('Product Proposal Raw Material', {
-    item_code: function(frm, cdt, cdn) {
+    item_code: async function(frm, cdt, cdn) {
         const row = locals[cdt][cdn];
+
+        if (
+            window.taj_core
+            && taj_core.item_uom
+            && taj_core.item_uom.apply_item_default
+        ) {
+            await taj_core.item_uom.apply_item_default(
+                frm,
+                cdt,
+                cdn
+            );
+        } else {
+            frappe.require(
+                '/assets/taj_core/js/item_uom.js',
+                () => {
+                    if (
+                        window.taj_core
+                        && taj_core.item_uom
+                        && taj_core.item_uom.apply_item_default
+                    ) {
+                        taj_core.item_uom.apply_item_default(
+                            frm,
+                            cdt,
+                            cdn
+                        );
+                    }
+                }
+            );
+        }
 
         // لا تعمل شيء إذا ما فيه item_code أو لو pre_bom ممتلئ مسبقًا
         if (!row.item_code || row.pre_bom) {
@@ -133,6 +162,10 @@ frappe.ui.form.on('Product Proposal Raw Material', {
 
 
 frappe.ui.form.on('Product Proposal Sample', {
+    trial_document(frm, cdt, cdn) {
+        frappe.model.set_value(cdt, cdn, 'trial_run_no', 0);
+    },
+
     evaluation_link(frm, cdt, cdn) {
         const row = locals[cdt][cdn];
 
@@ -225,9 +258,6 @@ function add_submitted_buttons(frm) {
     // زر New Version
     frm.add_custom_button(__('New Version'), function() {
         let new_pp = frappe.model.copy_doc(frm.doc);
-
-        // لا تنسخ Trial Cooking إلى النسخة الجديدة
-        new_pp.trial_cooking = [];
 
         frappe.set_route('Form', frm.doctype, new_pp.name);
     });
@@ -475,42 +505,12 @@ function handle_quantity_change(frm) {
 }
 
 
-function user_can_edit_trial_cooking() {
-    return TRIAL_COOKING_ALLOWED_ROLES.some(role => frappe.user.has_role(role));
+function user_can_manage_trials() {
+    return TRIAL_MANAGEMENT_ALLOWED_ROLES.some(
+        role => frappe.user.has_role(role)
+    );
 }
 
-
-function set_trial_cooking_permission(frm) {
-    if (!frm.fields_dict[TRIAL_COOKING_TABLE]) {
-        return;
-    }
-
-    const allowed = user_can_edit_trial_cooking();
-
-    // منع التعديل من الواجهة لغير المصرح لهم
-    frm.set_df_property(TRIAL_COOKING_TABLE, 'read_only', allowed ? 0 : 1);
-
-    const grid = frm.fields_dict[TRIAL_COOKING_TABLE].grid;
-
-    if (!grid) {
-        return;
-    }
-
-    grid.cannot_add_rows = !allowed;
-    grid.cannot_delete_rows = !allowed;
-
-    // إخفاء أزرار الإضافة والحذف قدر الإمكان
-    setTimeout(() => {
-        if (!grid.wrapper) {
-            return;
-        }
-
-        grid.wrapper.find('.grid-add-row').toggle(allowed);
-        grid.wrapper.find('.grid-remove-rows').toggle(allowed);
-        grid.wrapper.find('.grid-delete-row').toggle(allowed);
-        grid.wrapper.find('.grid-row-check').toggle(allowed);
-    }, 300);
-}
 
 // -----------------------------------------------------------------------------
 // Independent Trial Documents
@@ -520,18 +520,6 @@ function set_trial_document_filters(frm) {
     if (!frm.doc.name || frm.is_new()) {
         return;
     }
-
-    frm.set_query(
-        'trial_document',
-        'trial_cooking',
-        () => {
-            return {
-                filters: {
-                    product_proposal: frm.doc.name
-                }
-            };
-        }
-    );
 
     frm.set_query(
         'trial_document',
@@ -555,9 +543,9 @@ function add_trial_management_buttons(frm) {
         return;
     }
 
-    const group = __('Trial Cooking');
+    const group = __('Trials');
 
-    if (user_can_edit_trial_cooking()) {
+    if (user_can_manage_trials()) {
         frm.add_custom_button(
             __('New Trial'),
             () => create_new_trial(frm),
@@ -579,12 +567,6 @@ function add_trial_management_buttons(frm) {
         },
         group
     );
-
-    frm.add_custom_button(
-        __('Compare Trials'),
-        () => compare_product_trials(frm),
-        group
-    );
 }
 
 
@@ -604,13 +586,27 @@ function create_new_trial(frm) {
                 reqd: 1
             },
             {
+                fieldname: 'based_on_trial',
+                fieldtype: 'Link',
+                options: 'Product Proposal Trial',
+                label: __('Based On Trial'),
+                depends_on: "eval:doc.source_label == 'Previous Trial'",
+                get_query: () => {
+                    return {
+                        filters: {
+                            product_proposal: frm.doc.name
+                        }
+                    };
+                }
+            },
+            {
                 fieldname: 'planned_cooking_qty',
                 fieldtype: 'Int',
                 label: __('Planned Cooking Qty'),
                 reqd: 1
             }
         ],
-        title: __('New Trial Cooking'),
+        title: __('New Trial'),
         primary_action_label: __('Create'),
         primary_action: async values => {
             dialog.hide();
@@ -636,6 +632,7 @@ function create_new_trial(frm) {
                 args: {
                     product_proposal: frm.doc.name,
                     source: source,
+                    based_on_trial: values.based_on_trial || null,
                     planned_cooking_qty: values.planned_cooking_qty
                 },
                 freeze: true,
@@ -690,248 +687,4 @@ function create_new_trial(frm) {
     });
 
     dialog.show();
-}
-
-
-function compare_product_trials(frm) {
-    const get_query = () => {
-        return {
-            filters: {
-                product_proposal: frm.doc.name
-            }
-        };
-    };
-
-    frappe.prompt(
-        [
-            {
-                fieldname: 'first_trial',
-                fieldtype: 'Link',
-                options: 'Product Proposal Trial',
-                label: __('First Trial'),
-                reqd: 1,
-                get_query: get_query
-            },
-            {
-                fieldname: 'second_trial',
-                fieldtype: 'Link',
-                options: 'Product Proposal Trial',
-                label: __('Second Trial'),
-                reqd: 1,
-                get_query: get_query
-            }
-        ],
-        async values => {
-            if (
-                values.first_trial
-                === values.second_trial
-            ) {
-                frappe.msgprint(
-                    __('Please select two different Trials.')
-                );
-                return;
-            }
-
-            const response = await frappe.call({
-                method: [
-                    'taj_core.rnd.doctype.',
-                    'product_proposal_trial.',
-                    'product_proposal_trial.',
-                    'compare_trials'
-                ].join(''),
-                args: {
-                    first_trial: values.first_trial,
-                    second_trial: values.second_trial
-                },
-                freeze: true,
-                freeze_message: __('Comparing Trials...')
-            });
-
-            if (!response.message) {
-                return;
-            }
-
-            show_trial_comparison(
-                response.message
-            );
-        },
-        __('Compare Trials'),
-        __('Compare')
-    );
-}
-
-
-function trial_escape(value) {
-    if (
-        value === null
-        || value === undefined
-        || value === ''
-    ) {
-        return '-';
-    }
-
-    return frappe.utils.escape_html(
-        String(value)
-    );
-}
-
-
-function sensory_status_text(summary) {
-    const counts = (
-        summary.final_status_counts
-        || {}
-    );
-
-    const values = Object.entries(counts)
-        .map(([status, count]) => {
-            return (
-                `${trial_escape(status)} (${count})`
-            );
-        });
-
-    return values.length
-        ? values.join(', ')
-        : '-';
-}
-
-
-function sensory_summary_row(label, trial) {
-    const sensory = (
-        trial.sensory
-        || {}
-    );
-
-    return `
-        <tr>
-            <td><strong>${trial_escape(label)}</strong></td>
-            <td>${trial_escape(trial.name)}</td>
-            <td>${trial_escape(sensory.count || 0)}</td>
-            <td>${trial_escape(sensory.appearance)}</td>
-            <td>${trial_escape(sensory.texture)}</td>
-            <td>${trial_escape(sensory.taste)}</td>
-            <td>${sensory_status_text(sensory)}</td>
-        </tr>
-    `;
-}
-
-
-function show_trial_comparison(data) {
-    const detail_rows = [];
-
-    (data.changes || []).forEach(row => {
-        if (row.change_type === 'Added') {
-            detail_rows.push(`
-                <tr>
-                    <td>${trial_escape(row.item_code)}</td>
-                    <td>${__('Added')}</td>
-                    <td>${__('Qty')}</td>
-                    <td>-</td>
-                    <td>${trial_escape(row.new_qty)}</td>
-                </tr>
-            `);
-            return;
-        }
-
-        if (row.change_type === 'Removed') {
-            detail_rows.push(`
-                <tr>
-                    <td>${trial_escape(row.item_code)}</td>
-                    <td>${__('Removed')}</td>
-                    <td>${__('Qty')}</td>
-                    <td>${trial_escape(row.old_qty)}</td>
-                    <td>-</td>
-                </tr>
-            `);
-            return;
-        }
-
-        (row.changes || []).forEach(change => {
-            detail_rows.push(`
-                <tr>
-                    <td>${trial_escape(row.item_code)}</td>
-                    <td>${__('Changed')}</td>
-                    <td>${trial_escape(change.label)}</td>
-                    <td>${trial_escape(change.old)}</td>
-                    <td>${trial_escape(change.new)}</td>
-                </tr>
-            `);
-        });
-    });
-
-    if (!detail_rows.length) {
-        detail_rows.push(`
-            <tr>
-                <td colspan="5" class="text-muted text-center">
-                    ${__('No formulation differences found.')}
-                </td>
-            </tr>
-        `);
-    }
-
-    const html = `
-        <div class="mb-4">
-            <strong>${__('Product Proposal')}:</strong>
-            ${trial_escape(data.product_proposal)}
-        </div>
-
-        <div class="mb-4">
-            <strong>${trial_escape(data.first.name)}</strong>
-            &nbsp;→&nbsp;
-            <strong>${trial_escape(data.second.name)}</strong>
-        </div>
-
-        <h5>${__('Formulation Changes')}</h5>
-
-        <table class="table table-bordered table-sm">
-            <thead>
-                <tr>
-                    <th>${__('Item')}</th>
-                    <th>${__('Change')}</th>
-                    <th>${__('Field')}</th>
-                    <th>${__('From')}</th>
-                    <th>${__('To')}</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${detail_rows.join('')}
-            </tbody>
-        </table>
-
-        <p class="text-muted">
-            ${__('Unchanged lines')}:
-            ${trial_escape(data.unchanged_count || 0)}
-        </p>
-
-        <h5>${__('Sensory Evaluation')}</h5>
-
-        <table class="table table-bordered table-sm">
-            <thead>
-                <tr>
-                    <th>${__('Trial')}</th>
-                    <th>${__('Document')}</th>
-                    <th>${__('Evaluations')}</th>
-                    <th>${__('Appearance')}</th>
-                    <th>${__('Texture')}</th>
-                    <th>${__('Taste')}</th>
-                    <th>${__('Decision')}</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${sensory_summary_row(
-                    __('First'),
-                    data.first
-                )}
-                ${sensory_summary_row(
-                    __('Second'),
-                    data.second
-                )}
-            </tbody>
-        </table>
-    `;
-
-    frappe.msgprint({
-        title: __('Trial Comparison'),
-        message: html,
-        wide: true
-    });
 }

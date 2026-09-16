@@ -6,6 +6,7 @@
  "field_order": [
   "customer",
   "trial_document",
+  "trial_run_no",
   "sample_date",
   "sample_qty",
   "uom",
@@ -86,6 +87,14 @@
    "fieldname": "evaluation_link",
    "fieldtype": "Button",
    "label": "Open Evaluation"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "trial_run_no",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Run No",
+   "description": "Cooking Run number from the selected Product Proposal Trial."
   }
  ],
  "index_web_pages_for_search": 1,

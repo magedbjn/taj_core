@@ -1,13 +1,19 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import today, getdate, formatdate
+from frappe.utils import cint, today, getdate, formatdate
 
 class SensoryFeedback(Document):
     def validate(self):
+        self.set_evaluation_date_default()
         self.apply_sample_context()
         self.validate_trial_document()
         self.validate_public_sensory_availability()
+
+    def set_evaluation_date_default(self):
+        value = getattr(self, "evaluation_date", None)
+        if not value or str(value).strip().lower() == "today":
+            self.evaluation_date = today()
 
     def apply_sample_context(self):
         sample_token = (getattr(self, "sample_token", None) or "").strip()
@@ -23,6 +29,7 @@ class SensoryFeedback(Document):
         self.item = context.product_proposal
         self.trial_document = context.trial_document
         self.customer = context.customer
+        self.trial_run_no = cint(context.get("trial_run_no"))
         self.your_name = context.customer_name or context.customer
 
     def validate_public_sensory_availability(self):
@@ -59,13 +66,18 @@ class SensoryFeedback(Document):
                 _("Selected Trial Cooking does not exist.")
             )
 
-        if trial_proposal != (self.item or "").strip():
-            frappe.throw(
-                _(
-                    "Selected Trial Cooking does not belong "
-                    "to this Product Proposal."
-                )
-            )
+        self.item = trial_proposal
+        run_no = cint(getattr(self, "trial_run_no", 0))
+        if run_no and not frappe.db.exists(
+            "Product Proposal Trial Run",
+            {
+                "parent": trial_document,
+                "parenttype": "Product Proposal Trial",
+                "parentfield": "cooking_runs",
+                "run_no": run_no,
+            },
+        ):
+            frappe.throw(_("Selected Trial Cooking Run does not exist in this Trial."))
 
 
 def sync_to_product_proposal(doc: "SensoryFeedback", method=None):

@@ -13,8 +13,7 @@ class TestProductProposalTrialDialogSource(unittest.TestCase):
         )
         source = path.read_text()
         start = source.index("function create_new_trial(frm) {")
-        end = source.index("function compare_product_trials(frm) {")
-        block = source[start:end]
+        block = source[start:]
 
         self.assertIn("new frappe.ui.Dialog", block)
         self.assertIn("primary_action: async values =>", block)
