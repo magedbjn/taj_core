@@ -11,14 +11,31 @@
   "next_due_date",
   "column_break_sigb",
   "department",
+  "plant_floor",
+  "warehouse",
+  "asset",
   "assignment_type",
   "assigned_user",
   "section_break_iygn",
   "questions",
+  "enable_quick_pass",
   "section_break_cibg",
   "enable_time_control",
   "schedule_time",
-  "completion_window_minutes"
+  "completion_window_minutes",
+  "cycle_control_section",
+  "cycle_behavior",
+  "required_before_production",
+  "cycle_control_column",
+  "notify_on_overdue",
+  "escalate_after_minutes",
+  "escalation_user",
+  "worker_check_section",
+  "enable_worker_check",
+  "required_worker_count",
+  "default_worker_company",
+  "default_worker_supplier",
+  "worker_failure_reason_options"
  ],
  "fields": [
   {
@@ -47,6 +64,27 @@
    "label": "Department",
    "options": "Department",
    "reqd": 1
+  },
+  {
+   "fieldname": "plant_floor",
+   "fieldtype": "Link",
+   "label": "Plant Floor",
+   "options": "Plant Floor",
+   "description": "Optional production-area scope for this checklist."
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "description": "Optional warehouse/location scope for this checklist."
+  },
+  {
+   "fieldname": "asset",
+   "fieldtype": "Link",
+   "label": "Asset",
+   "options": "Asset",
+   "description": "Optional physical equipment scope. Use this when multiple assets share the same maintenance template."
   },
   {
    "fieldname": "assignment_type",
@@ -95,6 +133,95 @@
    "fieldname": "completion_window_minutes",
    "fieldtype": "Int",
    "label": "Completion Window Minutes"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_quick_pass",
+   "fieldtype": "Check",
+   "label": "Enable All OK / Quick Pass",
+   "description": "Allows the tablet page to fill only eligible unanswered positive binary questions."
+  },
+  {
+   "fieldname": "worker_check_section",
+   "fieldtype": "Section Break",
+   "label": "Worker Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_worker_check",
+   "fieldtype": "Check",
+   "label": "Enable Worker Check"
+  },
+  {
+   "depends_on": "eval: doc.enable_worker_check",
+   "fieldname": "required_worker_count",
+   "fieldtype": "Int",
+   "label": "Default Required Worker Count (Optional)",
+   "non_negative": 1,
+   "description": "Optional starting value. Production can change the required count on each checklist run."
+  },
+  {
+   "depends_on": "eval: doc.enable_worker_check",
+   "fieldname": "default_worker_company",
+   "fieldtype": "Data",
+   "label": "Default External Worker Company"
+  },
+  {
+   "depends_on": "eval: doc.enable_worker_check",
+   "fieldname": "default_worker_supplier",
+   "fieldtype": "Link",
+   "label": "Default External Worker Supplier",
+   "options": "Supplier"
+  },
+  {
+   "depends_on": "eval: doc.enable_worker_check",
+   "description": "One reason per line. Shown as quick choices when a worker fails the inspection.",
+   "fieldname": "worker_failure_reason_options",
+   "fieldtype": "Small Text",
+   "label": "Worker Failure Reason Options"
+  },
+  {
+   "fieldname": "cycle_control_section",
+   "fieldtype": "Section Break",
+   "label": "Cycle & Deadline Behavior"
+  },
+  {
+   "default": "Fresh Every Cycle",
+   "fieldname": "cycle_behavior",
+   "fieldtype": "Select",
+   "label": "Cycle Behavior",
+   "options": "Fresh Every Cycle\nContinue Until Completed",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "required_before_production",
+   "fieldtype": "Check",
+   "label": "Required Before Production"
+  },
+  {
+   "fieldname": "cycle_control_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.enable_time_control",
+   "fieldname": "notify_on_overdue",
+   "fieldtype": "Check",
+   "label": "Notify When Overdue"
+  },
+  {
+   "depends_on": "eval:doc.enable_time_control && doc.notify_on_overdue",
+   "fieldname": "escalate_after_minutes",
+   "fieldtype": "Int",
+   "label": "Escalate After Minutes"
+  },
+  {
+   "depends_on": "eval:doc.enable_time_control && doc.notify_on_overdue && doc.escalate_after_minutes",
+   "fieldname": "escalation_user",
+   "fieldtype": "Link",
+   "label": "Escalation User",
+   "options": "User"
   }
  ],
  "grid_page_length": 50,

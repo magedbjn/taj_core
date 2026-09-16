@@ -1,0 +1,24 @@
+{
+ "content": null,
+ "creation": "2026-09-14 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-09-14 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Checklist",
+ "name": "checklist-today",
+ "owner": "Administrator",
+ "page_name": "checklist-today",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "IT Manager"},
+  {"role": "Checklist Manager"},
+  {"role": "Employee"}
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Checklist Today"
+}

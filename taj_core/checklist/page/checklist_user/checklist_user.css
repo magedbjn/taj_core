@@ -136,7 +136,7 @@
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 12px;
-    align-items: start;
+    align-items: stretch;
 }
 
 /* Card */
@@ -149,7 +149,11 @@
     cursor: pointer;
     background: var(--bg-color, #fff);
     transition: 0.15s ease;
-    min-height: 148px;
+    min-height: 164px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .checklist-list-item:hover {
@@ -183,6 +187,38 @@
 
 .checklist-list-head {
     min-width: 0;
+}
+
+.checklist-list-template-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+}
+
+.checklist-card-title-icon {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #dbeafe;
+}
+
+.checklist-inline-icon {
+    width: 15px;
+    height: 15px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: 0 0 auto;
 }
 
 .checklist-list-template {
@@ -222,6 +258,7 @@
     color: #1d4ed8;
     border: 1px solid #bfdbfe;
     white-space: nowrap;
+    gap: 5px;
 }
 
 .status-pill {
@@ -234,6 +271,15 @@
     font-weight: 700;
     white-space: nowrap;
     border: 1px solid transparent;
+    gap: 6px;
+}
+
+.status-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.75;
 }
 
 .status-completed {
@@ -290,12 +336,38 @@
     line-height: 1.6;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px 12px;
+    gap: 5px 12px;
+    margin-top: auto;
+    padding-top: 9px;
+    border-top: 1px solid var(--border-color, #eef0f2);
 }
 
 .checklist-list-meta-item {
     min-width: 0;
     word-break: break-word;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.checklist-meta-icon {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    margin-top: 1px;
+}
+
+.checklist-meta-icon .checklist-inline-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.checklist-meta-text {
+    min-width: 0;
 }
 
 .empty-state {
@@ -468,20 +540,27 @@
 }
 
 .selected-doc-actions {
-    margin-top: 8px;
-    padding-top: 8px;
+    flex: 0 0 auto;
+    padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--border-color, #dee2e6);
+    background: var(--fg-color, #fff);
+    box-shadow: 0 -8px 22px rgba(15, 23, 42, 0.06);
+    z-index: 3;
+}
+
+.selected-doc-actions:empty {
+    display: none;
 }
 
 .selected-doc-actions .btn {
     min-width: 140px;
     margin-left: 8px;
-    margin-bottom: 8px;
 }
 
 .submit-area {
     display: flex;
     justify-content: flex-end;
-    margin-top: 10px;
+    margin-top: 0;
     flex-wrap: wrap;
 }
 
@@ -683,3 +762,324 @@ body.checklist-fullwidth-mode .page-content {
     padding: 4px;
     margin: 0 0 8px 0;
 }
+
+/* Tablet-first checklist inputs */
+
+.question-badges,
+.question-status-row,
+.failure-panel-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.question-badges {
+    margin: -2px 0 12px 38px;
+}
+
+.question-rule-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 3px 8px;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.question-rule-badge.is-required {
+    background: #eef2ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
+}
+
+.question-rule-badge.is-quality {
+    background: #ecfeff;
+    color: #155e75;
+    border-color: #a5f3fc;
+}
+
+.question-rule-badge.is-severity {
+    background: #fff7ed;
+    color: #9a3412;
+    border-color: #fed7aa;
+}
+
+.answer-choice-grid,
+.failure-reason-choices {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.answer-choice-grid.is-multi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.answer-choice-btn,
+.failure-reason-btn {
+    appearance: none;
+    border: 2px solid var(--border-color, #dbe2ea);
+    background: #fff;
+    color: #334155;
+    border-radius: 12px;
+    min-height: 52px;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: 0.15s ease;
+    touch-action: manipulation;
+}
+
+.answer-choice-btn:hover,
+.failure-reason-btn:hover {
+    border-color: var(--primary, #2563eb);
+}
+
+.answer-choice-btn.is-selected,
+.failure-reason-btn.is-selected {
+    border-color: var(--primary, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.answer-choice-btn.is-positive.is-selected {
+    border-color: #16a34a;
+    background: #f0fdf4;
+    color: #166534;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.10);
+}
+
+.answer-choice-btn.is-negative.is-selected {
+    border-color: #dc2626;
+    background: #fef2f2;
+    color: #991b1b;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.10);
+}
+
+.answer-choice-btn.is-na.is-selected {
+    border-color: #64748b;
+    background: #f8fafc;
+    color: #334155;
+    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.10);
+}
+
+.checklist-question-card.has-issue-live {
+    border-color: #fca5a5;
+    background: linear-gradient(180deg, #fff 0%, #fff7f7 100%);
+}
+
+.failure-detail-panel {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    background: #fff7f7;
+}
+
+.failure-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.failure-reason,
+.failure-note,
+.failure-photo {
+    margin-top: 12px;
+}
+
+.failure-field-help {
+    color: var(--text-muted, #6c757d);
+    font-size: 12px;
+    margin: -2px 0 8px 0;
+}
+
+.failure-photo-reason {
+    margin-top: 10px;
+}
+
+.failure-field-label {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #374151;
+}
+
+.checklist-action-row {
+    gap: 10px;
+}
+
+.btn-quick-pass {
+    min-height: 46px;
+    font-weight: 700;
+}
+
+.checklist-question-card .form-control,
+.failure-detail-panel .form-control {
+    min-height: 46px;
+    font-size: 16px;
+}
+
+@media (min-width: 768px) {
+    .checklist-drawer {
+        width: min(760px, 100vw);
+    }
+}
+
+@media (max-width: 640px) {
+    .answer-choice-grid,
+    .answer-choice-grid.is-multi,
+    .failure-reason-choices {
+        grid-template-columns: 1fr;
+    }
+
+    .answer-choice-btn,
+    .failure-reason-btn {
+        min-height: 56px;
+        font-size: 16px;
+    }
+
+    .question-badges {
+        margin-left: 0;
+    }
+
+    .failure-panel-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+.worker-roster-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border-color, #dfe3e8);
+}
+.worker-roster-header,
+.worker-card-head {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.worker-roster-title { font-size: 18px; font-weight: 700; }
+.worker-roster-subtitle,
+.worker-card-meta { color: var(--text-muted); font-size: 12px; }
+.worker-roster-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.worker-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 12px 0;
+}
+.worker-summary-grid > div {
+    border: 1px solid var(--border-color, #dfe3e8);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+.worker-summary-grid span { color: var(--text-muted); font-size: 11px; }
+.worker-summary-grid strong { font-size: 18px; }
+.worker-summary-grid.is-short { border-left: 4px solid var(--red-500, #e24c4c); padding-left: 8px; }
+.worker-summary-grid.is-met { border-left: 4px solid var(--green-500, #21ba45); padding-left: 8px; }
+.worker-roster-card {
+    border: 1px solid var(--border-color, #dfe3e8);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: var(--card-bg, #fff);
+}
+.worker-card-name { font-weight: 700; font-size: 15px; }
+.worker-choice-row,
+.worker-reason-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.worker-choice-btn,
+.worker-reason-btn {
+    min-height: 46px;
+    min-width: 88px;
+    border: 1px solid var(--border-color, #dfe3e8);
+    border-radius: 10px;
+    background: transparent;
+    padding: 8px 12px;
+}
+.worker-choice-btn.is-selected,
+.worker-reason-btn.is-selected { border-width: 2px; font-weight: 700; }
+.worker-choice-btn.is-pass { border-color: var(--green-500, #21ba45); }
+.worker-choice-btn.is-fail { border-color: var(--red-500, #e24c4c); }
+.worker-failure-box { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-color, #dfe3e8); }
+@media (max-width: 700px) {
+    .worker-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .worker-roster-actions { width: 100%; }
+    .worker-roster-actions .btn { flex: 1 1 45%; min-height: 48px; }
+    .worker-choice-btn, .worker-reason-btn { flex: 1 1 30%; }
+}
+
+.worker-requirement-control {
+    margin: 12px 0 16px;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--fg-color);
+}
+.worker-requirement-control label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.worker-requirement-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    max-width: 420px;
+}
+.required-worker-count-input {
+    min-height: 52px;
+    font-size: 20px;
+    max-width: 180px;
+}
+.btn-save-required-worker-count {
+    min-height: 52px;
+    min-width: 110px;
+}
+
+/* Direct execution mode opened from Checklist Today. */
+body.checklist-direct-open-mode .checklist-drawer-backdrop {
+    background: var(--fg-color, #fff);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+body.checklist-direct-open-mode .checklist-drawer {
+    width: 100vw;
+    max-width: 100vw;
+    border-left: 0;
+    box-shadow: none;
+}
+
+body.checklist-direct-open-mode .checklist-drawer .selected-doc-wrapper {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+body.checklist-direct-open-mode .selected-doc-actions .submit-area {
+    width: 100%;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.open-action-warning { margin: 10px 0 12px; padding: 10px 12px; border: 1px solid var(--orange-200, #f7c98b); border-radius: 10px; background: var(--orange-50, #fff8ee); display: flex; flex-direction: column; gap: 3px; }
+.open-action-warning strong { font-size: 12px; }
+.open-action-warning span { font-size: 11px; color: var(--text-muted); }

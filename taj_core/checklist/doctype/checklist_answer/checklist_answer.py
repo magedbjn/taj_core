@@ -7,11 +7,22 @@ from frappe.utils import (
     add_to_date,
     cint,
     cstr,
-    flt,
     get_datetime,
     getdate,
     now_datetime,
     nowdate,
+)
+
+from taj_core.checklist.rules import (
+    classify_auto_close_status,
+    evaluate_issue as evaluate_issue_rule,
+    failure_photo_requirement_satisfied,
+    is_valid_answer,
+    is_before_scheduled_start,
+    normalize_multi_value,
+    should_reuse_open_checklist,
+    summarize_required_answers,
+    summarize_workers,
 )
 
 
@@ -32,6 +43,9 @@ class ChecklistAnswer(Document):
         self.set_template_context()
         self.load_questions_from_template()
         sync_row_answer_fields(self)
+        sync_worker_rows(self)
+        validate_worker_rows(self)
+        update_worker_summary(self)
         set_started_at_if_needed(self)
         set_expired_status_if_needed(self)
         self.set_draft_status()
@@ -45,20 +59,37 @@ class ChecklistAnswer(Document):
             )
 
     def before_submit(self):
+        validate_scheduled_start_reached(self)
         sync_row_answer_fields(self)
+        sync_worker_rows(self)
+        validate_worker_rows(self)
+        update_worker_summary(self)
         set_completed_time_fields(self)
 
-        if self.status != "Auto Closed":
+        if self.status not in ("Auto Closed", "Auto Closed - Incomplete", "Missed"):
             validate_checklist_answer(self)
 
         evaluate_checklist_result(self)
 
-        if self.status != "Auto Closed":
+        if self.status not in ("Auto Closed", "Auto Closed - Incomplete", "Missed"):
             self.status = "Completed"
 
-        self.answer_by = self.answer_by or frappe.session.user
-        if hasattr(self, "taken_by") and not self.taken_by:
-            self.taken_by = self.answer_by
+        if self.status not in ("Auto Closed", "Auto Closed - Incomplete", "Missed"):
+            self.answer_by = self.answer_by or frappe.session.user
+            if hasattr(self, "taken_by") and not self.taken_by:
+                self.taken_by = self.answer_by
+        elif self.status == "Auto Closed - Incomplete" and not self.answer_by:
+            self.answer_by = getattr(self, "taken_by", None)
+
+    def on_submit(self):
+        if self.status != "Completed":
+            return
+
+        from taj_core.checklist.actions import process_checklist_actions
+        from taj_core.checklist.notifications import notify_checklist_issues
+
+        process_checklist_actions(self)
+        notify_checklist_issues(self)
 
     def validate_creator(self):
         if getattr(self.flags, "from_scheduler", False):
@@ -80,24 +111,21 @@ class ChecklistAnswer(Document):
         if not self.template:
             return
 
+        cycle_behavior = frappe.db.get_value(
+            "Checklist Question Template", self.template, "cycle_behavior"
+        ) or "Fresh Every Cycle"
+        due_date = getdate(getattr(self, "source_due_date", None) or getattr(self, "posting_date", None) or nowdate())
         open_docs = _get_open_answer_docs(self.template)
 
-        unanswered_open_docs = [
-            doc for doc in open_docs
-            if not checklist_has_any_answer(doc)
-        ]
-
-        if unanswered_open_docs:
-            open_doc = unanswered_open_docs[0]
-            frappe.throw(
-                _("An open checklist already exists for this template without answers. Please use the existing document: {0} بتاريخ {1}").format(
-                    open_doc.name,
-                    getdate(open_doc.posting_date)
+        for open_doc in open_docs:
+            same_cycle = _doc_cycle_date(open_doc) == due_date
+            if should_reuse_open_checklist(cycle_behavior, same_cycle=same_cycle):
+                frappe.throw(
+                    _("An open checklist already exists for this template: {0} dated {1}").format(
+                        open_doc.name, getdate(open_doc.posting_date)
+                    )
                 )
-            )
-
-        for stale_doc in open_docs:
-            _auto_close_answer_doc(stale_doc)
+            _auto_close_answer_doc(open_doc)
 
     def set_template_context(self):
         if not self.template:
@@ -106,7 +134,24 @@ class ChecklistAnswer(Document):
         template = frappe.db.get_value(
             "Checklist Question Template",
             self.template,
-            ["department", "assigned_user", "assignment_type"],
+            [
+                "department",
+                "plant_floor",
+                "warehouse",
+                "asset",
+                "assigned_user",
+                "assignment_type",
+                "enable_worker_check",
+                "required_worker_count",
+                "default_worker_company",
+                "default_worker_supplier",
+                "worker_failure_reason_options",
+                "cycle_behavior",
+                "notify_on_overdue",
+                "escalate_after_minutes",
+                "escalation_user",
+                "required_before_production",
+            ],
             as_dict=True,
         )
 
@@ -121,8 +166,30 @@ class ChecklistAnswer(Document):
         if self.is_new():
             self.assigned_user = template.assigned_user
 
-            if frappe.get_meta(self.doctype).has_field("assignment_type"):
+            answer_meta = frappe.get_meta(self.doctype)
+            if answer_meta.has_field("plant_floor"):
+                self.plant_floor = getattr(template, "plant_floor", None)
+            if answer_meta.has_field("warehouse"):
+                self.warehouse = getattr(template, "warehouse", None)
+            if answer_meta.has_field("asset"):
+                self.asset = getattr(template, "asset", None)
+
+            if answer_meta.has_field("assignment_type"):
                 self.assignment_type = template.assignment_type
+
+            if answer_meta.has_field("enable_worker_check"):
+                self.enable_worker_check = cint(getattr(template, "enable_worker_check", 0))
+                self.required_worker_count = cint(getattr(template, "required_worker_count", 0))
+                self.default_worker_company = cstr(getattr(template, "default_worker_company", "") or "").strip()
+                self.default_worker_supplier = getattr(template, "default_worker_supplier", None)
+                self.worker_failure_reason_options = cstr(getattr(template, "worker_failure_reason_options", "") or "").strip()
+
+            if answer_meta.has_field("cycle_behavior"):
+                self.cycle_behavior = getattr(template, "cycle_behavior", None) or "Fresh Every Cycle"
+                self.notify_on_overdue = cint(getattr(template, "notify_on_overdue", 0))
+                self.escalate_after_minutes = cint(getattr(template, "escalate_after_minutes", 0))
+                self.escalation_user = getattr(template, "escalation_user", None)
+                self.required_before_production = cint(getattr(template, "required_before_production", 0))
 
     def set_time_fields_from_template(self):
         if not self.template:
@@ -173,13 +240,15 @@ class ChecklistAnswer(Document):
         build_answer_rows_from_template(self, force=force)
 
     def set_draft_status(self):
-        if self.docstatus == 1 or self.status in ("Auto Closed", "Expired"):
+        if self.docstatus == 1 or self.status in ("Auto Closed", "Auto Closed - Incomplete", "Missed", "Expired"):
             return
 
         has_any_answer = any(not is_blank(row.answer) for row in self.answer)
-        if hasattr(self, "taken_by") and not self.taken_by and has_any_answer:
+        has_worker_activity = bool(cint(getattr(self, "enable_worker_check", 0)) and getattr(self, "workers", None))
+        has_any_activity = has_any_answer or has_worker_activity
+        if hasattr(self, "taken_by") and not self.taken_by and has_any_activity:
             self.taken_by = frappe.session.user
-        self.status = "In Progress" if has_any_answer else "Draft"
+        self.status = "In Progress" if has_any_activity else "Draft"
 
 
 def build_generation_key(template_name, source_due_date):
@@ -193,10 +262,12 @@ def _doc_cycle_date(doc):
 
 
 def checklist_has_any_answer(doc):
-    return any(
+    has_answer = any(
         not is_blank(getattr(row, "answer", ""))
         for row in (doc.answer or [])
     )
+    has_workers = bool(cint(getattr(doc, "enable_worker_check", 0)) and getattr(doc, "workers", None))
+    return has_answer or has_workers
 
 
 def _get_open_answer_docs(template_name, exclude=None):
@@ -226,8 +297,14 @@ def _auto_close_answer_doc(doc, acting_user=None):
     if not doc or doc.docstatus == 1:
         return doc
 
-    doc.status = "Auto Closed"
-    doc.answer_by = doc.answer_by or acting_user or frappe.session.user
+    answer_summary = summarize_required_answers(getattr(doc, "answer", None) or [])
+    has_worker_activity = bool(cint(getattr(doc, "enable_worker_check", 0)) and getattr(doc, "workers", None))
+    answered_count = answer_summary["answered"] + (1 if has_worker_activity else 0)
+    total_count = answer_summary["required"] + (1 if cint(getattr(doc, "enable_worker_check", 0)) else 0)
+
+    doc.status = classify_auto_close_status(answered_count, total_count)
+    if doc.status == "Auto Closed - Incomplete" and not doc.answer_by:
+        doc.answer_by = acting_user or getattr(doc, "taken_by", None)
     doc.flags.ignore_answer_validation = True
     doc.flags.ignore_permissions = True
     doc.submit()
@@ -264,31 +341,35 @@ def refresh_open_answer_to_new_cycle(doc, source_due_date):
 
 def create_checklist_answer_from_template(template_name: str, source_due_date=None, ignore_permissions=False, from_scheduler=False):
     due_date = getdate(source_due_date or nowdate())
+    cycle_behavior = frappe.db.get_value(
+        "Checklist Question Template", template_name, "cycle_behavior"
+    ) or "Fresh Every Cycle"
     open_docs = _get_open_answer_docs(template_name)
 
-    same_day_open_docs = [
+    same_cycle_open_docs = [
         doc for doc in open_docs
         if _doc_cycle_date(doc) == due_date
     ]
-    if same_day_open_docs:
-        existing_doc = same_day_open_docs[0]
+    if same_cycle_open_docs:
+        existing_doc = same_cycle_open_docs[0]
         existing_doc.flags.reused_existing = True
         existing_doc.flags.reuse_reason = "same_day_open"
         return existing_doc
 
-    previous_unanswered_open_docs = [
+    previous_open_docs = [
         doc for doc in open_docs
-        if _doc_cycle_date(doc) != due_date and not checklist_has_any_answer(doc)
+        if _doc_cycle_date(doc) != due_date
     ]
-    if previous_unanswered_open_docs:
-        existing_doc = previous_unanswered_open_docs[0]
+    if previous_open_docs and should_reuse_open_checklist(cycle_behavior, same_cycle=False):
+        existing_doc = previous_open_docs[0]
         existing_doc.flags.reused_existing = True
-        existing_doc.flags.reuse_reason = "previous_unanswered_open"
+        existing_doc.flags.reuse_reason = "continue_until_completed"
+        if from_scheduler:
+            update_template_next_due_date(template_name, due_date)
         return existing_doc
 
-    for stale_doc in open_docs:
-        if _doc_cycle_date(stale_doc) != due_date and checklist_has_any_answer(stale_doc):
-            _auto_close_answer_doc(stale_doc)
+    for stale_doc in previous_open_docs:
+        _auto_close_answer_doc(stale_doc)
 
     doc = frappe.new_doc("Checklist Answer")
     doc.template = template_name
@@ -326,6 +407,29 @@ def build_answer_rows_from_template(doc, force=False):
     doc.set("answer", [])
 
     child_meta = frappe.get_meta("Checklist Answer Question")
+    snapshot_fields = (
+        "is_required",
+        "quick_pass_allowed",
+        "answer_min_int",
+        "answer_max_int",
+        "answer_min_float",
+        "answer_max_float",
+        "issue_if_no",
+        "issue_select_values",
+        "issue_severity",
+        "quality_impact",
+        "require_failure_reason",
+        "failure_reason_options",
+        "require_failure_note",
+        "require_failure_photo",
+        "allow_no_photo_with_reason",
+        "require_follow_up",
+        "responsible_department",
+        "responsible_user",
+        "notify_department",
+        "notify_user",
+        "require_verification",
+    )
 
     for template_row in template.questions:
         question_doc = frappe.get_doc("Checklist Question", template_row.question)
@@ -340,60 +444,89 @@ def build_answer_rows_from_template(doc, force=False):
 
         if child_meta.has_field("yes_no_answer"):
             row.yes_no_answer = ""
-
+        if child_meta.has_field("pass_fail_answer"):
+            row.pass_fail_answer = ""
         if child_meta.has_field("int_answer"):
             row.int_answer = None
-
         if child_meta.has_field("float_answer"):
             row.float_answer = None
-
         if child_meta.has_field("select_answer"):
             row.select_answer = ""
+        if child_meta.has_field("multi_select_answer"):
+            row.multi_select_answer = ""
+        if child_meta.has_field("text_answer"):
+            row.text_answer = ""
+        if child_meta.has_field("photo_answer"):
+            row.photo_answer = ""
 
         if child_meta.has_field("answer_select_options"):
             row.answer_select_options = question_doc.answer_select or ""
 
-        if child_meta.has_field("answer_min_int"):
-            row.answer_min_int = question_doc.answer_min_int
-        if child_meta.has_field("answer_max_int"):
-            row.answer_max_int = question_doc.answer_max_int
-        if child_meta.has_field("answer_min_float"):
-            row.answer_min_float = question_doc.answer_min_float
-        if child_meta.has_field("answer_max_float"):
-            row.answer_max_float = question_doc.answer_max_float
-        if child_meta.has_field("issue_if_no"):
-            row.issue_if_no = question_doc.issue_if_no
-        if child_meta.has_field("issue_select_values"):
-            row.issue_select_values = question_doc.issue_select_values or ""
+        for fieldname in snapshot_fields:
+            if child_meta.has_field(fieldname):
+                value = getattr(question_doc, fieldname, None)
+                if fieldname == "is_required" and value in (None, ""):
+                    value = 1
+                if fieldname == "issue_severity" and not value:
+                    value = "Medium"
+                setattr(row, fieldname, value)
 
         if child_meta.has_field("has_issue"):
             row.has_issue = 0
-
         if child_meta.has_field("issue_note"):
             row.issue_note = ""
-
+        if child_meta.has_field("failure_reason"):
+            row.failure_reason = ""
+        if child_meta.has_field("user_note"):
+            row.user_note = ""
+        if child_meta.has_field("evidence_photo"):
+            row.evidence_photo = ""
+        if child_meta.has_field("photo_unavailable_reason"):
+            row.photo_unavailable_reason = ""
 
 def sync_row_answer_fields(doc):
     child_meta = frappe.get_meta("Checklist Answer Question")
 
     for row in doc.answer:
         value = ""
+        question_type = cstr(row.type).strip()
 
-        if row.type == "Yes/No":
+        if question_type in ("Yes/No", "Yes/No/NA"):
             value = cstr(getattr(row, "yes_no_answer", "")).strip()
-        elif row.type == "Int":
+        elif question_type == "Pass/Fail/NA":
+            value = cstr(getattr(row, "pass_fail_answer", "")).strip()
+        elif question_type == "Int":
             int_value = getattr(row, "int_answer", None)
             value = "" if int_value in (None, "") else cstr(int_value).strip()
-        elif row.type == "Float":
+        elif question_type == "Float":
             float_value = getattr(row, "float_answer", None)
             value = "" if float_value in (None, "") else cstr(float_value).strip()
-        elif row.type == "Select":
+        elif question_type in ("Select", "Single Select"):
             value = cstr(getattr(row, "select_answer", "")).strip()
+        elif question_type == "Multi Select":
+            value = normalize_multi_value(getattr(row, "multi_select_answer", ""))
+        elif question_type == "Text":
+            value = cstr(getattr(row, "text_answer", "")).strip()
+        elif question_type == "Photo":
+            value = cstr(getattr(row, "photo_answer", "")).strip()
         else:
             value = cstr(getattr(row, "answer", "")).strip()
 
         if child_meta.has_field("answer"):
             row.answer = value
+
+def validate_scheduled_start_reached(doc, now_value=None):
+    scheduled_start = get_datetime(doc.scheduled_start_at) if getattr(doc, "scheduled_start_at", None) else None
+    if not scheduled_start:
+        return
+
+    now_dt = now_value or now_datetime()
+    if is_before_scheduled_start(scheduled_start, now_dt):
+        frappe.throw(
+            _("Checklist cannot be started before its scheduled start time: {0}.").format(
+                scheduled_start
+            )
+        )
 
 
 def set_started_at_if_needed(doc):
@@ -403,11 +536,16 @@ def set_started_at_if_needed(doc):
     if doc.status in ("Completed", "Auto Closed"):
         return
 
-    has_any_answer = any(not is_blank(row.answer) for row in doc.answer)
-    if has_any_answer:
-        doc.started_at = now_datetime()
-        if hasattr(doc, "taken_by") and not doc.taken_by:
-            doc.taken_by = frappe.session.user
+    has_activity = checklist_has_any_answer(doc)
+    if not has_activity:
+        return
+
+    now_dt = now_datetime()
+    validate_scheduled_start_reached(doc, now_value=now_dt)
+
+    doc.started_at = now_dt
+    if hasattr(doc, "taken_by") and not doc.taken_by:
+        doc.taken_by = frappe.session.user
 
 
 def set_expired_status_if_needed(doc):
@@ -424,7 +562,8 @@ def set_expired_status_if_needed(doc):
 
     if now_dt > doc.deadline_at:
         doc.status = "Expired"
-        doc.time_status = "Overdue"
+        if getattr(doc, "time_status", None) != "Escalated":
+            doc.time_status = "Overdue"
 
         delay_seconds = (now_dt - doc.deadline_at).total_seconds()
         doc.delay_minutes = max(int(delay_seconds // 60), 0)
@@ -433,6 +572,16 @@ def set_expired_status_if_needed(doc):
 def set_completed_time_fields(doc):
     completed_at = doc.completed_at or now_datetime()
     doc.completed_at = completed_at
+
+    if doc.status == "Missed":
+        if not doc.deadline_at:
+            doc.time_status = "Overdue"
+            doc.delay_minutes = 0
+            return
+        delay_seconds = (completed_at - doc.deadline_at).total_seconds()
+        doc.time_status = "Overdue" if delay_seconds > 0 else "On Time"
+        doc.delay_minutes = max(int(delay_seconds // 60), 0) if delay_seconds > 0 else 0
+        return
 
     if not doc.started_at:
         doc.started_at = completed_at
@@ -473,7 +622,9 @@ def validate_checklist_answer(doc):
         answer_value = normalize_answer(row.answer)
 
         if is_blank(answer_value):
-            frappe.throw(_("Please answer question #{0}: {1}").format(idx, question_label))
+            if cint(getattr(meta, "is_required", 1)):
+                frappe.throw(_("Please answer question #{0}: {1}").format(idx, question_label))
+            continue
 
         validate_answer_value(
             idx=idx,
@@ -482,31 +633,174 @@ def validate_checklist_answer(doc):
             meta=meta,
         )
 
+        row_has_issue, _issue_note = evaluate_row_issue(answer_value, meta)
+        if row_has_issue:
+            validate_failure_details(idx, question_label, row, meta)
+
+
+def validate_failure_details(idx, question_label, row, meta):
+    failure_reason = cstr(getattr(row, "failure_reason", "")).strip()
+    user_note = cstr(getattr(row, "user_note", "")).strip()
+    evidence_photo = cstr(getattr(row, "evidence_photo", "")).strip()
+    photo_unavailable_reason = cstr(getattr(row, "photo_unavailable_reason", "")).strip()
+
+    if cint(getattr(meta, "require_failure_reason", 0)) and not failure_reason:
+        frappe.throw(_("Question #{0}: {1} requires a failure reason.").format(idx, question_label))
+
+    reason_options = [
+        option.strip()
+        for option in cstr(getattr(meta, "failure_reason_options", "")).splitlines()
+        if option and option.strip()
+    ]
+    if failure_reason and reason_options and failure_reason not in reason_options:
+        frappe.throw(_("Question #{0}: {1} has an invalid failure reason.").format(idx, question_label))
+
+    if cint(getattr(meta, "require_failure_note", 0)) and not user_note:
+        frappe.throw(_("Question #{0}: {1} requires a note for the failure.").format(idx, question_label))
+
+    if cint(getattr(meta, "require_failure_photo", 0)) and not failure_photo_requirement_satisfied(
+        evidence_photo,
+        getattr(meta, "allow_no_photo_with_reason", 0),
+        photo_unavailable_reason,
+    ):
+        if cint(getattr(meta, "allow_no_photo_with_reason", 0)):
+            frappe.throw(
+                _("Question #{0}: {1} requires a photo or a reason why no photo is available.").format(
+                    idx, question_label
+                )
+            )
+        frappe.throw(_("Question #{0}: {1} requires a photo for the failure.").format(idx, question_label))
 
 def validate_answer_value(idx, question_label, answer_value, meta):
     question_type = cstr(meta.type).strip()
+    answer_options = cstr(getattr(meta, "answer_select", "") or "")
+
+    if is_valid_answer(answer_value, question_type, answer_options):
+        return
 
     if question_type == "Yes/No":
-        if answer_value not in ("Yes", "No"):
-            frappe.throw(_("Question #{0}: {1} must be Yes or No.").format(idx, question_label))
-    elif question_type == "Int":
-        try:
-            int(answer_value)
-        except ValueError:
-            frappe.throw(_("Question #{0}: {1} must be an integer.").format(idx, question_label))
-    elif question_type == "Float":
-        try:
-            float(answer_value)
-        except ValueError:
-            frappe.throw(_("Question #{0}: {1} must be a number.").format(idx, question_label))
-    elif question_type == "Select":
-        options = [opt.strip() for opt in cstr(meta.answer_select).splitlines() if opt and opt.strip()]
-        if options and answer_value not in options:
-            frappe.throw(_("Question #{0}: {1} must be one of: {2}").format(idx, question_label, ", ".join(options)))
+        frappe.throw(_("Question #{0}: {1} must be Yes or No.").format(idx, question_label))
+    if question_type == "Yes/No/NA":
+        frappe.throw(_("Question #{0}: {1} must be Yes, No, or N/A.").format(idx, question_label))
+    if question_type == "Pass/Fail/NA":
+        frappe.throw(_("Question #{0}: {1} must be Pass, Fail, or N/A.").format(idx, question_label))
+    if question_type == "Int":
+        frappe.throw(_("Question #{0}: {1} must be an integer.").format(idx, question_label))
+    if question_type == "Float":
+        frappe.throw(_("Question #{0}: {1} must be a number.").format(idx, question_label))
+    if question_type in ("Select", "Single Select", "Multi Select"):
+        options = [opt.strip() for opt in answer_options.splitlines() if opt and opt.strip()]
+        frappe.throw(_("Question #{0}: {1} must use configured options: {2}").format(idx, question_label, ", ".join(options)))
+
+def sync_worker_rows(doc):
+    if not cint(getattr(doc, "enable_worker_check", 0)):
+        return
+
+    for row in getattr(doc, "workers", None) or []:
+        worker_type = cstr(getattr(row, "worker_type", "") or "").strip()
+
+        if worker_type == "Internal Employee":
+            if not getattr(row, "employee", None):
+                frappe.throw(_("Employee is required for an internal worker row."))
+
+            employee = frappe.db.get_value(
+                "Employee",
+                row.employee,
+                ["employee_name", "company"],
+                as_dict=True,
+            )
+            if not employee:
+                frappe.throw(_("Employee {0} was not found.").format(row.employee))
+
+            row.external_worker = None
+            row.worker_name = employee.employee_name or row.employee
+            row.company_name = employee.company or ""
+            if hasattr(row, "supplier"):
+                row.supplier = None
+            if hasattr(row, "badge_no"):
+                row.badge_no = ""
+
+        elif worker_type == "External Worker":
+            if not getattr(row, "external_worker", None):
+                frappe.throw(_("External Worker is required for an external worker row."))
+
+            worker = frappe.db.get_value(
+                "Checklist External Worker",
+                row.external_worker,
+                ["worker_name", "company_name", "supplier", "badge_no"],
+                as_dict=True,
+            )
+            if not worker:
+                frappe.throw(_("External Worker {0} was not found.").format(row.external_worker))
+
+            row.employee = None
+            row.worker_name = worker.worker_name
+            row.company_name = worker.company_name or ""
+            if hasattr(row, "supplier"):
+                row.supplier = worker.supplier
+            if hasattr(row, "badge_no"):
+                row.badge_no = worker.badge_no or ""
+
+        else:
+            frappe.throw(_("Worker Type must be Internal Employee or External Worker."))
+
+        if not getattr(row, "presence_status", None):
+            row.presence_status = "Present"
+
+        if row.presence_status not in ("Present", "Absent"):
+            frappe.throw(_("Worker presence must be Present or Absent."))
+
+        if getattr(row, "inspection_status", None) not in (None, "", "Pass", "Fail", "N/A"):
+            frappe.throw(_("Worker inspection must be Pass, Fail, or N/A."))
+
+        if getattr(row, "inspection_status", None) != "Fail":
+            row.failure_reasons = ""
+            row.note = cstr(getattr(row, "note", "") or "").strip()
+            row.corrected_immediately = 0
+
+
+def validate_worker_rows(doc):
+    if not cint(getattr(doc, "enable_worker_check", 0)):
+        return
+
+    seen = set()
+    for row in getattr(doc, "workers", None) or []:
+        if row.worker_type == "Internal Employee":
+            key = ("Internal Employee", cstr(row.employee))
+        else:
+            key = ("External Worker", cstr(row.external_worker))
+
+        if key in seen:
+            frappe.throw(_("Worker {0} is listed more than once in this checklist.").format(row.worker_name or key[1]))
+        seen.add(key)
+
+
+def update_worker_summary(doc):
+    if not hasattr(doc, "enable_worker_check"):
+        return
+
+    if not cint(getattr(doc, "enable_worker_check", 0)):
+        doc.present_worker_count = 0
+        doc.absent_worker_count = 0
+        doc.replacement_worker_count = 0
+        doc.worker_shortage_count = 0
+        doc.worker_requirement_status = "Not Set"
+        return
+
+    summary = summarize_workers(
+        getattr(doc, "workers", None) or [],
+        required_count=getattr(doc, "required_worker_count", 0),
+    )
+    doc.present_worker_count = summary["present"]
+    doc.absent_worker_count = summary["absent"]
+    doc.replacement_worker_count = summary["replacements"]
+    doc.worker_shortage_count = summary["shortage"]
+    doc.worker_requirement_status = summary["status"]
 
 
 def evaluate_checklist_result(doc):
     has_any_issue = False
+    has_critical_issue = False
     child_meta = frappe.get_meta("Checklist Answer Question")
     parent_meta = frappe.get_meta("Checklist Answer")
 
@@ -528,103 +822,128 @@ def evaluate_checklist_result(doc):
 
         if row_has_issue:
             has_any_issue = True
+            if cstr(getattr(meta, "issue_severity", "Medium")).strip() == "Critical":
+                has_critical_issue = True
+        else:
+            if child_meta.has_field("failure_reason"):
+                row.failure_reason = ""
+            if child_meta.has_field("user_note"):
+                row.user_note = ""
+            if child_meta.has_field("evidence_photo"):
+                row.evidence_photo = ""
+
+    if cint(getattr(doc, "enable_worker_check", 0)):
+        if cint(getattr(doc, "worker_shortage_count", 0)) > 0:
+            has_any_issue = True
+        if any(cstr(getattr(row, "inspection_status", "") or "").strip() == "Fail" for row in (getattr(doc, "workers", None) or [])):
+            has_any_issue = True
+
+    if cint(getattr(doc, "production_started_before_completion", 0)):
+        has_any_issue = True
 
     if parent_meta.has_field("result_status"):
-        doc.result_status = "Has Issue" if has_any_issue else "Normal"
-
+        if has_critical_issue:
+            doc.result_status = "Critical"
+        elif has_any_issue:
+            doc.result_status = "Has Issue"
+        else:
+            doc.result_status = "Normal"
 
 def evaluate_row_issue(answer_value, meta):
     question_type = cstr(meta.type).strip()
-
-    if question_type == "Yes/No":
-        issue_if_no = cint(meta.issue_if_no or 0)
-        if issue_if_no and answer_value == "No":
-            return True, _("Issue because answer is No")
-        return False, ""
+    min_value = None
+    max_value = None
 
     if question_type == "Int":
-        try:
-            parsed_value = int(answer_value)
-        except ValueError:
-            return False, ""
-        min_int = meta.answer_min_int
-        max_int = meta.answer_max_int
-        if min_int not in (None, "") and parsed_value < cint(min_int):
-            return True, _("Value is below minimum allowed")
-        if max_int not in (None, "") and parsed_value > cint(max_int):
-            return True, _("Value is above maximum allowed")
-        return False, ""
+        min_value = getattr(meta, "answer_min_int", None)
+        max_value = getattr(meta, "answer_max_int", None)
+    elif question_type == "Float":
+        min_value = getattr(meta, "answer_min_float", None)
+        max_value = getattr(meta, "answer_max_float", None)
 
-    if question_type == "Float":
-        try:
-            parsed_value = float(answer_value)
-        except ValueError:
-            return False, ""
-        min_float = meta.answer_min_float
-        max_float = meta.answer_max_float
-        if min_float not in (None, "") and parsed_value < flt(min_float):
-            return True, _("Value is below minimum allowed")
-        if max_float not in (None, "") and parsed_value > flt(max_float):
-            return True, _("Value is above maximum allowed")
-        return False, ""
-
-    if question_type == "Select":
-        issue_values = [opt.strip() for opt in cstr(meta.issue_select_values).splitlines() if opt and opt.strip()]
-        if issue_values and answer_value in issue_values:
-            return True, _("Issue option selected")
-        return False, ""
-
-    return False, ""
-
+    has_issue, message = evaluate_issue_rule(
+        answer_value,
+        question_type,
+        issue_if_no=cint(getattr(meta, "issue_if_no", 0)),
+        issue_select_values=getattr(meta, "issue_select_values", None),
+        min_value=min_value,
+        max_value=max_value,
+    )
+    return has_issue, _(message) if message else ""
 
 def get_question_meta(row):
     meta = frappe._dict({
         "question_text": row.question,
         "type": getattr(row, "type", None),
         "answer_select": getattr(row, "answer_select_options", None),
+        "is_required": getattr(row, "is_required", 1),
+        "quick_pass_allowed": getattr(row, "quick_pass_allowed", 0),
         "answer_min_int": getattr(row, "answer_min_int", None),
         "answer_max_int": getattr(row, "answer_max_int", None),
         "answer_min_float": getattr(row, "answer_min_float", None),
         "answer_max_float": getattr(row, "answer_max_float", None),
         "issue_if_no": getattr(row, "issue_if_no", 0),
         "issue_select_values": getattr(row, "issue_select_values", None),
+        "issue_severity": getattr(row, "issue_severity", None) or "Medium",
+        "quality_impact": getattr(row, "quality_impact", 0),
+        "require_failure_reason": getattr(row, "require_failure_reason", 0),
+        "failure_reason_options": getattr(row, "failure_reason_options", None),
+        "require_failure_note": getattr(row, "require_failure_note", 0),
+        "require_failure_photo": getattr(row, "require_failure_photo", 0),
+        "allow_no_photo_with_reason": getattr(row, "allow_no_photo_with_reason", 0),
+        "require_follow_up": getattr(row, "require_follow_up", 0),
+        "responsible_department": getattr(row, "responsible_department", None),
+        "responsible_user": getattr(row, "responsible_user", None),
+        "notify_department": getattr(row, "notify_department", None),
+        "notify_user": getattr(row, "notify_user", None),
+        "require_verification": getattr(row, "require_verification", 0),
     })
+
+    # New checklists carry a full immutable snapshot. Older rows created before
+    # this schema did not have question_link, so fall back to the live question
+    # only for backward compatibility.
+    if getattr(row, "question_link", None):
+        return meta
 
     if not row.question:
         return meta
 
-    if (
-        getattr(row, "answer_min_int", None) not in (None, "")
-        or getattr(row, "answer_max_int", None) not in (None, "")
-        or getattr(row, "answer_min_float", None) not in (None, "")
-        or getattr(row, "answer_max_float", None) not in (None, "")
-        or getattr(row, "issue_if_no", None) not in (None, "")
-        or getattr(row, "issue_select_values", None) not in (None, "")
-    ):
+    question_meta = frappe.get_meta("Checklist Question")
+    columns = [
+        "question", "type", "answer_select", "answer_min_int", "answer_max_int",
+        "answer_min_float", "answer_max_float", "issue_if_no", "issue_select_values",
+    ]
+    optional_columns = (
+        "is_required", "quick_pass_allowed", "issue_severity", "quality_impact",
+        "require_failure_reason", "failure_reason_options", "require_failure_note",
+        "require_failure_photo", "allow_no_photo_with_reason", "require_follow_up", "responsible_department",
+        "responsible_user", "notify_department", "notify_user", "require_verification",
+    )
+    for fieldname in optional_columns:
+        if question_meta.has_field(fieldname):
+            columns.append(fieldname)
+
+    live_question = frappe.db.get_value(
+        "Checklist Question",
+        {"question": row.question},
+        columns,
+        as_dict=True,
+    )
+    if not live_question:
         return meta
 
-    question_meta = frappe.get_meta("Checklist Question")
-    columns = ["question", "type", "answer_select", "answer_min_int", "answer_max_int", "answer_min_float", "answer_max_float"]
+    meta.question_text = live_question.question
+    meta.type = row.type or live_question.type
+    meta.answer_select = getattr(row, "answer_select_options", None) or live_question.answer_select
+    for fieldname in columns:
+        if fieldname in ("question", "type", "answer_select"):
+            continue
+        if hasattr(live_question, fieldname):
+            setattr(meta, fieldname, getattr(live_question, fieldname))
 
-    if question_meta.has_field("issue_if_no"):
-        columns.append("issue_if_no")
-    if question_meta.has_field("issue_select_values"):
-        columns.append("issue_select_values")
-
-    live_question = frappe.db.get_value("Checklist Question", {"question": row.question}, columns, as_dict=True)
-    if live_question:
-        meta.question_text = live_question.question
-        meta.type = row.type or live_question.type
-        meta.answer_select = getattr(row, "answer_select_options", None) or live_question.answer_select
-        meta.answer_min_int = live_question.answer_min_int
-        meta.answer_max_int = live_question.answer_max_int
-        meta.answer_min_float = live_question.answer_min_float
-        meta.answer_max_float = live_question.answer_max_float
-        meta.issue_if_no = getattr(live_question, "issue_if_no", 0)
-        meta.issue_select_values = getattr(live_question, "issue_select_values", None)
-
+    meta.is_required = getattr(meta, "is_required", 1)
+    meta.issue_severity = getattr(meta, "issue_severity", None) or "Medium"
     return meta
-
 
 def auto_close_open_answers(template_name, exclude=None):
     if not template_name:

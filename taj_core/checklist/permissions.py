@@ -41,6 +41,16 @@ def _get_user_departments(user=None):
     return {d for d in employees if d}
 
 
+def checklist_user_belongs_to_department(doc, user=None):
+    user = user or frappe.session.user
+    department = getattr(doc, "department", None)
+
+    if not department:
+        return False
+
+    return department in _get_user_departments(user)
+
+
 def checklist_answer_has_permission(doc, user=None, permission_type=None):
     user = user or frappe.session.user
 
@@ -60,12 +70,7 @@ def checklist_answer_has_permission(doc, user=None, permission_type=None):
         return assigned_user == user or answer_by == user or taken_by == user
 
     if assignment_type == "Any User in Department":
-        if not department:
-            return False
-
-        user_departments = _get_user_departments(user)
-
-        if department not in user_departments:
+        if not checklist_user_belongs_to_department(doc, user):
             return False
 
         return (
@@ -107,5 +112,59 @@ def checklist_answer_query_conditions(user=None):
             )
             OR ifnull(`tabChecklist Answer`.`answer_by`, '') = {user_escaped}
             OR ifnull(`tabChecklist Answer`.`taken_by`, '') = {user_escaped}
+        )
+    """
+
+def checklist_action_has_permission(doc, user=None, permission_type=None):
+    user = user or frappe.session.user
+
+    if permission_type in ("create", "delete"):
+        return False
+
+    if is_checklist_manager(user):
+        return True
+
+    departments = _get_user_departments(user)
+    responsible = (
+        getattr(doc, "responsible_user", None) == user
+        or getattr(doc, "responsible_department", None) in departments
+    )
+    verifier = (
+        getattr(doc, "verification_user", None) == user
+        or getattr(doc, "verification_department", None) in departments
+    )
+
+    if responsible or verifier:
+        return True
+
+    if permission_type in (None, "read", "print", "email"):
+        return getattr(doc, "owner", None) == user
+
+    return False
+
+
+def checklist_action_query_conditions(user=None):
+    user = user or frappe.session.user
+
+    if is_checklist_manager(user):
+        return ""
+
+    user_escaped = frappe.db.escape(user)
+    departments = list(_get_user_departments(user))
+    if departments:
+        dept_sql = ", ".join(frappe.db.escape(d) for d in departments)
+        responsible_dept = f"`tabChecklist Action`.`responsible_department` IN ({dept_sql})"
+        verification_dept = f"`tabChecklist Action`.`verification_department` IN ({dept_sql})"
+    else:
+        responsible_dept = "1 = 0"
+        verification_dept = "1 = 0"
+
+    return f"""
+        (
+            `tabChecklist Action`.`owner` = {user_escaped}
+            OR `tabChecklist Action`.`responsible_user` = {user_escaped}
+            OR `tabChecklist Action`.`verification_user` = {user_escaped}
+            OR {responsible_dept}
+            OR {verification_dept}
         )
     """

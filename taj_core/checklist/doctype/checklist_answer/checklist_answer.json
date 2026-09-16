@@ -14,12 +14,28 @@
   "result_status",
   "column_break_uwgo",
   "department",
+  "plant_floor",
+  "warehouse",
+  "asset",
   "assignment_type",
   "assigned_user",
   "taken_by",
   "answer_by",
   "section_break_fewk",
   "answer",
+  "worker_check_section",
+  "enable_worker_check",
+  "required_worker_count",
+  "default_worker_company",
+  "default_worker_supplier",
+  "worker_failure_reason_options",
+  "workers",
+  "worker_summary_section",
+  "present_worker_count",
+  "absent_worker_count",
+  "replacement_worker_count",
+  "worker_shortage_count",
+  "worker_requirement_status",
   "section_break_rmiw",
   "scheduled_start_at",
   "deadline_at",
@@ -27,7 +43,21 @@
   "column_break_alua",
   "started_at",
   "completed_at",
-  "delay_minutes"
+  "delay_minutes",
+  "cycle_audit_section",
+  "cycle_behavior",
+  "required_before_production",
+  "notify_on_overdue",
+  "escalate_after_minutes",
+  "escalation_user",
+  "cycle_audit_column",
+  "overdue_notified_at",
+  "escalated_at",
+  "production_started_before_completion",
+  "production_started_at",
+  "production_work_order",
+  "completion_percent_at_production_start",
+  "incomplete_items_at_production_start"
  ],
  "fields": [
   {
@@ -66,7 +96,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nIn Progress\nCompleted\nExpired\nAuto Closed",
+   "options": "Draft\nIn Progress\nCompleted\nExpired\nAuto Closed\nAuto Closed - Incomplete\nMissed",
    "read_only": 1
   },
   {
@@ -78,6 +108,27 @@
    "fieldtype": "Link",
    "label": "Department",
    "options": "Department"
+  },
+  {
+   "fieldname": "plant_floor",
+   "fieldtype": "Link",
+   "label": "Plant Floor",
+   "options": "Plant Floor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "read_only": 1
+  },
+  {
+   "fieldname": "asset",
+   "fieldtype": "Link",
+   "label": "Asset",
+   "options": "Asset",
+   "read_only": 1
   },
   {
    "fieldname": "answer_by",
@@ -182,6 +233,173 @@
    "fieldtype": "Link",
    "label": "Taken By",
    "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "worker_check_section",
+   "fieldtype": "Section Break",
+   "label": "Worker Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_worker_check",
+   "fieldtype": "Check",
+   "label": "Enable Worker Check",
+   "read_only": 1
+  },
+  {
+   "fieldname": "required_worker_count",
+   "fieldtype": "Int",
+   "label": "Required Worker Count (Production)",
+   "description": "Set by Production for this checklist run. Used to calculate staffing shortage.",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "default_worker_company",
+   "fieldtype": "Data",
+   "label": "Default External Worker Company",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "default_worker_supplier",
+   "fieldtype": "Link",
+   "label": "Default External Worker Supplier",
+   "options": "Supplier",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "worker_failure_reason_options",
+   "fieldtype": "Small Text",
+   "label": "Worker Failure Reason Options",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "workers",
+   "fieldtype": "Table",
+   "label": "Workers Checked",
+   "options": "Checklist Worker Entry"
+  },
+  {
+   "fieldname": "worker_summary_section",
+   "fieldtype": "Section Break",
+   "label": "Worker Summary"
+  },
+  {
+   "fieldname": "present_worker_count",
+   "fieldtype": "Int",
+   "label": "Present",
+   "read_only": 1
+  },
+  {
+   "fieldname": "absent_worker_count",
+   "fieldtype": "Int",
+   "label": "Absent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "replacement_worker_count",
+   "fieldtype": "Int",
+   "label": "Replacements",
+   "read_only": 1
+  },
+  {
+   "fieldname": "worker_shortage_count",
+   "fieldtype": "Int",
+   "label": "Shortage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "worker_requirement_status",
+   "fieldtype": "Select",
+   "label": "Staffing Requirement",
+   "options": "Not Set\nMet\nShort",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cycle_audit_section",
+   "fieldtype": "Section Break",
+   "label": "Cycle & Production Audit"
+  },
+  {
+   "fieldname": "cycle_behavior",
+   "fieldtype": "Select",
+   "label": "Cycle Behavior",
+   "options": "Fresh Every Cycle\nContinue Until Completed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "required_before_production",
+   "fieldtype": "Check",
+   "label": "Required Before Production",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notify_on_overdue",
+   "fieldtype": "Check",
+   "label": "Notify When Overdue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "escalate_after_minutes",
+   "fieldtype": "Int",
+   "label": "Escalate After Minutes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "escalation_user",
+   "fieldtype": "Link",
+   "label": "Escalation User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cycle_audit_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "overdue_notified_at",
+   "fieldtype": "Datetime",
+   "label": "Overdue Notified At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "escalated_at",
+   "fieldtype": "Datetime",
+   "label": "Escalated At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "production_started_before_completion",
+   "fieldtype": "Check",
+   "label": "Production Started Before Completion",
+   "read_only": 1
+  },
+  {
+   "fieldname": "production_started_at",
+   "fieldtype": "Datetime",
+   "label": "Production Started At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "production_work_order",
+   "fieldtype": "Link",
+   "label": "Production Work Order",
+   "options": "Work Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completion_percent_at_production_start",
+   "fieldtype": "Int",
+   "label": "Completion % At Production Start",
+   "read_only": 1
+  },
+  {
+   "fieldname": "incomplete_items_at_production_start",
+   "fieldtype": "Small Text",
+   "label": "Incomplete Items At Production Start",
    "read_only": 1
   }
  ],

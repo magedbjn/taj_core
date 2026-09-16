@@ -240,6 +240,22 @@ class ChecklistAnswerManagerPage {
                             </div>
                         </div>
                     </div>
+
+                    <div class="summary-card summary-card-clickable is-red" data-group="today_production_started_early" role="button" tabindex="0" aria-label="${__("Production Started Early")}">
+                        <div class="summary-card-inner">
+                            <div class="summary-icon-wrap is-red">
+                                <svg class="summary-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 4V13"></path>
+                                    <path d="M8 9L12 13L16 9"></path>
+                                    <path d="M5 18H19"></path>
+                                </svg>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-label">${__("Production Started Early")}</div>
+                                <div class="summary-value today-production-started-early">0</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card shadow-sm border-0 mgr-panel">
@@ -279,6 +295,7 @@ class ChecklistAnswerManagerPage {
         this.$todayCompleted = $(this.page.body).find(".today-completed");
         this.$todayRemaining = $(this.page.body).find(".today-remaining");
         this.$todayHasIssue = $(this.page.body).find(".today-has-issue");
+        this.$todayProductionStartedEarly = $(this.page.body).find(".today-production-started-early");
 
         this.$summaryCards = $(this.page.body).find(".summary-card-clickable");
         this.$cardsListPanel = $(this.page.body).find(".cards-list-panel");
@@ -350,7 +367,7 @@ class ChecklistAnswerManagerPage {
                 label: __("Status"),
                 fieldname: "status",
                 fieldtype: "Select",
-                options: "\nAll\nOpen\nDraft\nIn Progress\nExpired\nCompleted\nAuto Closed"
+                options: "\nAll\nOpen\nDraft\nIn Progress\nExpired\nCompleted\nAuto Closed\nAuto Closed - Incomplete\nMissed"
             },
             render_input: true
         });
@@ -544,6 +561,7 @@ class ChecklistAnswerManagerPage {
             this.$todayCompleted.text(summary.today_completed || 0);
             this.$todayRemaining.text(summary.today_remaining || 0);
             this.$todayHasIssue.text(summary.today_has_issue || 0);
+            this.$todayProductionStartedEarly.text(summary.today_production_started_early || 0);
 
             this.render_active_group();
         } catch (e) {
@@ -575,6 +593,7 @@ class ChecklistAnswerManagerPage {
             today_completed: () => this.lastData?.today_completed || [],
             today_remaining: () => this.lastData?.today_remaining_docs || [],
             today_has_issue: () => this.lastData?.today_has_issue_docs || [],
+            today_production_started_early: () => this.lastData?.today_production_started_early_docs || [],
             search: () => this.lastData?.search_results || []
         };
     }
@@ -592,6 +611,7 @@ class ChecklistAnswerManagerPage {
             today_completed: __("Today Completed Cards"),
             today_remaining: __("Today Remaining Cards"),
             today_has_issue: __("Today Has Issue Cards"),
+            today_production_started_early: __("Production Started Before Checklist Completion"),
             search: __("Search Result Cards")
         };
         return titles[this.activeGroup] || __("Checklist Cards");
@@ -604,6 +624,7 @@ class ChecklistAnswerManagerPage {
             today_completed: __("No completed tasks today."),
             today_remaining: __("No remaining tasks today."),
             today_has_issue: __("No issue tasks today."),
+            today_production_started_early: __("No production runs started before required checklist completion today."),
             search: __("No search results found.")
         };
         return emptyMap[this.activeGroup] || __("No records found.");
@@ -621,7 +642,7 @@ class ChecklistAnswerManagerPage {
             badgeClass = "badge badge-pill badge-secondary";
         } else if (value === "in progress") {
             badgeClass = "badge badge-pill badge-warning";
-        } else if (value === "auto closed") {
+        } else if (value === "auto closed" || value === "auto closed - incomplete" || value === "missed") {
             badgeClass = "badge badge-pill badge-dark";
         } else if (value === "expired") {
             badgeClass = "badge badge-pill badge-danger";
@@ -776,6 +797,11 @@ class ChecklistAnswerManagerPage {
                         <div class="meta-line"><strong>${__("Completed At")}:</strong> ${this.escape(this.doc.completed_at || "-")}</div>
                         <div class="meta-line"><strong>${__("Time Status")}:</strong> ${this.escape(this.doc.time_status || "-")}</div>
                         <div class="meta-line"><strong>${__("Delay Minutes")}:</strong> ${this.escape(this.doc.delay_minutes != null ? this.doc.delay_minutes : 0)}</div>
+                        ${this.doc.production_started_before_completion ? `<div class="meta-line"><strong>${__("Production Started Before Completion")}:</strong> ${__("Yes")}</div>` : ""}
+                        ${this.doc.production_work_order ? `<div class="meta-line"><strong>${__("Production Work Order")}:</strong> ${this.escape(this.doc.production_work_order)}</div>` : ""}
+                        ${this.doc.production_started_at ? `<div class="meta-line"><strong>${__("Production Started At")}:</strong> ${this.escape(this.doc.production_started_at)}</div>` : ""}
+                        ${this.doc.production_started_before_completion ? `<div class="meta-line"><strong>${__("Completion At Production Start")}:</strong> ${this.escape(this.doc.completion_percent_at_production_start || 0)}%</div>` : ""}
+                        ${this.doc.incomplete_items_at_production_start ? `<div class="meta-line"><strong>${__("Incomplete At Production Start")}:</strong> ${this.escape(this.doc.incomplete_items_at_production_start).replace(/\n/g, ", ")}</div>` : ""}
                     </div>
                 </div>
             </div>
@@ -818,8 +844,26 @@ class ChecklistAnswerManagerPage {
 
         questions.forEach((row, index) => {
             const issueClass = row.has_issue ? "has-issue" : "";
+            const severity = row.has_issue && row.issue_severity
+                ? `<span class="issue-badge is-issue">${this.escape(row.issue_severity)}</span>`
+                : "";
+            const quality = row.has_issue && Number(row.quality_impact || 0)
+                ? `<span class="issue-badge is-issue">${__("Quality Impact")}</span>`
+                : "";
             const issueLine = row.has_issue
-                ? `<div style="margin-bottom:6px;"><span class="issue-badge is-issue">${__("Issue Answer")}</span></div>`
+                ? `<div style="margin-bottom:6px; display:flex; gap:6px; flex-wrap:wrap;"><span class="issue-badge is-issue">${__("Issue Answer")}</span>${severity}${quality}</div>`
+                : "";
+            const failureReason = row.failure_reason
+                ? `<div class="readonly-answer-value"><strong>${__("Reason")}:</strong> ${this.escape(row.failure_reason)}</div>`
+                : "";
+            const userNote = row.user_note
+                ? `<div class="readonly-answer-value"><strong>${__("Note")}:</strong> ${this.escape(row.user_note)}</div>`
+                : "";
+            const evidencePhoto = row.evidence_photo
+                ? `<div class="readonly-answer-value"><strong>${__("Photo")}:</strong> <a href="${this.escape(row.evidence_photo)}" target="_blank" rel="noopener">${__("Open photo")}</a></div>`
+                : "";
+            const followUp = row.has_issue && Number(row.require_follow_up || 0)
+                ? `<div class="readonly-answer-value"><strong>${__("Follow-up")}:</strong> ${this.escape(row.responsible_user || row.responsible_department || __("Required"))}</div>`
                 : "";
 
             const answerCard = document.createElement("div");
@@ -834,6 +878,7 @@ class ChecklistAnswerManagerPage {
                     <strong>${__("Answer")}:</strong> ${this.escape(row.answer || "-")}
                 </div>
                 ${row.issue_note ? `<div class="readonly-answer-value"><strong>${__("Issue Note")}:</strong> ${this.escape(row.issue_note)}</div>` : ""}
+                ${failureReason}${userNote}${evidencePhoto}${followUp}
             `;
             fragment.appendChild(answerCard);
         });

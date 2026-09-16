@@ -40,6 +40,20 @@ def validate_template(doc):
         if not frappe.utils.cint(doc.completion_window_minutes):
             frappe.throw(_("Completion Window Minutes is required when Time Control is enabled."))
 
+    if frappe.utils.cint(getattr(doc, "notify_on_overdue", 0)) and not frappe.utils.cint(doc.enable_time_control):
+        frappe.throw(_("Time Control must be enabled when overdue notification is enabled."))
+
+    escalation_minutes = frappe.utils.cint(getattr(doc, "escalate_after_minutes", 0))
+    if escalation_minutes < 0:
+        frappe.throw(_("Escalate After Minutes cannot be negative."))
+    if escalation_minutes and not frappe.utils.cint(getattr(doc, "notify_on_overdue", 0)):
+        frappe.throw(_("Overdue notification must be enabled before escalation can be configured."))
+    if getattr(doc, "escalation_user", None) and not escalation_minutes:
+        frappe.throw(_("Escalate After Minutes is required when an Escalation User is configured."))
+
+    if frappe.utils.cint(getattr(doc, "required_before_production", 0)) and getattr(doc, "cycle_behavior", None) != "Fresh Every Cycle":
+        frappe.throw(_("A checklist required before production must use Fresh Every Cycle behavior."))
+
 
 @frappe.whitelist()
 def create_checklist_answer_from_template_form(template_name=None):

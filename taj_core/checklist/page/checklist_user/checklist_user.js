@@ -1,5 +1,11 @@
 frappe.pages["checklist-user"].on_page_load = function (wrapper) {
-    new ChecklistUserPage(wrapper);
+    wrapper.checklist_user_page = new ChecklistUserPage(wrapper);
+};
+
+frappe.pages["checklist-user"].on_page_show = function (wrapper) {
+    if (wrapper.checklist_user_page) {
+        return wrapper.checklist_user_page.on_page_show();
+    }
 };
 
 function setup_checklist_fullwidth(wrapper) {
@@ -16,6 +22,7 @@ function setup_checklist_fullwidth(wrapper) {
             if (current_page !== "checklist-user") {
                 $("body").removeClass("checklist-fullwidth-mode");
                 $("body").removeClass("checklist-drawer-open");
+                $("body").removeClass("checklist-direct-open-mode");
             }
         });
     }
@@ -39,6 +46,8 @@ class ChecklistUserPage {
         this.selectedDocname = null;
         this.saveState = "";
         this.activeView = "my-new";
+        this.directOpen = false;
+        this.directOrigin = null;
 
         this.page = frappe.ui.make_app_page({
             parent: wrapper,
@@ -51,11 +60,34 @@ class ChecklistUserPage {
 
         this.render_layout();
         this.bind_events();
-        this.load_initial_state();
     }
 
     escape(value) {
         return frappe.utils.escape_html(value == null ? "" : String(value));
+    }
+
+    card_icon_svg(name) {
+        const icons = {
+            checklist: '<rect x="5" y="4" width="14" height="16" rx="2"></rect><path d="M9 9h6M9 13h6M9 17h4"></path>',
+            questions: '<circle cx="12" cy="12" r="8"></circle><path d="M9.8 9.5a2.4 2.4 0 0 1 4.6 1c0 1.8-2.4 2-2.4 3.6M12 17h.01"></path>',
+            department: '<path d="M4 20h16M6 20V8h12v12M9 11h2M13 11h2M9 15h2M13 15h2M9 8V5h6v3"></path>',
+            user: '<circle cx="12" cy="8" r="3"></circle><path d="M5.5 20c.7-4 3-6 6.5-6s5.8 2 6.5 6"></path>',
+            result: '<path d="M5 12l4 4L19 6"></path>',
+            plant_floor: '<path d="M3 20h18M5 20V10l5 3V9l5 3V6l4 3v11"></path>',
+            warehouse: '<path d="M3 10l9-6 9 6v10H3zM7 20v-6h10v6"></path>',
+            calendar: '<rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path>'
+        };
+        const body = icons[name] || icons.checklist;
+        return `<svg class="checklist-inline-icon" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>`;
+    }
+
+    card_meta_item(iconName, label, value) {
+        return `
+            <div class="checklist-list-meta-item">
+                <span class="checklist-meta-icon">${this.card_icon_svg(iconName)}</span>
+                <span class="checklist-meta-text"><strong>${this.escape(label)}:</strong> ${this.escape(value || "-")}</span>
+            </div>
+        `;
     }
 
     render_layout() {
@@ -152,8 +184,8 @@ class ChecklistUserPage {
                         <div class="selected-doc-meta"></div>
                         <div class="selected-doc-progress"></div>
                         <div class="selected-doc-body"></div>
-                        <div class="selected-doc-actions"></div>
                     </div>
+                    <div class="selected-doc-actions"></div>
                 </aside>
             </div>
         `);
@@ -219,9 +251,18 @@ class ChecklistUserPage {
     }
 
     close_drawer() {
+        if (this.directOpen && this.directOrigin === "checklist-today") {
+            this.directOpen = false;
+            this.directOrigin = null;
+            $("body").removeClass("checklist-direct-open-mode");
+            frappe.set_route("checklist-today");
+            return;
+        }
+
         this.$drawer.removeClass("is-open");
         this.$drawerBackdrop.removeClass("is-open");
         $("body").removeClass("checklist-drawer-open");
+        $("body").removeClass("checklist-direct-open-mode");
     }
 
     set_save_state(stateText = "") {
@@ -229,13 +270,24 @@ class ChecklistUserPage {
         this.render_progress();
     }
 
-    async load_initial_state() {
-        await this.load_dashboard();
+    async on_page_show() {
+        const opts = { ...(frappe.route_options || {}) };
+        frappe.route_options = null;
 
-        const opts = frappe.route_options || {};
         if (opts.checklist_answer) {
+            this.directOpen = !!opts.direct_open;
+            this.directOrigin = opts.origin || null;
+            $("body").toggleClass("checklist-direct-open-mode", this.directOpen);
             await this.load_doc(opts.checklist_answer);
+            return;
         }
+
+        this.directOpen = false;
+        this.directOrigin = null;
+        this.$drawer.removeClass("is-open");
+        this.$drawerBackdrop.removeClass("is-open");
+        $("body").removeClass("checklist-drawer-open checklist-direct-open-mode");
+        await this.load_dashboard();
     }
 
     async load_dashboard() {
@@ -335,7 +387,7 @@ class ChecklistUserPage {
         if (value === "completed") return "completed";
         if (value === "open") return "open";
         if (value === "in progress") return "in-progress";
-        if (value === "auto closed") return "auto-closed";
+        if (["auto closed", "auto closed - incomplete", "missed"].includes(value)) return "auto-closed";
         if (value === "expired") return "expired";
         if (value === "on hold") return "on-hold";
         return "default";
@@ -357,12 +409,14 @@ class ChecklistUserPage {
 
             const questionBadge = `
                 <span class="question-count-badge">
-                    ${__("Questions")}: ${this.escape(questionCount)}
+                    ${this.card_icon_svg("questions")}
+                    <span>${__("Questions")}: ${this.escape(questionCount)}</span>
                 </span>
             `;
 
             const statusBadge = `
                 <span class="status-pill status-${statusSlug}">
+                    <span class="status-pill-dot" aria-hidden="true"></span>
                     ${this.escape(statusText)}
                 </span>
             `;
@@ -375,7 +429,10 @@ class ChecklistUserPage {
                 <div class="checklist-list-item status-card-${statusSlug} ${activeClass}">
                     <div class="checklist-list-top">
                         <div class="checklist-list-head">
-                            <div class="checklist-list-template">${this.escape(doc.template || "-")}</div>
+                            <div class="checklist-list-template-row">
+                                <span class="checklist-card-title-icon">${this.card_icon_svg("checklist")}</span>
+                                <div class="checklist-list-template">${this.escape(doc.template || "-")}</div>
+                            </div>
                             <div class="checklist-list-docname">${this.escape(doc.name || "-")}</div>
                         </div>
 
@@ -387,11 +444,12 @@ class ChecklistUserPage {
                     </div>
 
                     <div class="checklist-list-meta">
-                        <div class="checklist-list-meta-item"><strong>${__("Status")}:</strong> ${this.escape(doc.status || "-")}</div>
-                        <div class="checklist-list-meta-item"><strong>${__("Department")}:</strong> ${this.escape(doc.department || "-")}</div>
-                        <div class="checklist-list-meta-item"><strong>${__("Assigned User")}:</strong> ${this.escape(doc.assigned_user || "-")}</div>
-                        <div class="checklist-list-meta-item"><strong>${__("Result")}:</strong> ${this.escape(doc.result_status || "Normal")}</div>
-                        ${doc.is_previous_cycle_open ? `<div class="checklist-list-meta-item"><strong>${__("Open From")}:</strong> ${this.escape(doc.open_from_date || doc.posting_date || "-")}</div>` : ""}
+                        ${this.card_meta_item("department", __("Department"), doc.department || "-")}
+                        ${doc.plant_floor ? this.card_meta_item("plant_floor", __("Plant Floor"), doc.plant_floor) : ""}
+                        ${doc.warehouse ? this.card_meta_item("warehouse", __("Warehouse"), doc.warehouse) : ""}
+                        ${this.card_meta_item("user", __("Assigned User"), doc.assigned_user || "-")}
+                        ${this.card_meta_item("result", __("Result"), doc.result_status || "Normal")}
+                        ${doc.is_previous_cycle_open ? this.card_meta_item("calendar", __("Open From"), doc.open_from_date || doc.posting_date || "-") : ""}
                     </div>
                 </div>
             `);
@@ -464,11 +522,13 @@ class ChecklistUserPage {
                         <div class="meta-line"><strong>${__("Document")}:</strong> ${this.escape(this.doc.name || "-")}</div>
                         <div class="meta-line"><strong>${__("Posting Date")}:</strong> ${this.escape(this.doc.posting_date || "-")}</div>
                         <div class="meta-line"><strong>${__("Department")}:</strong> ${this.escape(this.doc.department || "-")}</div>
+                        ${this.doc.plant_floor ? `<div class="meta-line"><strong>${__("Plant Floor")}:</strong> ${this.escape(this.doc.plant_floor)}</div>` : ""}
+                        ${this.doc.warehouse ? `<div class="meta-line"><strong>${__("Warehouse")}:</strong> ${this.escape(this.doc.warehouse)}</div>` : ""}
                         <div class="meta-line"><strong>${__("Assigned User")}:</strong> ${this.escape(this.doc.assigned_user || "-")}</div>
-                        <div class="meta-line"><strong>${__("Status")}:</strong> ${this.escape(this.doc.status || "-")}</div>
                         <div class="meta-line"><strong>${__("Result")}:</strong> ${this.escape(this.doc.result_status || "Normal")}</div>
                         <div class="meta-line"><strong>${__("Questions")}:</strong> ${this.escape((this.doc.questions || []).length)}</div>
 
+                        <div class="meta-line"><strong>${__("Asset")}:</strong> ${this.escape(this.doc.asset || "-")}</div>
                         <div class="meta-line"><strong>${__("Scheduled Start At")}:</strong> ${this.escape(this.doc.scheduled_start_at || "-")}</div>
                         <div class="meta-line"><strong>${__("Deadline At")}:</strong> ${this.escape(this.doc.deadline_at || "-")}</div>
                         <div class="meta-line"><strong>${__("Started At")}:</strong> ${this.escape(this.doc.started_at || "-")}</div>
@@ -497,6 +557,7 @@ class ChecklistUserPage {
 
         this.render_progress();
         this.render_questions();
+        this.render_worker_section();
         this.render_actions();
     }
 
@@ -521,12 +582,74 @@ class ChecklistUserPage {
     }
 
     normalize_select_options(raw) {
-        const lines = String(raw || "")
+        const lines = this.split_lines(raw);
+        return "\n" + lines.join("\n");
+    }
+
+    split_lines(raw) {
+        return String(raw || "")
             .split(/\r?\n/)
             .map(v => v.trim())
             .filter(Boolean);
+    }
 
-        return "\n" + lines.join("\n");
+    is_binary_type(type) {
+        return ["Yes/No", "Yes/No/NA", "Pass/Fail/NA"].includes(type);
+    }
+
+    can_quick_pass_row(row) {
+        if (Number(row.quick_pass_allowed || 0) !== 1) return false;
+        if (row.type === "Pass/Fail/NA") return true;
+        if (["Yes/No", "Yes/No/NA"].includes(row.type)) {
+            return Number(row.issue_if_no || 0) === 1;
+        }
+        return false;
+    }
+
+    get_choice_options(row) {
+        if (row.type === "Pass/Fail/NA") {
+            return ["Pass", "Fail", "N/A"];
+        }
+        if (row.type === "Yes/No/NA") {
+            return ["Yes", "No", "N/A"];
+        }
+        if (row.type === "Yes/No") {
+            return ["Yes", "No"];
+        }
+        return [];
+    }
+
+    is_failure_answer(row, answer) {
+        const value = String(answer == null ? "" : answer).trim();
+        if (!value || value === "N/A") return false;
+
+        if (row.type === "Pass/Fail/NA") {
+            return value === "Fail";
+        }
+
+        if (["Yes/No", "Yes/No/NA"].includes(row.type)) {
+            return Boolean(Number(row.issue_if_no || 0)) && value === "No";
+        }
+
+        if (["Select", "Single Select"].includes(row.type)) {
+            return this.split_lines(row.issue_values).includes(value);
+        }
+
+        if (row.type === "Multi Select") {
+            const selected = new Set(this.split_lines(value));
+            return this.split_lines(row.issue_values).some(v => selected.has(v));
+        }
+
+        if (row.type === "Int" || row.type === "Float") {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return false;
+            const minValue = row.type === "Int" ? row.answer_min_int : row.answer_min_float;
+            const maxValue = row.type === "Int" ? row.answer_max_int : row.answer_max_float;
+            if (minValue !== null && minValue !== undefined && minValue !== "" && numeric < Number(minValue)) return true;
+            if (maxValue !== null && maxValue !== undefined && maxValue !== "" && numeric > Number(maxValue)) return true;
+        }
+
+        return false;
     }
 
     render_questions() {
@@ -540,128 +663,693 @@ class ChecklistUserPage {
         }
 
         if (!this.doc.is_editable) {
-            questions.forEach((row, index) => {
-                const issueClass = row.has_issue ? "has-issue" : "";
-                const issueLine = row.has_issue
-                    ? `<div style="margin-bottom:8px;"><span class="status-pill status-expired">${__("Issue Answer")}</span></div>`
-                    : "";
-
-                this.$body.append(`
-                    <div class="checklist-answer-readonly ${issueClass}">
-                        ${issueLine}
-                        <div class="checklist-question-title">
-                            <span class="question-number">${index + 1}</span>
-                            <span>${this.escape(row.question_text || row.question || "")}</span>
-                        </div>
-                        <div class="readonly-answer-value">
-                            <strong>${__("Answer")}:</strong> ${this.escape(row.answer || "-")}
-                        </div>
-                        ${row.issue_note ? `<div class="readonly-answer-value"><strong>${__("Issue Note")}:</strong> ${this.escape(row.issue_note)}</div>` : ""}
-                    </div>
-                `);
-            });
+            questions.forEach((row, index) => this.render_readonly_question(row, index));
             return;
         }
 
         this.is_hydrating_controls = true;
+        questions.forEach((row, index) => this.render_editable_question(row, index));
+        this.is_hydrating_controls = false;
+    }
 
-        questions.forEach((row, index) => {
-            const $card = $(`
-                <div class="checklist-question-card">
-                    <div class="checklist-question-title">
-                        <span class="question-number">${index + 1}</span>
-                        <span>${this.escape(row.question_text || row.question || "")}</span>
-                    </div>
-                    <div class="question-control"></div>
+    render_readonly_question(row, index) {
+        const issueClass = row.has_issue ? "has-issue" : "";
+        const issueLine = row.has_issue
+            ? `<div class="question-status-row"><span class="status-pill status-expired">${__("Issue Answer")}</span>${row.issue_severity ? `<span class="question-rule-badge">${this.escape(row.issue_severity)}</span>` : ""}</div>`
+            : "";
+        const failureReason = row.failure_reason
+            ? `<div class="readonly-answer-value"><strong>${__("Reason")}:</strong> ${this.escape(row.failure_reason)}</div>`
+            : "";
+        const userNote = row.user_note
+            ? `<div class="readonly-answer-value"><strong>${__("Note")}:</strong> ${this.escape(row.user_note)}</div>`
+            : "";
+        const evidence = row.evidence_photo
+            ? `<div class="readonly-answer-value"><strong>${__("Photo")}:</strong> <a href="${this.escape(row.evidence_photo)}" target="_blank" rel="noopener">${__("Open photo")}</a></div>`
+            : "";
+        const followUp = row.has_issue && row.require_follow_up
+            ? `<div class="readonly-answer-value"><strong>${__("Follow-up")}:</strong> ${this.escape(row.responsible_department || row.responsible_user || __("Required"))}</div>`
+            : "";
+        const openActionWarning = row.open_action
+            ? `<div class="open-action-warning"><strong>${__("Open Action")}: ${this.escape(row.open_action)}</strong><span>${__("This action is still open. A Pass in this checklist does not close it automatically.")}</span></div>`
+            : "";
+
+        this.$body.append(`
+            <div class="checklist-answer-readonly ${issueClass}">
+                ${issueLine}
+                <div class="checklist-question-title">
+                    <span class="question-number">${index + 1}</span>
+                    <span>${this.escape(row.question_text || row.question || "")}</span>
                 </div>
+                <div class="readonly-answer-value">
+                    <strong>${__("Answer")}:</strong> ${this.escape(row.answer || "-")}
+                </div>
+                ${row.issue_note ? `<div class="readonly-answer-value"><strong>${__("System Result")}:</strong> ${this.escape(row.issue_note)}</div>` : ""}
+                ${failureReason}${userNote}${evidence}${followUp}${openActionWarning}
+            </div>
+        `);
+    }
+
+    render_editable_question(row, index) {
+        const requiredBadge = Number(row.is_required || 0)
+            ? `<span class="question-rule-badge is-required">${__("Required")}</span>`
+            : `<span class="question-rule-badge">${__("Optional")}</span>`;
+        const qualityBadge = Number(row.quality_impact || 0)
+            ? `<span class="question-rule-badge is-quality">${__("Quality")}</span>`
+            : "";
+        const openActionWarning = row.open_action
+            ? `<div class="open-action-warning"><strong>${__("Open Action")}: ${this.escape(row.open_action)} (${this.escape(row.open_action_status || "")})</strong><span>${__("This action is unresolved. A Pass now records the current condition but does not close the previous action.")}</span></div>`
+            : "";
+
+        const $card = $(`
+            <div class="checklist-question-card" data-row-name="${this.escape(row.row_name)}">
+                <div class="checklist-question-title">
+                    <span class="question-number">${index + 1}</span>
+                    <span class="question-title-text">${this.escape(row.question_text || row.question || "")}</span>
+                </div>
+                <div class="question-badges">${requiredBadge}${qualityBadge}</div>
+                ${openActionWarning}
+                <div class="question-control"></div>
+                <div class="failure-detail-panel-container"></div>
+            </div>
+        `);
+        this.$body.append($card);
+
+        if (this.is_binary_type(row.type)) {
+            this.render_choice_control(row, $card);
+        } else if (row.type === "Multi Select") {
+            this.render_multi_select_control(row, $card);
+        } else {
+            this.render_generic_control(row, $card);
+        }
+
+        this.refresh_failure_panel(row, $card);
+    }
+
+    render_choice_control(row, $card) {
+        const options = this.get_choice_options(row);
+        const $wrap = $('<div class="answer-choice-grid"></div>');
+
+        options.forEach(option => {
+            const active = String(row.answer || "") === option ? "is-selected" : "";
+            const semantic = option === "Pass" || option === "Yes"
+                ? "is-positive"
+                : (option === "Fail" || option === "No" ? "is-negative" : "is-na");
+            const $button = $(`
+                <button type="button" class="answer-choice-btn ${semantic} ${active}" data-value="${this.escape(option)}">
+                    ${this.escape(option)}
+                </button>
             `);
-
-            this.$body.append($card);
-
-            const control = frappe.ui.form.make_control({
-                parent: $card.find(".question-control").get(0),
-                df: this.get_df_for_row(row),
-                render_input: true
+            $button.on("click", () => {
+                $wrap.find(".answer-choice-btn").removeClass("is-selected");
+                $button.addClass("is-selected");
+                this.set_row_answer(row, option, $card);
             });
-
-            control.refresh();
-            control.set_value(row.answer || "");
-            this.row_controls[row.row_name] = control;
+            $wrap.append($button);
         });
 
-        this.is_hydrating_controls = false;
+        $card.find(".question-control").append($wrap);
+    }
+
+    render_multi_select_control(row, $card) {
+        const selected = new Set(this.split_lines(row.answer));
+        const $wrap = $('<div class="answer-choice-grid is-multi"></div>');
+
+        this.split_lines(row.answer_options).forEach(option => {
+            const active = selected.has(option) ? "is-selected" : "";
+            const $button = $(`
+                <button type="button" class="answer-choice-btn multi-choice-btn ${active}" data-value="${this.escape(option)}">
+                    ${this.escape(option)}
+                </button>
+            `);
+            $button.on("click", () => {
+                if (selected.has(option)) {
+                    selected.delete(option);
+                    $button.removeClass("is-selected");
+                } else {
+                    selected.add(option);
+                    $button.addClass("is-selected");
+                }
+                this.set_row_answer(row, Array.from(selected).join("\n"), $card);
+            });
+            $wrap.append($button);
+        });
+
+        $card.find(".question-control").append($wrap);
+    }
+
+    render_generic_control(row, $card) {
+        const control = frappe.ui.form.make_control({
+            parent: $card.find(".question-control").get(0),
+            df: this.get_df_for_row(row, $card),
+            render_input: true
+        });
+
+        control.refresh();
+        control.set_value(row.answer || "");
+        this.row_controls[row.row_name] = control;
+    }
+
+    get_df_for_row(row, $card) {
+        const base_df = {
+            label: "",
+            fieldname: `answer_${row.row_name}`,
+            reqd: 0,
+            change: () => {
+                if (this.is_hydrating_controls) return;
+                const control = this.row_controls[row.row_name];
+                const value = control ? control.get_value() : "";
+                this.set_row_answer(row, value, $card);
+            }
+        };
+
+        if (row.type === "Int") return { ...base_df, fieldtype: "Int" };
+        if (row.type === "Float") return { ...base_df, fieldtype: "Float" };
+        if (["Select", "Single Select"].includes(row.type)) {
+            return { ...base_df, fieldtype: "Select", options: this.normalize_select_options(row.answer_options) };
+        }
+        if (row.type === "Text") return { ...base_df, fieldtype: "Small Text" };
+        if (row.type === "Photo") return { ...base_df, fieldtype: "Attach Image" };
+        return { ...base_df, fieldtype: "Data" };
+    }
+
+    set_row_answer(row, value, $card) {
+        const normalized = value == null ? "" : String(value);
+        row.answer = normalized;
+        this.schedule_save(row.row_name, { answer: normalized });
+        this.refresh_failure_panel(row, $card);
+        this.render_progress();
+    }
+
+    refresh_failure_panel(row, $card) {
+        const $container = $card.find(".failure-detail-panel-container");
+        $container.empty();
+        $card.toggleClass("has-issue-live", this.is_failure_answer(row, row.answer));
+
+        if (!this.is_failure_answer(row, row.answer)) {
+            row.failure_reason = "";
+            row.user_note = "";
+            row.evidence_photo = "";
+            row.photo_unavailable_reason = "";
+            return;
+        }
+
+        const routingLabel = row.require_follow_up
+            ? (row.responsible_department || row.responsible_user || __("Follow-up required"))
+            : "";
+        const $panel = $(`
+            <div class="failure-detail-panel">
+                <div class="failure-panel-head">
+                    <strong>${__("Issue details")}</strong>
+                    <div class="failure-panel-badges">
+                        <span class="question-rule-badge is-severity">${this.escape(row.issue_severity || "Medium")}</span>
+                        ${routingLabel ? `<span class="question-rule-badge">${this.escape(routingLabel)}</span>` : ""}
+                    </div>
+                </div>
+                <div class="failure-reason"></div>
+                <div class="failure-note"></div>
+                <div class="failure-photo"></div>
+            </div>
+        `);
+        $container.append($panel);
+
+        this.render_failure_reason(row, $panel);
+        this.render_failure_note(row, $panel);
+        this.render_failure_photo(row, $panel);
+    }
+
+    render_failure_reason(row, $panel) {
+        const options = this.split_lines(row.failure_reason_options);
+        const needsReason = Number(row.require_failure_reason || 0) === 1;
+        if (!needsReason && !options.length) return;
+
+        const $host = $panel.find(".failure-reason");
+        $host.append(`<div class="failure-field-label">${__("Reason")}${needsReason ? " *" : ""}</div>`);
+
+        if (options.length) {
+            const $choices = $('<div class="failure-reason-choices"></div>');
+            options.forEach(option => {
+                const active = row.failure_reason === option ? "is-selected" : "";
+                const $button = $(`<button type="button" class="failure-reason-btn ${active}">${this.escape(option)}</button>`);
+                $button.on("click", () => {
+                    row.failure_reason = option;
+                    $choices.find(".failure-reason-btn").removeClass("is-selected");
+                    $button.addClass("is-selected");
+                    this.schedule_save(row.row_name, { failure_reason: option });
+                });
+                $choices.append($button);
+            });
+            $host.append($choices);
+            return;
+        }
+
+        const controlKey = `${row.row_name}:failure_reason`;
+        const control = frappe.ui.form.make_control({
+            parent: $host.get(0),
+            df: {
+                label: "",
+                fieldname: `failure_reason_${row.row_name}`,
+                fieldtype: "Data",
+                reqd: 0,
+                change: () => {
+                    if (this.is_hydrating_controls) return;
+                    row.failure_reason = control.get_value() || "";
+                    this.schedule_save(row.row_name, { failure_reason: row.failure_reason });
+                }
+            },
+            render_input: true
+        });
+        control.refresh();
+        control.set_value(row.failure_reason || "");
+        this.row_controls[controlKey] = control;
+    }
+
+    render_failure_note(row, $panel) {
+        if (!Number(row.require_failure_note || 0)) return;
+
+        const $host = $panel.find(".failure-note");
+        $host.append(`<div class="failure-field-label">${__("Note")} *</div>`);
+        const controlKey = `${row.row_name}:user_note`;
+        const control = frappe.ui.form.make_control({
+            parent: $host.get(0),
+            df: {
+                label: "",
+                fieldname: `user_note_${row.row_name}`,
+                fieldtype: "Small Text",
+                reqd: 0,
+                change: () => {
+                    if (this.is_hydrating_controls) return;
+                    row.user_note = control.get_value() || "";
+                    this.schedule_save(row.row_name, { user_note: row.user_note });
+                }
+            },
+            render_input: true
+        });
+        control.refresh();
+        control.set_value(row.user_note || "");
+        this.row_controls[controlKey] = control;
+    }
+
+    render_failure_photo(row, $panel) {
+        if (!Number(row.require_failure_photo || 0)) return;
+
+        const allowNoPhotoWithReason = Number(row.allow_no_photo_with_reason || 0) === 1;
+        const $host = $panel.find(".failure-photo");
+        $host.append(`<div class="failure-field-label">${allowNoPhotoWithReason ? __("Photo Evidence") : __("Photo")} *</div>`);
+        if (allowNoPhotoWithReason) {
+            $host.append(`<div class="failure-field-help">${__("Upload a photo, or explain below why no photo is available.")}</div>`);
+        }
+
+        const controlKey = `${row.row_name}:evidence_photo`;
+        const control = frappe.ui.form.make_control({
+            parent: $host.get(0),
+            df: {
+                label: "",
+                fieldname: `evidence_photo_${row.row_name}`,
+                fieldtype: "Attach Image",
+                reqd: 0,
+                change: () => {
+                    if (this.is_hydrating_controls) return;
+                    row.evidence_photo = control.get_value() || "";
+                    this.schedule_save(row.row_name, { evidence_photo: row.evidence_photo });
+                }
+            },
+            render_input: true
+        });
+        control.refresh();
+        control.set_value(row.evidence_photo || "");
+        this.row_controls[controlKey] = control;
+
+        if (!allowNoPhotoWithReason) return;
+
+        const reasonHost = $('<div class="failure-photo-reason"></div>');
+        reasonHost.append(`<div class="failure-field-label">${__("No Photo Available Reason")} *</div>`);
+        $host.append(reasonHost);
+
+        const reasonKey = `${row.row_name}:photo_unavailable_reason`;
+        const reasonControl = frappe.ui.form.make_control({
+            parent: reasonHost.get(0),
+            df: {
+                label: "",
+                fieldname: `photo_unavailable_reason_${row.row_name}`,
+                fieldtype: "Small Text",
+                reqd: 0,
+                change: () => {
+                    if (this.is_hydrating_controls) return;
+                    row.photo_unavailable_reason = reasonControl.get_value() || "";
+                    this.schedule_save(row.row_name, { photo_unavailable_reason: row.photo_unavailable_reason });
+                }
+            },
+            render_input: true
+        });
+        reasonControl.refresh();
+        reasonControl.set_value(row.photo_unavailable_reason || "");
+        this.row_controls[reasonKey] = reasonControl;
+    }
+
+    render_worker_section() {
+        if (!Number(this.doc?.enable_worker_check || 0)) return;
+
+        const workers = this.doc.workers || [];
+        const summary = this.doc.worker_summary || {};
+        const statusClass = summary.status === "Short" ? "is-short" : (summary.status === "Met" ? "is-met" : "");
+        const $section = $(`
+            <section class="worker-roster-section">
+                <div class="worker-roster-header">
+                    <div>
+                        <div class="worker-roster-title">${__("Workers Check")}</div>
+                        <div class="worker-roster-subtitle">${__("Required staffing and worker compliance")}</div>
+                    </div>
+                    ${this.doc.is_editable ? `
+                        <div class="worker-roster-actions">
+                            <button class="btn btn-default btn-add-internal-worker" type="button">+ ${__("Employee")}</button>
+                            <button class="btn btn-default btn-add-external-worker" type="button">+ ${__("Add External Worker")}</button>
+                            <button class="btn btn-primary btn-all-workers-ok" type="button">✓ ${__("All Workers OK")}</button>
+                        </div>
+                    ` : ""}
+                </div>
+                ${this.doc.is_editable ? `
+                    <div class="worker-requirement-control">
+                        <label for="required-worker-count-${this.escape(this.doc.name)}">${__("Required Workers (Production)")}</label>
+                        <div class="worker-requirement-input-row">
+                            <input id="required-worker-count-${this.escape(this.doc.name)}" class="form-control required-worker-count-input" type="number" min="0" inputmode="numeric" value="${this.escape(this.doc.required_worker_count ?? 0)}">
+                            <button class="btn btn-primary btn-save-required-worker-count" type="button">${__("Save")}</button>
+                        </div>
+                        <div class="text-muted small">${__("Set by Production for this checklist run.")}</div>
+                    </div>
+                ` : ""}
+                <div class="worker-summary-grid ${statusClass}">
+                    <div><span>${__("Required")}</span><strong>${this.escape(summary.required ?? this.doc.required_worker_count ?? 0)}</strong></div>
+                    <div><span>${__("Present")}</span><strong>${this.escape(summary.present ?? 0)}</strong></div>
+                    <div><span>${__("Absent")}</span><strong>${this.escape(summary.absent ?? 0)}</strong></div>
+                    <div><span>${__("Replacements")}</span><strong>${this.escape(summary.replacements ?? 0)}</strong></div>
+                    <div><span>${__("Shortage")}</span><strong>${this.escape(summary.shortage ?? 0)}</strong></div>
+                    <div><span>${__("Status")}</span><strong>${this.escape(summary.status || "Not Set")}</strong></div>
+                </div>
+                <div class="worker-roster-list"></div>
+            </section>
+        `);
+
+        this.$body.append($section);
+        const $list = $section.find(".worker-roster-list");
+
+        if (!workers.length) {
+            $list.html(`<div class="empty-state">${__("No workers added yet.")}</div>`);
+        } else {
+            workers.forEach((worker, index) => this.render_worker_card($list, worker, index));
+        }
+
+        if (!this.doc.is_editable) return;
+        $section.find(".btn-save-required-worker-count").on("click", async () => {
+            const raw = $section.find(".required-worker-count-input").val();
+            const count = Number.parseInt(raw || "0", 10);
+            if (!Number.isFinite(count) || count < 0) {
+                frappe.msgprint(__("Required Worker Count must be zero or greater."));
+                return;
+            }
+            await this.update_required_worker_count(count);
+        });
+        $section.find(".btn-add-internal-worker").on("click", () => this.open_add_internal_worker_dialog());
+        $section.find(".btn-add-external-worker").on("click", () => this.open_add_external_worker_dialog());
+        $section.find(".btn-all-workers-ok").on("click", async () => {
+            (this.doc.workers || []).forEach(worker => {
+                if ((worker.presence_status || "Present") === "Present") worker.inspection_status = "Pass";
+            });
+            await this.save_worker_roster();
+        });
+    }
+
+    render_worker_card($list, worker, index) {
+        const reasons = this.split_lines(this.doc.worker_failure_reason_options || "");
+        const isFail = worker.inspection_status === "Fail";
+        const sourceLabel = worker.worker_type === "Internal Employee" ? __("Employee") : __("External");
+        const $card = $(`
+            <div class="worker-roster-card" data-worker-index="${index}">
+                <div class="worker-card-head">
+                    <div>
+                        <div class="worker-card-name">${this.escape(worker.worker_name || worker.employee || worker.external_worker || "-")}</div>
+                        <div class="worker-card-meta">${this.escape(sourceLabel)}${worker.company_name ? ` · ${this.escape(worker.company_name)}` : ""}${worker.badge_no ? ` · ${__("No.")} ${this.escape(worker.badge_no)}` : ""}${Number(worker.is_replacement || 0) ? ` · ${__("Replacement")}` : ""}</div>
+                    </div>
+                    ${this.doc.is_editable ? `<button type="button" class="btn btn-xs btn-default btn-remove-worker">${__("Remove")}</button>` : ""}
+                </div>
+                <div class="worker-choice-row">
+                    <button type="button" class="worker-choice-btn ${worker.presence_status === "Present" ? "is-selected is-pass" : ""}" data-presence="Present">${__("Present")}</button>
+                    <button type="button" class="worker-choice-btn ${worker.presence_status === "Absent" ? "is-selected is-fail" : ""}" data-presence="Absent">${__("Absent")}</button>
+                    <button type="button" class="worker-choice-btn ${Number(worker.is_replacement || 0) ? "is-selected" : ""}" data-replacement="1">${__("Replacement")}</button>
+                </div>
+                <div class="worker-choice-row">
+                    ${["Pass", "Fail", "N/A"].map(value => `<button type="button" class="worker-choice-btn ${worker.inspection_status === value ? `is-selected ${value === "Pass" ? "is-pass" : value === "Fail" ? "is-fail" : ""}` : ""}" data-inspection="${value}">${this.escape(value)}</button>`).join("")}
+                </div>
+                ${isFail ? `
+                    <div class="worker-failure-box">
+                        ${reasons.length ? `<div class="worker-reason-grid">${reasons.map(reason => {
+                            const selected = this.split_lines(worker.failure_reasons).includes(reason) ? "is-selected" : "";
+                            return `<button type="button" class="worker-reason-btn ${selected}" data-reason="${this.escape(reason)}">${this.escape(reason)}</button>`;
+                        }).join("")}</div>` : ""}
+                        <button type="button" class="btn btn-sm btn-default btn-worker-details">${__("Note / Photo / Correction")}</button>
+                    </div>
+                ` : ""}
+            </div>
+        `);
+        $list.append($card);
+        if (!this.doc.is_editable) return;
+
+        $card.find("[data-presence]").on("click", async e => {
+            worker.presence_status = $(e.currentTarget).attr("data-presence");
+            await this.save_worker_roster();
+        });
+        $card.find("[data-replacement]").on("click", async () => {
+            worker.is_replacement = Number(worker.is_replacement || 0) ? 0 : 1;
+            await this.save_worker_roster();
+        });
+        $card.find("[data-inspection]").on("click", async e => {
+            worker.inspection_status = $(e.currentTarget).attr("data-inspection");
+            if (worker.inspection_status !== "Fail") {
+                worker.failure_reasons = "";
+                worker.corrected_immediately = 0;
+            }
+            await this.save_worker_roster();
+        });
+        $card.find(".worker-reason-btn").on("click", async e => {
+            const reason = $(e.currentTarget).attr("data-reason");
+            const selected = new Set(this.split_lines(worker.failure_reasons));
+            if (selected.has(reason)) selected.delete(reason); else selected.add(reason);
+            worker.failure_reasons = Array.from(selected).join("\n");
+            await this.save_worker_roster();
+        });
+        $card.find(".btn-worker-details").on("click", () => this.open_worker_details_dialog(worker));
+        $card.find(".btn-remove-worker").on("click", async () => {
+            this.doc.workers.splice(index, 1);
+            await this.save_worker_roster();
+        });
+    }
+
+    worker_payload() {
+        return (this.doc?.workers || []).map(worker => ({
+            worker_type: worker.worker_type,
+            employee: worker.employee || "",
+            external_worker: worker.external_worker || "",
+            presence_status: worker.presence_status || "Present",
+            is_replacement: Number(worker.is_replacement || 0),
+            inspection_status: worker.inspection_status || "",
+            failure_reasons: worker.failure_reasons || "",
+            note: worker.note || "",
+            evidence_photo: worker.evidence_photo || "",
+            corrected_immediately: Number(worker.corrected_immediately || 0)
+        }));
+    }
+
+    async update_required_worker_count(count) {
+        if (!this.doc?.name || !this.doc.is_editable) return;
+        const r = await frappe.call({
+            method: "taj_core.checklist.api.update_required_worker_count",
+            args: { docname: this.doc.name, required_worker_count: count },
+            freeze: false
+        });
+        this.doc = r.message;
+        this.render_doc();
+        frappe.show_alert({ message: __("Required worker count updated."), indicator: "green" });
+    }
+
+    async save_worker_roster() {
+        if (!this.doc?.name || !this.doc.is_editable) return;
+        const r = await frappe.call({
+            method: "taj_core.checklist.api.save_workers",
+            args: { docname: this.doc.name, workers: JSON.stringify(this.worker_payload()) },
+            freeze: false
+        });
+        this.doc = r.message;
+        this.render_doc();
+    }
+
+    open_add_internal_worker_dialog() {
+        const dialog = new frappe.ui.Dialog({
+            title: __("Add Employee"),
+            fields: [
+                { fieldname: "employee", fieldtype: "Link", options: "Employee", label: __("Employee"), reqd: 1, get_query: () => ({ filters: { status: "Active" } }) },
+                { fieldname: "presence_status", fieldtype: "Select", options: "Present\nAbsent", label: __("Presence"), default: "Present", reqd: 1 },
+                { fieldname: "is_replacement", fieldtype: "Check", label: __("Replacement") }
+            ],
+            primary_action_label: __("Add"),
+            primary_action: async values => {
+                this.doc.workers = this.doc.workers || [];
+                this.doc.workers.push({
+                    worker_type: "Internal Employee",
+                    employee: values.employee,
+                    presence_status: values.presence_status || "Present",
+                    is_replacement: Number(values.is_replacement || 0),
+                    inspection_status: ""
+                });
+                dialog.hide();
+                await this.save_worker_roster();
+            }
+        });
+        dialog.show();
+    }
+
+    open_add_external_worker_dialog() {
+        const dialog = new frappe.ui.Dialog({
+            title: __("Add External Worker"),
+            fields: [
+                { fieldname: "existing_worker", fieldtype: "Link", options: "Checklist External Worker", label: __("Existing Worker"), get_query: () => ({ filters: { active: 1 } }) },
+                { fieldtype: "Section Break", label: __("Or Create New") },
+                { fieldname: "worker_name", fieldtype: "Data", label: __("Worker Name") },
+                { fieldname: "company_name", fieldtype: "Data", label: __("Company Name"), default: this.doc.default_worker_company || "" },
+                { fieldname: "supplier", fieldtype: "Link", options: "Supplier", label: __("Supplier"), default: this.doc.default_worker_supplier || "" },
+                { fieldname: "badge_no", fieldtype: "Data", label: __("Badge / Worker No.") },
+                { fieldname: "is_replacement", fieldtype: "Check", label: __("Replacement") }
+            ],
+            primary_action_label: __("Add"),
+            primary_action: async values => {
+                let workerName = values.existing_worker;
+                if (!workerName) {
+                    if (!values.worker_name) {
+                        frappe.msgprint(__("Choose an existing external worker or enter a new worker name."));
+                        return;
+                    }
+                    const r = await frappe.call({
+                        method: "taj_core.checklist.api.quick_create_external_worker",
+                        args: {
+                            docname: this.doc.name,
+                            worker_name: values.worker_name,
+                            company_name: values.company_name,
+                            supplier: values.supplier,
+                            badge_no: values.badge_no
+                        }
+                    });
+                    workerName = r.message.name;
+                }
+                this.doc.workers = this.doc.workers || [];
+                this.doc.workers.push({
+                    worker_type: "External Worker",
+                    external_worker: workerName,
+                    presence_status: "Present",
+                    is_replacement: Number(values.is_replacement || 0),
+                    inspection_status: ""
+                });
+                dialog.hide();
+                await this.save_worker_roster();
+            }
+        });
+        dialog.show();
+    }
+
+    open_worker_details_dialog(worker) {
+        const dialog = new frappe.ui.Dialog({
+            title: worker.worker_name || __("Worker Details"),
+            fields: [
+                { fieldname: "note", fieldtype: "Small Text", label: __("Note"), default: worker.note || "" },
+                { fieldname: "evidence_photo", fieldtype: "Attach Image", label: __("Evidence Photo"), default: worker.evidence_photo || "" },
+                { fieldname: "corrected_immediately", fieldtype: "Check", label: __("Corrected Immediately"), default: Number(worker.corrected_immediately || 0) }
+            ],
+            primary_action_label: __("Save"),
+            primary_action: async values => {
+                worker.note = values.note || "";
+                worker.evidence_photo = values.evidence_photo || "";
+                worker.corrected_immediately = Number(values.corrected_immediately || 0);
+                dialog.hide();
+                await this.save_worker_roster();
+            }
+        });
+        dialog.show();
     }
 
     render_actions() {
         this.$actions.empty();
-
-        if (!this.doc?.is_editable) {
+        if (Number(this.doc?.is_time_locked || 0) === 1) {
+            this.$actions.html(`
+                <div class="alert alert-warning mb-0">
+                    <strong>${__("Scheduled start")}:</strong>
+                    ${this.escape(this.doc.scheduled_start_at || "-")}
+                    <div>${__("This checklist is view-only until its scheduled start time.")}</div>
+                </div>
+            `);
             return;
         }
+        if (!this.doc?.is_editable) return;
+
+        const hasQuickPassRows = Boolean(this.doc.can_quick_pass) && (this.doc.questions || []).some(row =>
+            !String(row.answer || "").trim()
+            && this.can_quick_pass_row(row)
+        );
 
         this.$actions.html(`
-            <div class="submit-area">
-                <button class="btn btn-primary btn-submit-doc">${__("Submit")}</button>
+            <div class="submit-area checklist-action-row">
+                ${hasQuickPassRows ? `<button class="btn btn-default btn-quick-pass" type="button">✓ ${__("All OK")}</button>` : ""}
+                <button class="btn btn-primary btn-submit-doc" type="button">${__("Submit")}</button>
             </div>
         `);
 
+        this.$actions.find(".btn-quick-pass").on("click", () => this.apply_quick_pass());
         this.$actions.find(".btn-submit-doc").on("click", () => this.submit_doc());
 
         if (this.is_submitting) {
-            this.$actions.find(".btn-submit-doc").prop("disabled", true).text(__("Submitting..."));
+            this.$actions.find("button").prop("disabled", true);
+            this.$actions.find(".btn-submit-doc").text(__("Submitting..."));
         }
     }
 
-    get_df_for_row(row) {
-        const base_df = {
-            label: "",
-            fieldname: `answer_${row.row_name}`,
-            reqd: 1,
-            change: () => {
-                if (this.is_hydrating_controls) {
-                    return;
-                }
-
-                const control = this.row_controls[row.row_name];
-                const value = control ? control.get_value() : "";
-                this.schedule_save(row.row_name, value);
-            }
-        };
-
-        if (row.type === "Yes/No") {
-            return { ...base_df, fieldtype: "Select", options: "\nYes\nNo" };
-        }
-
-        if (row.type === "Int") {
-            return { ...base_df, fieldtype: "Int" };
-        }
-
-        if (row.type === "Float") {
-            return { ...base_df, fieldtype: "Float" };
-        }
-
-        if (row.type === "Select") {
-            return {
-                ...base_df,
-                fieldtype: "Select",
-                options: this.normalize_select_options(row.answer_options)
-            };
-        }
-
-        return { ...base_df, fieldtype: "Data" };
-    }
-
-    schedule_save(row_name, answer) {
-        if (!this.doc?.name || !this.doc.is_editable) return;
-
-        this.last_save_failed = false;
-        this.pending_changes[row_name] = answer;
-        this.set_save_state(__("Pending changes..."));
+    async apply_quick_pass() {
+        if (!this.doc?.name || !this.doc.is_editable || this.is_saving || this.is_submitting) return;
 
         if (this.save_timer) {
             clearTimeout(this.save_timer);
+            this.save_timer = null;
         }
+        await this.last_save_promise;
+        await this.flush_pending_saves();
+        if (this.last_save_failed) return;
 
+        try {
+            const r = await frappe.call({
+                method: "taj_core.checklist.api.quick_pass_checklist",
+                args: { docname: this.doc.name },
+                freeze: true,
+                freeze_message: __("Applying All OK...")
+            });
+            this.doc = r.message;
+            this.render_doc();
+            frappe.show_alert({ message: __("Eligible checks marked OK."), indicator: "green" });
+        } catch (e) {
+            frappe.msgprint({ title: __("Error"), indicator: "red", message: __("Could not apply All OK.") });
+            console.error(e);
+        }
+    }
+
+    schedule_save(row_name, patch) {
+        if (!this.doc?.name || !this.doc.is_editable) return;
+
+        const normalizedPatch = (patch && typeof patch === "object" && !Array.isArray(patch))
+            ? patch
+            : { answer: patch };
+
+        this.last_save_failed = false;
+        this.pending_changes[row_name] = {
+            ...(this.pending_changes[row_name] || {}),
+            ...normalizedPatch
+        };
+        this.set_save_state(__("Pending changes..."));
+
+        if (this.save_timer) clearTimeout(this.save_timer);
         this.save_timer = setTimeout(() => {
             this.last_save_promise = this.last_save_promise.then(() => this.flush_pending_saves());
         }, 400);
@@ -673,9 +1361,7 @@ class ChecklistUserPage {
 
         const entries = Object.entries(this.pending_changes);
         if (!entries.length) {
-            if (!this.is_submitting && !this.last_save_failed) {
-                this.set_save_state(__("All changes saved."));
-            }
+            if (!this.is_submitting && !this.last_save_failed) this.set_save_state(__("All changes saved."));
             return;
         }
 
@@ -683,42 +1369,38 @@ class ChecklistUserPage {
         this.last_save_failed = false;
         this.set_save_state(__("Saving..."));
 
-        const payload = entries.map(([row_name, answer]) => ({ row_name, answer }));
+        const payload = entries.map(([row_name, patch]) => ({ row_name, ...patch }));
         this.pending_changes = {};
 
         try {
             const r = await frappe.call({
                 method: "taj_core.checklist.api.save_answers",
-                args: {
-                    docname: this.doc.name,
-                    answers: JSON.stringify(payload)
-                }
+                args: { docname: this.doc.name, answers: JSON.stringify(payload) }
             });
-
             this.doc = r.message;
             this.last_save_error_key = "";
             this.set_save_state(__("All changes saved."));
         } catch (e) {
             payload.forEach(item => {
-                this.pending_changes[item.row_name] = item.answer;
+                const { row_name, ...patch } = item;
+                this.pending_changes[row_name] = {
+                    ...(this.pending_changes[row_name] || {}),
+                    ...patch
+                };
             });
-
             this.last_save_failed = true;
             this.set_save_state(__("Save failed."));
 
             const error_key = String((e && (e.message || e.exc_type || e.statusText)) || "save_failed");
             if (this.last_save_error_key !== error_key) {
                 this.last_save_error_key = error_key;
-                frappe.show_alert({
-                    message: __("Auto save failed. Please try again."),
-                    indicator: "red"
-                });
+                frappe.show_alert({ message: __("Auto save failed. Please try again."), indicator: "red" });
             }
-
             console.error(e);
         } finally {
             this.is_saving = false;
             this.render_progress();
+            this.render_actions();
         }
 
         if (!this.last_save_failed && Object.keys(this.pending_changes).length) {
@@ -727,17 +1409,37 @@ class ChecklistUserPage {
     }
 
     validate_before_submit() {
-        const missing = [];
+        const problems = [];
 
         (this.doc?.questions || []).forEach(row => {
-            const control = this.row_controls[row.row_name];
-            const liveValue = control ? control.get_value() : row.answer;
-            if (!String(liveValue || "").trim()) {
-                missing.push(row.question_text || row.question || row.row_name);
+            const label = row.question_text || row.question || row.row_name;
+            const answer = String(row.answer == null ? "" : row.answer).trim();
+
+            if (Number(row.is_required || 0) === 1 && !answer) {
+                problems.push(`${label}: ${__("answer is required")}`);
+                return;
+            }
+
+            if (!answer || !this.is_failure_answer(row, answer)) return;
+
+            if (Number(row.require_failure_reason || 0) === 1 && !String(row.failure_reason || "").trim()) {
+                problems.push(`${label}: ${__("failure reason is required")}`);
+            }
+            if (Number(row.require_failure_note || 0) === 1 && !String(row.user_note || "").trim()) {
+                problems.push(`${label}: ${__("note is required")}`);
+            }
+            if (Number(row.require_failure_photo || 0) === 1 && !String(row.evidence_photo || "").trim()) {
+                const allowReason = Number(row.allow_no_photo_with_reason || 0) === 1;
+                const noPhotoReason = String(row.photo_unavailable_reason || "").trim();
+                if (allowReason && !noPhotoReason) {
+                    problems.push(`${label}: ${__("photo or no-photo reason is required")}`);
+                } else if (!allowReason) {
+                    problems.push(`${label}: ${__("photo is required")}`);
+                }
             }
         });
 
-        return missing;
+        return problems;
     }
 
     async submit_doc() {
@@ -747,10 +1449,11 @@ class ChecklistUserPage {
 
         const missing = this.validate_before_submit();
         if (missing.length) {
+            const items = missing.map(item => `<li>${this.escape(item)}</li>`).join("");
             frappe.msgprint({
-                title: __("Missing Answers"),
+                title: __("Missing Required Information"),
                 indicator: "orange",
-                message: __("Please answer all questions before submit.")
+                message: `<ul class="mb-0 pl-3">${items}</ul>`
             });
             return;
         }
@@ -800,7 +1503,7 @@ class ChecklistUserPage {
     get_indicator_color(status) {
         if (status === "Completed") return "green";
         if (status === "In Progress") return "orange";
-        if (status === "Auto Closed") return "darkgrey";
+        if (["Auto Closed", "Auto Closed - Incomplete", "Missed"].includes(status)) return "darkgrey";
         if (status === "Expired") return "red";
         return "blue";
     }

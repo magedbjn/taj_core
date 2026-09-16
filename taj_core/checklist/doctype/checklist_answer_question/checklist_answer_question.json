@@ -6,85 +6,344 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "question_link",
   "question",
   "type",
   "yes_no_answer",
+  "pass_fail_answer",
   "int_answer",
   "float_answer",
   "select_answer",
+  "multi_select_answer",
+  "text_answer",
+  "photo_answer",
   "answer_select_options",
   "answer",
+  "is_required",
+  "quick_pass_allowed",
+  "answer_min_int",
+  "answer_max_int",
+  "answer_min_float",
+  "answer_max_float",
+  "issue_if_no",
+  "issue_select_values",
   "has_issue",
-  "issue_note"
+  "checklist_action",
+  "issue_note",
+  "issue_severity",
+  "quality_impact",
+  "require_failure_reason",
+  "failure_reason_options",
+  "failure_reason",
+  "require_failure_note",
+  "user_note",
+  "require_failure_photo",
+  "allow_no_photo_with_reason",
+  "evidence_photo",
+  "photo_unavailable_reason",
+  "require_follow_up",
+  "responsible_department",
+  "responsible_user",
+  "notify_department",
+  "notify_user",
+  "require_verification"
  ],
  "fields": [
   {
-    "fieldname": "question",
-    "fieldtype": "Data",
-    "label": "Question",
-    "read_only": 1,
-    "in_list_view": 1
+   "fieldname": "question",
+   "fieldtype": "Data",
+   "label": "Question",
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
-    "fieldname": "type",
-    "fieldtype": "Data",
-    "label": "Type",
-    "read_only": 1
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "label": "Type",
+   "read_only": 1
   },
   {
-    "fieldname": "answer",
-    "fieldtype": "Data",
-    "label": "Answer",
-    "read_only": 1,
-    "in_list_view": 1
+   "fieldname": "answer",
+   "fieldtype": "Small Text",
+   "label": "Answer",
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
-    "fieldname": "yes_no_answer",
-    "fieldtype": "Select",
-    "label": "Yes / No Answer",
-    "options": "\nYes\nNo",
-    "depends_on": "eval: doc.type == 'Yes/No'"
+   "fieldname": "yes_no_answer",
+   "fieldtype": "Select",
+   "label": "Yes / No Answer",
+   "options": "\nYes\nNo\nN/A",
+   "depends_on": "eval: ['Yes/No','Yes/No/NA'].includes(doc.type)"
   },
   {
-    "fieldname": "int_answer",
-    "fieldtype": "Int",
-    "label": "Int Answer",
-    "depends_on": "eval: doc.type == 'Int'"
+   "fieldname": "int_answer",
+   "fieldtype": "Int",
+   "label": "Int Answer",
+   "depends_on": "eval: doc.type == 'Int'"
   },
   {
-    "fieldname": "float_answer",
-    "fieldtype": "Float",
-    "label": "Float Answer",
-    "depends_on": "eval: doc.type == 'Float'"
+   "fieldname": "float_answer",
+   "fieldtype": "Float",
+   "label": "Float Answer",
+   "depends_on": "eval: doc.type == 'Float'"
   },
   {
-    "fieldname": "select_answer",
-    "fieldtype": "Select",
-    "label": "Select Answer",
-    "depends_on": "eval: doc.type == 'Select'"
+   "fieldname": "select_answer",
+   "fieldtype": "Select",
+   "label": "Select Answer",
+   "depends_on": "eval: ['Select','Single Select'].includes(doc.type)"
   },
   {
-    "fieldname": "answer_select_options",
-    "fieldtype": "Small Text",
-    "label": "Answer Select Options",
-    "hidden": 1,
-    "read_only": 1
+   "fieldname": "answer_select_options",
+   "fieldtype": "Small Text",
+   "label": "Answer Select Options",
+   "hidden": 1,
+   "read_only": 1
   },
   {
-    "fieldname": "has_issue",
-    "fieldtype": "Check",
-    "label": "Has Issue",
-    "read_only": 1,
-    "in_list_view": 1
+   "fieldname": "has_issue",
+   "fieldtype": "Check",
+   "label": "Has Issue",
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
-    "fieldname": "issue_note",
-    "fieldtype": "Small Text",
-    "label": "Issue Note",
-    "read_only": 1,
-    "depends_on": "eval: doc.has_issue"
+   "fieldname": "checklist_action",
+   "fieldtype": "Link",
+   "label": "Follow-up Action",
+   "options": "Checklist Action",
+   "read_only": 1,
+   "depends_on": "eval: doc.checklist_action"
+  },
+  {
+   "fieldname": "issue_note",
+   "fieldtype": "Small Text",
+   "label": "Issue Note",
+   "read_only": 1,
+   "depends_on": "eval: doc.has_issue"
+  },
+  {
+   "fieldname": "question_link",
+   "fieldtype": "Link",
+   "label": "Question Link",
+   "options": "Checklist Question",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "pass_fail_answer",
+   "fieldtype": "Select",
+   "label": "Pass / Fail / N/A Answer",
+   "options": "\nPass\nFail\nN/A",
+   "depends_on": "eval: doc.type == 'Pass/Fail/NA'"
+  },
+  {
+   "fieldname": "multi_select_answer",
+   "fieldtype": "Small Text",
+   "label": "Multi Select Answer",
+   "depends_on": "eval: doc.type == 'Multi Select'"
+  },
+  {
+   "fieldname": "text_answer",
+   "fieldtype": "Small Text",
+   "label": "Text Answer",
+   "depends_on": "eval: doc.type == 'Text'"
+  },
+  {
+   "fieldname": "photo_answer",
+   "fieldtype": "Attach Image",
+   "label": "Photo Answer",
+   "depends_on": "eval: doc.type == 'Photo'"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_required",
+   "fieldtype": "Check",
+   "label": "Required Answer",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "quick_pass_allowed",
+   "fieldtype": "Check",
+   "label": "Quick Pass Allowed",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "answer_min_int",
+   "fieldtype": "Int",
+   "label": "Answer Min Int",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "answer_max_int",
+   "fieldtype": "Int",
+   "label": "Answer Max Int",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "answer_min_float",
+   "fieldtype": "Float",
+   "label": "Answer Min Float",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "answer_max_float",
+   "fieldtype": "Float",
+   "label": "Answer Max Float",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "issue_if_no",
+   "fieldtype": "Check",
+   "label": "Issue If No",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_select_values",
+   "fieldtype": "Small Text",
+   "label": "Issue Select Values",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "default": "Medium",
+   "fieldname": "issue_severity",
+   "fieldtype": "Select",
+   "label": "Issue Severity",
+   "options": "Low\nMedium\nHigh\nCritical",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "quality_impact",
+   "fieldtype": "Check",
+   "label": "Quality Impact",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "require_failure_reason",
+   "fieldtype": "Check",
+   "label": "Require Failure Reason",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "failure_reason_options",
+   "fieldtype": "Small Text",
+   "label": "Failure Reason Options",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "failure_reason",
+   "fieldtype": "Data",
+   "label": "Failure Reason",
+   "depends_on": "eval: doc.has_issue"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_failure_note",
+   "fieldtype": "Check",
+   "label": "Require Failure Note",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "user_note",
+   "fieldtype": "Small Text",
+   "label": "User Note",
+   "depends_on": "eval: doc.has_issue"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_failure_photo",
+   "fieldtype": "Check",
+   "label": "Require Failure Photo",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_no_photo_with_reason",
+   "fieldtype": "Check",
+   "label": "Allow No Photo with Reason",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_photo",
+   "fieldtype": "Attach Image",
+   "label": "Evidence Photo",
+   "depends_on": "eval: doc.has_issue"
+  },
+  {
+   "fieldname": "photo_unavailable_reason",
+   "fieldtype": "Small Text",
+   "label": "Photo Unavailable Reason",
+   "depends_on": "eval: doc.has_issue && doc.require_failure_photo && doc.allow_no_photo_with_reason"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_follow_up",
+   "fieldtype": "Check",
+   "label": "Requires Follow-up",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "responsible_department",
+   "fieldtype": "Link",
+   "label": "Responsible Department",
+   "options": "Department",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "responsible_user",
+   "fieldtype": "Link",
+   "label": "Responsible User",
+   "options": "User",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "notify_department",
+   "fieldtype": "Link",
+   "label": "Notify Department",
+   "options": "Department",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "notify_user",
+   "fieldtype": "Link",
+   "label": "Notify User",
+   "options": "User",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "require_verification",
+   "fieldtype": "Check",
+   "label": "Require Verification",
+   "hidden": 1,
+   "read_only": 1
   }
-],
+ ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,

@@ -1,0 +1,438 @@
+{
+ "actions": [],
+ "allow_import": 0,
+ "autoname": "format:CHK-ACT-{YYYY}-{#####}",
+ "creation": "2026-09-15 20:30:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "overview_tab",
+  "status",
+  "severity",
+  "quality_impact",
+  "latest_observation",
+  "overview_col",
+  "responsible_department",
+  "responsible_user",
+  "due_at",
+  "requires_verification",
+  "source_section",
+  "source_checklist",
+  "latest_checklist",
+  "source_template",
+  "question",
+  "question_text",
+  "source_col",
+  "department",
+  "plant_floor",
+  "warehouse",
+  "asset",
+  "issue_section",
+  "latest_answer",
+  "latest_issue_note",
+  "latest_failure_reason",
+  "latest_evidence_photo",
+  "issue_col",
+  "occurrence_count",
+  "first_detected_at",
+  "last_detected_at",
+  "occurrences_section",
+  "occurrences",
+  "resolution_tab",
+  "resolution_details",
+  "resolution_photo",
+  "waiting_reason",
+  "resolution_col",
+  "resolved_by",
+  "resolved_at",
+  "verification_section",
+  "verification_user",
+  "verification_department",
+  "verification_note",
+  "verification_col",
+  "verified_by",
+  "verified_at",
+  "integration_tab",
+  "material_request",
+  "asset_repair",
+  "control_section",
+  "issue_key",
+  "open_issue_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "overview_tab",
+   "fieldtype": "Tab Break",
+   "label": "Action"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nIn Progress\nWaiting\nPending Verification\nClosed",
+   "default": "Open",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "Low\nMedium\nHigh\nCritical",
+   "default": "Medium",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "quality_impact",
+   "fieldtype": "Check",
+   "label": "Quality Impact",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "latest_observation",
+   "fieldtype": "Select",
+   "label": "Latest Observation",
+   "options": "Issue\nPass Observation",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "overview_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "responsible_department",
+   "fieldtype": "Link",
+   "label": "Responsible Department",
+   "options": "Department",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "responsible_user",
+   "fieldtype": "Link",
+   "label": "Responsible User",
+   "options": "User",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "due_at",
+   "fieldtype": "Datetime",
+   "label": "Due At",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requires_verification",
+   "fieldtype": "Check",
+   "label": "Requires Verification",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Source"
+  },
+  {
+   "fieldname": "source_checklist",
+   "fieldtype": "Link",
+   "label": "Source Checklist",
+   "options": "Checklist Answer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_checklist",
+   "fieldtype": "Link",
+   "label": "Latest Checklist",
+   "options": "Checklist Answer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_template",
+   "fieldtype": "Link",
+   "label": "Template",
+   "options": "Checklist Question Template",
+   "read_only": 1
+  },
+  {
+   "fieldname": "question",
+   "fieldtype": "Link",
+   "label": "Question",
+   "options": "Checklist Question",
+   "read_only": 1
+  },
+  {
+   "fieldname": "question_text",
+   "fieldtype": "Data",
+   "label": "Question Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Checklist Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plant_floor",
+   "fieldtype": "Link",
+   "label": "Plant Floor",
+   "options": "Plant Floor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "read_only": 1
+  },
+  {
+   "fieldname": "asset",
+   "fieldtype": "Link",
+   "label": "Asset",
+   "options": "Asset",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_section",
+   "fieldtype": "Section Break",
+   "label": "Latest Issue / Observation"
+  },
+  {
+   "fieldname": "latest_answer",
+   "fieldtype": "Small Text",
+   "label": "Latest Answer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_issue_note",
+   "fieldtype": "Small Text",
+   "label": "Latest Issue Note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_failure_reason",
+   "fieldtype": "Data",
+   "label": "Latest Failure Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_evidence_photo",
+   "fieldtype": "Attach Image",
+   "label": "Latest Evidence Photo",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "occurrence_count",
+   "fieldtype": "Int",
+   "label": "Issue Occurrences",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "first_detected_at",
+   "fieldtype": "Datetime",
+   "label": "First Detected At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_detected_at",
+   "fieldtype": "Datetime",
+   "label": "Last Detected At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "occurrences_section",
+   "fieldtype": "Section Break",
+   "label": "Observation History"
+  },
+  {
+   "fieldname": "occurrences",
+   "fieldtype": "Table",
+   "label": "Occurrences",
+   "options": "Checklist Action Occurrence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolution_tab",
+   "fieldtype": "Tab Break",
+   "label": "Resolution"
+  },
+  {
+   "fieldname": "resolution_details",
+   "fieldtype": "Small Text",
+   "label": "What Was Done"
+  },
+  {
+   "fieldname": "resolution_photo",
+   "fieldtype": "Attach Image",
+   "label": "Resolution Photo"
+  },
+  {
+   "fieldname": "waiting_reason",
+   "fieldtype": "Small Text",
+   "label": "Waiting Reason",
+   "depends_on": "eval: doc.status == 'Waiting'"
+  },
+  {
+   "fieldname": "resolution_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "resolved_by",
+   "fieldtype": "Link",
+   "label": "Resolved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_at",
+   "fieldtype": "Datetime",
+   "label": "Resolved At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verification_section",
+   "fieldtype": "Section Break",
+   "label": "Verification",
+   "depends_on": "requires_verification"
+  },
+  {
+   "fieldname": "verification_user",
+   "fieldtype": "Link",
+   "label": "Verification User",
+   "options": "User"
+  },
+  {
+   "fieldname": "verification_department",
+   "fieldtype": "Link",
+   "label": "Verification Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "verification_note",
+   "fieldtype": "Small Text",
+   "label": "Verification Note"
+  },
+  {
+   "fieldname": "verification_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "verified_by",
+   "fieldtype": "Link",
+   "label": "Verified By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verified_at",
+   "fieldtype": "Datetime",
+   "label": "Verified At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "integration_tab",
+   "fieldtype": "Tab Break",
+   "label": "ERPNext Links"
+  },
+  {
+   "fieldname": "material_request",
+   "fieldtype": "Link",
+   "label": "Material Request",
+   "options": "Material Request"
+  },
+  {
+   "fieldname": "asset_repair",
+   "fieldtype": "Link",
+   "label": "Asset Repair",
+   "options": "Asset Repair"
+  },
+  {
+   "fieldname": "control_section",
+   "fieldtype": "Section Break",
+   "label": "Control",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "issue_key",
+   "fieldtype": "Data",
+   "label": "Issue Key",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "open_issue_key",
+   "fieldtype": "Data",
+   "label": "Open Issue Key",
+   "read_only": 1,
+   "hidden": 1,
+   "unique": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-15 20:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Checklist",
+ "name": "Checklist Action",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "IT Manager",
+   "read": 1,
+   "write": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Checklist Manager",
+   "read": 1,
+   "write": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Employee",
+   "read": 1,
+   "write": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "search_fields": "question_text,responsible_department,responsible_user,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "question_text",
+ "track_changes": 1
+}

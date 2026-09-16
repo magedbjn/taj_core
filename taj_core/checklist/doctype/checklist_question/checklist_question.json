@@ -8,13 +8,31 @@
  "field_order": [
   "question",
   "type",
+  "is_required",
+  "quick_pass_allowed",
+  "answer_setup_tab",
   "answer_select",
   "answer_min_int",
   "answer_max_int",
   "answer_min_float",
   "answer_max_float",
+  "failure_rules_tab",
   "issue_if_no",
-  "issue_select_values"
+  "issue_select_values",
+  "issue_severity",
+  "quality_impact",
+  "require_failure_reason",
+  "failure_reason_options",
+  "require_failure_note",
+  "require_failure_photo",
+  "allow_no_photo_with_reason",
+  "routing_tab",
+  "require_follow_up",
+  "responsible_department",
+  "responsible_user",
+  "notify_department",
+  "notify_user",
+  "require_verification"
  ],
  "fields": [
   {
@@ -22,42 +40,41 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Question",
-   "unique": 1
+   "unique": 1,
+   "reqd": 1
   },
   {
    "fieldname": "type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Type",
-   "options": "Yes/No\nInt\nFloat\nSelect"
+   "options": "Yes/No\nYes/No/NA\nPass/Fail/NA\nInt\nFloat\nSelect\nSingle Select\nMulti Select\nText\nPhoto",
+   "reqd": 1
   },
   {
-   "depends_on": "eval: doc.type == 'Select'",
+   "depends_on": "eval: ['Select','Single Select','Multi Select'].includes(doc.type)",
    "fieldname": "answer_select",
    "fieldtype": "Small Text",
    "label": "Answer Select",
-   "mandatory_depends_on": "eval: doc.type == 'Select'"
+   "mandatory_depends_on": "eval: ['Select','Single Select','Multi Select'].includes(doc.type)"
   },
   {
    "depends_on": "eval: doc.type == 'Int'",
    "fieldname": "answer_min_int",
    "fieldtype": "Int",
-   "label": "Answer Min Int",
-   "mandatory_depends_on": "eval: doc.type == 'Int'"
+   "label": "Answer Min Int"
   },
   {
    "depends_on": "eval: doc.type == 'Int'",
    "fieldname": "answer_max_int",
    "fieldtype": "Int",
-   "label": "Answer Max Int",
-   "mandatory_depends_on": "eval: doc.type == 'Int'"
+   "label": "Answer Max Int"
   },
   {
    "depends_on": "eval: doc.type == 'Float'",
    "fieldname": "answer_min_float",
    "fieldtype": "Float",
-   "label": "Answer Min Float",
-   "mandatory_depends_on": "eval: doc.type == 'Float'"
+   "label": "Answer Min Float"
   },
   {
    "depends_on": "eval: doc.type == 'Float'",
@@ -67,16 +84,130 @@
   },
   {
    "default": "1",
-   "depends_on": "eval: doc.type == 'Yes/No'",
+   "depends_on": "eval: ['Yes/No','Yes/No/NA'].includes(doc.type)",
    "fieldname": "issue_if_no",
    "fieldtype": "Check",
    "label": "Issue If No"
   },
   {
-   "depends_on": "eval: doc.type == 'Select'",
+   "depends_on": "eval: ['Select','Single Select','Multi Select'].includes(doc.type)",
    "fieldname": "issue_select_values",
    "fieldtype": "Small Text",
    "label": "Issue Select Values"
+  },
+  {
+   "fieldname": "answer_setup_tab",
+   "fieldtype": "Tab Break",
+   "label": "Answer Setup"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_required",
+   "fieldtype": "Check",
+   "label": "Required Answer"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: ['Yes/No','Yes/No/NA','Pass/Fail/NA'].includes(doc.type)",
+   "fieldname": "quick_pass_allowed",
+   "fieldtype": "Check",
+   "label": "Allow All OK / Quick Pass",
+   "description": "Allows All OK to fill this question only when the positive answer is deterministic."
+  },
+  {
+   "fieldname": "failure_rules_tab",
+   "fieldtype": "Tab Break",
+   "label": "Failure Rules"
+  },
+  {
+   "default": "Medium",
+   "fieldname": "issue_severity",
+   "fieldtype": "Select",
+   "label": "Issue Severity",
+   "options": "Low\nMedium\nHigh\nCritical"
+  },
+  {
+   "default": "0",
+   "fieldname": "quality_impact",
+   "fieldtype": "Check",
+   "label": "Quality Impact"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_failure_reason",
+   "fieldtype": "Check",
+   "label": "Require Failure Reason"
+  },
+  {
+   "depends_on": "require_failure_reason",
+   "fieldname": "failure_reason_options",
+   "fieldtype": "Small Text",
+   "label": "Failure Reason Options",
+   "description": "One reason per line. Add Other when free-text explanation should be allowed."
+  },
+  {
+   "default": "0",
+   "fieldname": "require_failure_note",
+   "fieldtype": "Check",
+   "label": "Require Note on Failure"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_failure_photo",
+   "fieldtype": "Check",
+   "label": "Require Photo on Failure"
+  },
+  {
+   "default": "0",
+   "depends_on": "require_failure_photo",
+   "fieldname": "allow_no_photo_with_reason",
+   "fieldtype": "Check",
+   "label": "Allow No Photo with Reason",
+   "description": "When enabled, a failed check may be submitted without a photo only if the user explains why no photo is available."
+  },
+  {
+   "fieldname": "routing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Follow-up & Routing"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_follow_up",
+   "fieldtype": "Check",
+   "label": "Requires Follow-up on Failure"
+  },
+  {
+   "depends_on": "require_follow_up",
+   "fieldname": "responsible_department",
+   "fieldtype": "Link",
+   "label": "Responsible Department",
+   "options": "Department"
+  },
+  {
+   "depends_on": "require_follow_up",
+   "fieldname": "responsible_user",
+   "fieldtype": "Link",
+   "label": "Responsible User",
+   "options": "User"
+  },
+  {
+   "fieldname": "notify_department",
+   "fieldtype": "Link",
+   "label": "Notify Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "notify_user",
+   "fieldtype": "Link",
+   "label": "Notify User",
+   "options": "User"
+  },
+  {
+   "default": "0",
+   "depends_on": "require_follow_up",
+   "fieldname": "require_verification",
+   "fieldtype": "Check",
+   "label": "Require Verification After Follow-up"
   }
  ],
  "grid_page_length": 50,
@@ -119,5 +250,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "show_title_field_in_link": 1,
  "title_field": "question"
 }
