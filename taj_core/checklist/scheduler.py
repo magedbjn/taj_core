@@ -1,35 +1,60 @@
 import frappe
-from frappe.utils import now_datetime, nowdate
+from frappe.utils import getdate, now_datetime, nowdate
 
 from taj_core.checklist.doctype.checklist_answer.checklist_answer import (
-    create_checklist_answer_from_template,
+    create_checklist_answer_from_schedule,
 )
 from taj_core.checklist.notifications import notify_checklist_overdue
-from taj_core.checklist.rules import deadline_notification_state
+from taj_core.checklist.rules import deadline_notification_state, schedule_due_occurrences
+
+
+def process_due_schedule(schedule_name, today=None, max_cycles=366):
+    schedule = frappe.get_doc("Checklist Schedule", schedule_name)
+    through_date = getdate(today or nowdate())
+    due_dates = schedule_due_occurrences(
+        schedule,
+        next_due_date=schedule.next_due_date,
+        through_date=through_date,
+        max_cycles=max_cycles,
+    )
+
+    processed = 0
+    for due_date in due_dates:
+        before = getdate(frappe.db.get_value("Checklist Schedule", schedule_name, "next_due_date"))
+        create_checklist_answer_from_schedule(
+            schedule_name=schedule_name,
+            source_due_date=due_date,
+            ignore_permissions=True,
+            from_scheduler=True,
+        )
+        after_value = frappe.db.get_value("Checklist Schedule", schedule_name, "next_due_date")
+        after = getdate(after_value) if after_value else None
+        if not after or after <= before:
+            raise RuntimeError(f"Checklist Schedule {schedule_name} did not advance after {due_date}")
+        processed += 1
+
+    return processed
 
 
 def create_due_checklist_answers():
     today = nowdate()
 
-    templates = frappe.get_all(
-        "Checklist Question Template",
+    schedules = frappe.get_all(
+        "Checklist Schedule",
         filters={
-            "periodicity": ["!=", "None"],
+            "is_active": 1,
+            "schedule_type": ["!=", "Manual"],
             "next_due_date": ["<=", today],
         },
         pluck="name",
     )
 
-    for template_name in templates:
+    for schedule_name in schedules:
         try:
-            create_checklist_answer_from_template(
-                template_name=template_name,
-                ignore_permissions=True,
-                from_scheduler=True,
-            )
+            process_due_schedule(schedule_name, today=today)
         except Exception:
             frappe.log_error(
-                title=f"Checklist scheduler failed for template {template_name}",
+                title=f"Checklist scheduler failed for schedule {schedule_name}",
                 message=frappe.get_traceback(),
             )
 

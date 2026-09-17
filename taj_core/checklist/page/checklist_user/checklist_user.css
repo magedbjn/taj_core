@@ -1083,3 +1083,27 @@ body.checklist-direct-open-mode .selected-doc-actions .submit-area {
 .open-action-warning { margin: 10px 0 12px; padding: 10px 12px; border: 1px solid var(--orange-200, #f7c98b); border-radius: 10px; background: var(--orange-50, #fff8ee); display: flex; flex-direction: column; gap: 3px; }
 .open-action-warning strong { font-size: 12px; }
 .open-action-warning span { font-size: 11px; color: var(--text-muted); }
+
+.checklist-question-group-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 22px 0 10px;
+    padding: 9px 12px;
+    border-left: 4px solid var(--primary, #007bff);
+    border-radius: 8px;
+    background: var(--subtle-accent, #f4f8ff);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.question-reference-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--control-bg, #f1f3f5);
+    color: var(--text-muted, #6c757d);
+    font-size: 11px;
+    font-weight: 600;
+}

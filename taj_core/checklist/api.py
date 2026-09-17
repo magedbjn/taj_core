@@ -47,6 +47,8 @@ BASE_LIST_FIELDS = [
 ]
 
 OPTIONAL_FIELDS = [
+    "schedule",
+    "company",
     "taken_by",
     "plant_floor",
     "warehouse",
@@ -148,6 +150,8 @@ def _serialize_row_doc(doc):
     return {
         "name": doc.get("name"),
         "template": doc.get("template"),
+        "schedule": doc.get("schedule"),
+        "company": doc.get("company"),
         "posting_date": posting_date,
         "status": doc.get("status"),
         "department": doc.get("department"),
@@ -213,6 +217,12 @@ def create_checklist_answer(template_name):
 
     if not template_name:
         frappe.throw(_("Template is required."))
+
+    if frappe.db.exists("DocType", "Checklist Schedule"):
+        frappe.throw(
+            _("Use Checklist Schedule to create checklists. Create or open a Manual schedule for this template."),
+            frappe.ValidationError,
+        )
 
     doc = create_checklist_answer_from_template(template_name=template_name)
     reused_existing = cint(getattr(doc.flags, "reused_existing", 0))
@@ -1024,9 +1034,15 @@ def save_answers(docname, answers):
                 if "answer" in item:
                     _set_row_answer_by_type(row, item.get("answer"))
 
-                for fieldname in ("failure_reason", "user_note", "evidence_photo", "photo_unavailable_reason"):
+                for fieldname in (
+                    "failure_reason", "affected_items", "issue_type",
+                    "user_note", "evidence_photo", "photo_unavailable_reason",
+                ):
                     if fieldname in item and hasattr(row, fieldname):
-                        setattr(row, fieldname, cstr(item.get(fieldname) or "").strip())
+                        value = cstr(item.get(fieldname) or "").strip()
+                        if fieldname == "affected_items":
+                            value = normalize_multi_value(value)
+                        setattr(row, fieldname, value)
 
             doc.flags.ignore_due_date_update = True
             doc.save(ignore_permissions=True)
@@ -1230,40 +1246,84 @@ def submit_checklist_answer(docname):
 
 
 def _get_open_actions_for_answer(doc):
-    row_keys = {}
+    template = getattr(doc, "template", None)
+    if not template:
+        return {}
+
+    row_info = {}
     for row in getattr(doc, "answer", None) or []:
         question_identity = cstr(
             getattr(row, "question_link", None) or getattr(row, "question", None)
         ).strip()
         if not question_identity:
             continue
-        row_keys[row.name] = build_issue_key(
-            getattr(doc, "template", None),
-            question_identity,
-            getattr(doc, "plant_floor", None),
-            getattr(doc, "warehouse", None),
-            asset=getattr(doc, "asset", None),
-        )
+        row_info[row.name] = {
+            "question_link": cstr(getattr(row, "question_link", None)).strip(),
+            "question_text": cstr(getattr(row, "question", None)).strip(),
+            "plant_floor": cstr(getattr(doc, "plant_floor", None)).strip(),
+            "warehouse": cstr(getattr(doc, "warehouse", None)).strip(),
+            "asset": cstr(getattr(doc, "asset", None)).strip(),
+            "exact_key": build_issue_key(
+                template,
+                question_identity,
+                getattr(doc, "plant_floor", None),
+                getattr(doc, "warehouse", None),
+                asset=getattr(doc, "asset", None),
+                affected_items=getattr(row, "affected_items", None),
+                issue_type=getattr(row, "issue_type", None),
+            ),
+        }
 
-    if not row_keys:
+    if not row_info:
         return {}
 
     try:
-        rows = frappe.get_all(
+        actions = frappe.get_all(
             "Checklist Action",
-            filters={"open_issue_key": ["in", list(set(row_keys.values()))]},
-            fields=["name", "open_issue_key", "status", "latest_observation"],
+            filters={
+                "source_template": getattr(doc, "template", None),
+                "open_issue_key": ["is", "set"],
+            },
+            fields=[
+                "name", "open_issue_key", "status", "latest_observation",
+                "question", "question_text", "plant_floor", "warehouse", "asset",
+            ],
+            order_by="modified desc",
             limit_page_length=500,
         )
     except Exception:
         return {}
 
-    by_key = {row.get("open_issue_key"): row for row in rows}
-    return {
-        row_name: by_key.get(issue_key)
-        for row_name, issue_key in row_keys.items()
-        if by_key.get(issue_key)
-    }
+    result = {}
+    for row_name, info in row_info.items():
+        matches = []
+        for action in actions:
+            question_matches = (
+                (info["question_link"] and cstr(action.get("question")).strip() == info["question_link"])
+                or (not info["question_link"] and cstr(action.get("question_text")).strip() == info["question_text"])
+            )
+            if not question_matches:
+                continue
+            if cstr(action.get("plant_floor")).strip() != info["plant_floor"]:
+                continue
+            if cstr(action.get("warehouse")).strip() != info["warehouse"]:
+                continue
+            if cstr(action.get("asset")).strip() != info["asset"]:
+                continue
+            matches.append(action)
+
+        if not matches:
+            continue
+
+        exact = next(
+            (item for item in matches if item.get("open_issue_key") == info["exact_key"]),
+            None,
+        )
+        chosen = dict(exact or matches[0])
+        chosen["open_action_count"] = len(matches)
+        result[row_name] = chosen
+
+    return result
 
 
 def serialize_checklist_answer(doc):
@@ -1284,6 +1344,8 @@ def serialize_checklist_answer(doc):
             "question": row.question,
             "question_text": meta.question_text or row.question,
             "type": meta.type or row.type,
+            "question_group": getattr(meta, "question_group", None) or "",
+            "standard_reference": getattr(meta, "standard_reference", None) or "",
             "answer": row.answer,
             "answer_options": meta.answer_select or "",
             "is_required": cint(getattr(meta, "is_required", 1)),
@@ -1301,6 +1363,12 @@ def serialize_checklist_answer(doc):
             "require_failure_reason": cint(getattr(meta, "require_failure_reason", 0)),
             "failure_reason_options": getattr(meta, "failure_reason_options", None) or "",
             "failure_reason": getattr(row, "failure_reason", "") or "",
+            "require_affected_item": cint(getattr(meta, "require_affected_item", 0)),
+            "affected_item_options": getattr(meta, "affected_item_options", None) or "",
+            "affected_items": getattr(row, "affected_items", "") or "",
+            "require_issue_type": cint(getattr(meta, "require_issue_type", 0)),
+            "issue_type_options": getattr(meta, "issue_type_options", None) or "",
+            "issue_type": getattr(row, "issue_type", "") or "",
             "require_failure_note": cint(getattr(meta, "require_failure_note", 0)),
             "user_note": getattr(row, "user_note", "") or "",
             "require_failure_photo": cint(getattr(meta, "require_failure_photo", 0)),
@@ -1316,6 +1384,7 @@ def serialize_checklist_answer(doc):
             "open_action": open_action.get("name") or "",
             "open_action_status": open_action.get("status") or "",
             "open_action_latest_observation": open_action.get("latest_observation") or "",
+            "open_action_count": cint(open_action.get("open_action_count") or (1 if open_action.get("name") else 0)),
         })
 
     workers = []
@@ -1364,6 +1433,8 @@ def serialize_checklist_answer(doc):
     return {
         "name": doc.name,
         "template": doc.template,
+        "schedule": getattr(doc, "schedule", None),
+        "company": getattr(doc, "company", None),
         "posting_date": str(doc.posting_date) if doc.posting_date else "",
         "status": doc.status,
         "department": doc.department,

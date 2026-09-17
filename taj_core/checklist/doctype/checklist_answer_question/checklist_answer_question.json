@@ -9,6 +9,8 @@
   "question_link",
   "question",
   "type",
+  "question_group",
+  "standard_reference",
   "yes_no_answer",
   "pass_fail_answer",
   "int_answer",
@@ -35,6 +37,12 @@
   "require_failure_reason",
   "failure_reason_options",
   "failure_reason",
+  "require_affected_item",
+  "affected_item_options",
+  "affected_items",
+  "require_issue_type",
+  "issue_type_options",
+  "issue_type",
   "require_failure_note",
   "user_note",
   "require_failure_photo",
@@ -60,6 +68,20 @@
    "fieldname": "type",
    "fieldtype": "Data",
    "label": "Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "question_group",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Question Group",
+   "read_only": 1
+  },
+  {
+   "fieldname": "standard_reference",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Standard Reference",
    "read_only": 1
   },
   {
@@ -342,6 +364,48 @@
    "label": "Require Verification",
    "hidden": 1,
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "require_affected_item",
+   "fieldtype": "Check",
+   "label": "Require Affected Item",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_item_options",
+   "fieldtype": "Small Text",
+   "label": "Affected Item Options",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_items",
+   "fieldtype": "Small Text",
+   "label": "Affected Item(s)",
+   "depends_on": "eval: doc.has_issue"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_issue_type",
+   "fieldtype": "Check",
+   "label": "Require Issue Type",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_type_options",
+   "fieldtype": "Small Text",
+   "label": "Issue Type Options",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_type",
+   "fieldtype": "Data",
+   "label": "Issue Type",
+   "depends_on": "eval: doc.has_issue"
   }
  ],
  "grid_page_length": 50,

@@ -39,7 +39,7 @@ class TestChecklistAssetScopeSource(unittest.TestCase):
         actions = ACTIONS.read_text(encoding="utf-8")
         api = API.read_text(encoding="utf-8")
         self.assertIn('"asset"', controller)
-        self.assertIn('self.asset = getattr(template, "asset", None)', controller)
+        self.assertIn('self.asset = getattr(operational, "asset", None)', controller)
         self.assertIn('getattr(doc, "asset", None)', actions)
         self.assertIn('action.asset = getattr(doc, "asset", None)', actions)
         self.assertIn('"asset": getattr(doc, "asset", None)', api)

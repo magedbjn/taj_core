@@ -36,6 +36,37 @@ class TestChecklistActionRules(unittest.TestCase):
         self.assertNotEqual(asset_a, asset_b)
         self.assertNotEqual(first, asset_a)
 
+        # Structured failure scope separates two problems raised from one broad question.
+        light_electrical = build(
+            "GMP - Receiving", "Q-0082", "Receiving", "",
+            affected_items="Light Fixture", issue_type="Electrical",
+        )
+        floor_damage = build(
+            "GMP - Receiving", "Q-0082", "Receiving", "",
+            affected_items="Floor", issue_type="Damage",
+        )
+        same_light_reordered = build(
+            "GMP - Receiving", "Q-0082", "Receiving", "",
+            affected_items="Door\nLight Fixture", issue_type="Electrical",
+        )
+        same_light_reordered_2 = build(
+            "GMP - Receiving", "Q-0082", "Receiving", "",
+            affected_items="Light Fixture\nDoor", issue_type="Electrical",
+        )
+        self.assertNotEqual(light_electrical, floor_damage)
+        self.assertEqual(same_light_reordered, same_light_reordered_2)
+
+        # No failure scope must keep the pre-feature key unchanged.
+        no_scope = build("Retort Sterilizer Maintenance", "Q-0001", "Production", "", affected_items="", issue_type="")
+        self.assertEqual(first, no_scope)
+
+    def test_action_title_prefers_structured_failure_scope(self):
+        rules = self._rules()
+        build_title = rules["build_action_title"]
+        self.assertEqual(build_title("Facility condition", "Light Fixture", "Electrical"), "Light Fixture — Electrical")
+        self.assertEqual(build_title("Facility condition", "Door\nLight Fixture", "Damage"), "Door, Light Fixture — Damage")
+        self.assertEqual(build_title("Facility condition", "", ""), "Facility condition")
+
     def test_observation_effect_encodes_recurrence_and_pass_behavior(self):
         rules = self._rules()
         effect = rules["observation_effect"]

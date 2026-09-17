@@ -13,6 +13,8 @@
   "observer",
   "answer",
   "issue_note",
+  "affected_items",
+  "issue_type",
   "failure_reason",
   "user_note",
   "evidence_photo",
@@ -105,6 +107,18 @@
    "fieldname": "quality_impact",
    "fieldtype": "Check",
    "label": "Quality Impact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_items",
+   "fieldtype": "Small Text",
+   "label": "Affected Item(s)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_type",
+   "fieldtype": "Data",
+   "label": "Issue Type",
    "read_only": 1
   }
  ],

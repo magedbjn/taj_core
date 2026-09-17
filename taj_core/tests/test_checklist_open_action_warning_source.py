@@ -15,9 +15,17 @@ class TestChecklistOpenActionWarningSource(unittest.TestCase):
         self.assertIn('"open_action_status"', source)
         self.assertIn('"open_action_latest_observation"', source)
 
+    def test_open_action_lookup_supports_scoped_failure_identity_and_broad_fallback(self):
+        source = API.read_text(encoding="utf-8")
+        self.assertIn('affected_items=getattr(row, "affected_items", None)', source)
+        self.assertIn('issue_type=getattr(row, "issue_type", None)', source)
+        self.assertIn('"source_template": getattr(doc, "template", None)', source)
+        self.assertIn('"open_action_count"', source)
+
     def test_execution_ui_warns_that_pass_does_not_close_existing_action(self):
         source = USER_JS.read_text(encoding="utf-8")
         self.assertIn("open_action", source)
+        self.assertIn("open_action_count", source)
         self.assertIn("Open Action", source)
         self.assertIn("does not close", source)
         self.assertIn("open-action-warning", source)

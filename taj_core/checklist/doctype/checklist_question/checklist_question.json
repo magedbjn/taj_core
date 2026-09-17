@@ -10,6 +10,10 @@
   "type",
   "is_required",
   "quick_pass_allowed",
+  "classification_section",
+  "question_group",
+  "standards",
+  "standard_reference",
   "answer_setup_tab",
   "answer_select",
   "answer_min_int",
@@ -23,6 +27,10 @@
   "quality_impact",
   "require_failure_reason",
   "failure_reason_options",
+  "require_affected_item",
+  "affected_item_options",
+  "require_issue_type",
+  "issue_type_options",
   "require_failure_note",
   "require_failure_photo",
   "allow_no_photo_with_reason",
@@ -96,6 +104,32 @@
    "label": "Issue Select Values"
   },
   {
+   "fieldname": "classification_section",
+   "fieldtype": "Section Break",
+   "label": "Classification"
+  },
+  {
+   "description": "Optional section heading used to group related checklist questions during execution.",
+   "fieldname": "question_group",
+   "fieldtype": "Data",
+   "label": "Question Group"
+  },
+  {
+   "description": "Select all standards that this question supports. Add the clause or internal reference when applicable.",
+   "fieldname": "standards",
+   "fieldtype": "Table",
+   "label": "Standards & References",
+   "options": "Checklist Question Standard"
+  },
+  {
+   "description": "Legacy snapshot generated from Standards & References for historical checklist records.",
+   "fieldname": "standard_reference",
+   "fieldtype": "Small Text",
+   "label": "Standard Reference",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "answer_setup_tab",
    "fieldtype": "Tab Break",
    "label": "Answer Setup"
@@ -155,7 +189,9 @@
    "default": "0",
    "fieldname": "require_failure_photo",
    "fieldtype": "Check",
-   "label": "Require Photo on Failure"
+   "label": "Require Photo on Failure",
+   "hidden": 1,
+   "description": "Legacy compatibility field. Evidence photos are optional."
   },
   {
    "default": "0",
@@ -163,7 +199,8 @@
    "fieldname": "allow_no_photo_with_reason",
    "fieldtype": "Check",
    "label": "Allow No Photo with Reason",
-   "description": "When enabled, a failed check may be submitted without a photo only if the user explains why no photo is available."
+   "description": "Legacy compatibility field. Evidence photos are optional.",
+   "hidden": 1
   },
   {
    "fieldname": "routing_tab",
@@ -208,6 +245,32 @@
    "fieldname": "require_verification",
    "fieldtype": "Check",
    "label": "Require Verification After Follow-up"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_affected_item",
+   "fieldtype": "Check",
+   "label": "Require Affected Item"
+  },
+  {
+   "depends_on": "require_affected_item",
+   "fieldname": "affected_item_options",
+   "fieldtype": "Small Text",
+   "label": "Affected Item Options",
+   "description": "One affected item per line. The inspector can select one or more when the check fails."
+  },
+  {
+   "default": "0",
+   "fieldname": "require_issue_type",
+   "fieldtype": "Check",
+   "label": "Require Issue Type"
+  },
+  {
+   "depends_on": "require_issue_type",
+   "fieldname": "issue_type_options",
+   "fieldtype": "Small Text",
+   "label": "Issue Type Options",
+   "description": "One issue type per line. The inspector selects one issue type when the check fails."
   }
  ],
  "grid_page_length": 50,

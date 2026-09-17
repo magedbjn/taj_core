@@ -652,6 +652,18 @@ class ChecklistUserPage {
         return false;
     }
 
+    render_question_group_heading(row, previousGroup) {
+        const group = String(row?.question_group || "").trim();
+        if (!group || group === previousGroup) return previousGroup;
+
+        this.$body.append(`
+            <div class="checklist-question-group-heading">
+                <span>${this.escape(group)}</span>
+            </div>
+        `);
+        return group;
+    }
+
     render_questions() {
         const questions = this.doc?.questions || [];
         this.$body.empty();
@@ -662,13 +674,20 @@ class ChecklistUserPage {
             return;
         }
 
+        let currentGroup = "";
         if (!this.doc.is_editable) {
-            questions.forEach((row, index) => this.render_readonly_question(row, index));
+            questions.forEach((row, index) => {
+                currentGroup = this.render_question_group_heading(row, currentGroup);
+                this.render_readonly_question(row, index);
+            });
             return;
         }
 
         this.is_hydrating_controls = true;
-        questions.forEach((row, index) => this.render_editable_question(row, index));
+        questions.forEach((row, index) => {
+            currentGroup = this.render_question_group_heading(row, currentGroup);
+            this.render_editable_question(row, index);
+        });
         this.is_hydrating_controls = false;
     }
 
@@ -680,6 +699,12 @@ class ChecklistUserPage {
         const failureReason = row.failure_reason
             ? `<div class="readonly-answer-value"><strong>${__("Reason")}:</strong> ${this.escape(row.failure_reason)}</div>`
             : "";
+        const affectedItems = row.affected_items
+            ? `<div class="readonly-answer-value"><strong>${__("Affected Item")}:</strong> ${this.escape(this.split_lines(row.affected_items).join(", "))}</div>`
+            : "";
+        const issueType = row.issue_type
+            ? `<div class="readonly-answer-value"><strong>${__("Issue Type")}:</strong> ${this.escape(row.issue_type)}</div>`
+            : "";
         const userNote = row.user_note
             ? `<div class="readonly-answer-value"><strong>${__("Note")}:</strong> ${this.escape(row.user_note)}</div>`
             : "";
@@ -690,7 +715,7 @@ class ChecklistUserPage {
             ? `<div class="readonly-answer-value"><strong>${__("Follow-up")}:</strong> ${this.escape(row.responsible_department || row.responsible_user || __("Required"))}</div>`
             : "";
         const openActionWarning = row.open_action
-            ? `<div class="open-action-warning"><strong>${__("Open Action")}: ${this.escape(row.open_action)}</strong><span>${__("This action is still open. A Pass in this checklist does not close it automatically.")}</span></div>`
+            ? `<div class="open-action-warning"><strong>${Number(row.open_action_count || 0) > 1 ? `${__("Open Actions")}: ${this.escape(row.open_action_count)}` : `${__("Open Action")}: ${this.escape(row.open_action)}`}</strong><span>${__("This action is still open. A Pass in this checklist does not close it automatically.")}</span></div>`
             : "";
 
         this.$body.append(`
@@ -700,11 +725,11 @@ class ChecklistUserPage {
                     <span class="question-number">${index + 1}</span>
                     <span>${this.escape(row.question_text || row.question || "")}</span>
                 </div>
-                <div class="readonly-answer-value">
+                                <div class="readonly-answer-value">
                     <strong>${__("Answer")}:</strong> ${this.escape(row.answer || "-")}
                 </div>
                 ${row.issue_note ? `<div class="readonly-answer-value"><strong>${__("System Result")}:</strong> ${this.escape(row.issue_note)}</div>` : ""}
-                ${failureReason}${userNote}${evidence}${followUp}${openActionWarning}
+                ${failureReason}${affectedItems}${issueType}${userNote}${evidence}${followUp}${openActionWarning}
             </div>
         `);
     }
@@ -717,7 +742,7 @@ class ChecklistUserPage {
             ? `<span class="question-rule-badge is-quality">${__("Quality")}</span>`
             : "";
         const openActionWarning = row.open_action
-            ? `<div class="open-action-warning"><strong>${__("Open Action")}: ${this.escape(row.open_action)} (${this.escape(row.open_action_status || "")})</strong><span>${__("This action is unresolved. A Pass now records the current condition but does not close the previous action.")}</span></div>`
+            ? `<div class="open-action-warning"><strong>${Number(row.open_action_count || 0) > 1 ? `${__("Open Actions")}: ${this.escape(row.open_action_count)}` : `${__("Open Action")}: ${this.escape(row.open_action)} (${this.escape(row.open_action_status || "")})`}</strong><span>${__("This action is unresolved. A Pass now records the current condition but does not close the previous action.")}</span></div>`
             : "";
 
         const $card = $(`
@@ -847,6 +872,8 @@ class ChecklistUserPage {
 
         if (!this.is_failure_answer(row, row.answer)) {
             row.failure_reason = "";
+            row.affected_items = "";
+            row.issue_type = "";
             row.user_note = "";
             row.evidence_photo = "";
             row.photo_unavailable_reason = "";
@@ -866,6 +893,8 @@ class ChecklistUserPage {
                     </div>
                 </div>
                 <div class="failure-reason"></div>
+                <div class="failure-affected-items"></div>
+                <div class="failure-issue-type"></div>
                 <div class="failure-note"></div>
                 <div class="failure-photo"></div>
             </div>
@@ -873,6 +902,8 @@ class ChecklistUserPage {
         $container.append($panel);
 
         this.render_failure_reason(row, $panel);
+        this.render_failure_affected_items(row, $panel);
+        this.render_failure_issue_type(row, $panel);
         this.render_failure_note(row, $panel);
         this.render_failure_photo(row, $panel);
     }
@@ -923,6 +954,105 @@ class ChecklistUserPage {
         this.row_controls[controlKey] = control;
     }
 
+    render_failure_affected_items(row, $panel) {
+        const options = this.split_lines(row.affected_item_options);
+        const required = Number(row.require_affected_item || 0) === 1;
+        if (!required && !options.length) return;
+
+        const $host = $panel.find(".failure-affected-items");
+        $host.append(`<div class="failure-field-label">${__("Affected Item")}${required ? " *" : ""}</div>`);
+        $host.append(`<div class="failure-field-help">${__("Select all items affected by this failure.")}</div>`);
+
+        if (options.length) {
+            const selected = new Set(this.split_lines(row.affected_items));
+            const $choices = $('<div class="failure-reason-choices"></div>');
+            options.forEach(option => {
+                const active = selected.has(option) ? "is-selected" : "";
+                const $button = $(`<button type="button" class="failure-reason-btn ${active}">${this.escape(option)}</button>`);
+                $button.on("click", () => {
+                    if (selected.has(option)) {
+                        selected.delete(option);
+                        $button.removeClass("is-selected");
+                    } else {
+                        selected.add(option);
+                        $button.addClass("is-selected");
+                    }
+                    row.affected_items = options.filter(value => selected.has(value)).join("\n");
+                    this.schedule_save(row.row_name, { affected_items: row.affected_items });
+                });
+                $choices.append($button);
+            });
+            $host.append($choices);
+            return;
+        }
+
+        const controlKey = `${row.row_name}:affected_items`;
+        const control = frappe.ui.form.make_control({
+            parent: $host.get(0),
+            df: {
+                label: "",
+                fieldname: `affected_items_${row.row_name}`,
+                fieldtype: "Small Text",
+                reqd: 0,
+                change: () => {
+                    if (this.is_hydrating_controls) return;
+                    row.affected_items = control.get_value() || "";
+                    this.schedule_save(row.row_name, { affected_items: row.affected_items });
+                }
+            },
+            render_input: true
+        });
+        control.refresh();
+        control.set_value(row.affected_items || "");
+        this.row_controls[controlKey] = control;
+    }
+
+    render_failure_issue_type(row, $panel) {
+        const options = this.split_lines(row.issue_type_options);
+        const required = Number(row.require_issue_type || 0) === 1;
+        if (!required && !options.length) return;
+
+        const $host = $panel.find(".failure-issue-type");
+        $host.append(`<div class="failure-field-label">${__("Issue Type")}${required ? " *" : ""}</div>`);
+
+        if (options.length) {
+            const $choices = $('<div class="failure-reason-choices"></div>');
+            options.forEach(option => {
+                const active = row.issue_type === option ? "is-selected" : "";
+                const $button = $(`<button type="button" class="failure-reason-btn ${active}">${this.escape(option)}</button>`);
+                $button.on("click", () => {
+                    row.issue_type = option;
+                    $choices.find(".failure-reason-btn").removeClass("is-selected");
+                    $button.addClass("is-selected");
+                    this.schedule_save(row.row_name, { issue_type: option });
+                });
+                $choices.append($button);
+            });
+            $host.append($choices);
+            return;
+        }
+
+        const controlKey = `${row.row_name}:issue_type`;
+        const control = frappe.ui.form.make_control({
+            parent: $host.get(0),
+            df: {
+                label: "",
+                fieldname: `issue_type_${row.row_name}`,
+                fieldtype: "Data",
+                reqd: 0,
+                change: () => {
+                    if (this.is_hydrating_controls) return;
+                    row.issue_type = control.get_value() || "";
+                    this.schedule_save(row.row_name, { issue_type: row.issue_type });
+                }
+            },
+            render_input: true
+        });
+        control.refresh();
+        control.set_value(row.issue_type || "");
+        this.row_controls[controlKey] = control;
+    }
+
     render_failure_note(row, $panel) {
         if (!Number(row.require_failure_note || 0)) return;
 
@@ -950,14 +1080,8 @@ class ChecklistUserPage {
     }
 
     render_failure_photo(row, $panel) {
-        if (!Number(row.require_failure_photo || 0)) return;
-
-        const allowNoPhotoWithReason = Number(row.allow_no_photo_with_reason || 0) === 1;
         const $host = $panel.find(".failure-photo");
-        $host.append(`<div class="failure-field-label">${allowNoPhotoWithReason ? __("Photo Evidence") : __("Photo")} *</div>`);
-        if (allowNoPhotoWithReason) {
-            $host.append(`<div class="failure-field-help">${__("Upload a photo, or explain below why no photo is available.")}</div>`);
-        }
+        $host.append(`<div class="failure-field-label">${__("Photo (Optional)")}</div>`);
 
         const controlKey = `${row.row_name}:evidence_photo`;
         const control = frappe.ui.form.make_control({
@@ -978,32 +1102,6 @@ class ChecklistUserPage {
         control.refresh();
         control.set_value(row.evidence_photo || "");
         this.row_controls[controlKey] = control;
-
-        if (!allowNoPhotoWithReason) return;
-
-        const reasonHost = $('<div class="failure-photo-reason"></div>');
-        reasonHost.append(`<div class="failure-field-label">${__("No Photo Available Reason")} *</div>`);
-        $host.append(reasonHost);
-
-        const reasonKey = `${row.row_name}:photo_unavailable_reason`;
-        const reasonControl = frappe.ui.form.make_control({
-            parent: reasonHost.get(0),
-            df: {
-                label: "",
-                fieldname: `photo_unavailable_reason_${row.row_name}`,
-                fieldtype: "Small Text",
-                reqd: 0,
-                change: () => {
-                    if (this.is_hydrating_controls) return;
-                    row.photo_unavailable_reason = reasonControl.get_value() || "";
-                    this.schedule_save(row.row_name, { photo_unavailable_reason: row.photo_unavailable_reason });
-                }
-            },
-            render_input: true
-        });
-        reasonControl.refresh();
-        reasonControl.set_value(row.photo_unavailable_reason || "");
-        this.row_controls[reasonKey] = reasonControl;
     }
 
     render_worker_section() {
@@ -1422,20 +1520,17 @@ class ChecklistUserPage {
 
             if (!answer || !this.is_failure_answer(row, answer)) return;
 
+            if (Number(row.require_affected_item || 0) === 1 && !this.split_lines(row.affected_items).length) {
+                problems.push(`${label}: ${__("affected item is required")}`);
+            }
+            if (Number(row.require_issue_type || 0) === 1 && !String(row.issue_type || "").trim()) {
+                problems.push(`${label}: ${__("issue type is required")}`);
+            }
             if (Number(row.require_failure_reason || 0) === 1 && !String(row.failure_reason || "").trim()) {
                 problems.push(`${label}: ${__("failure reason is required")}`);
             }
             if (Number(row.require_failure_note || 0) === 1 && !String(row.user_note || "").trim()) {
                 problems.push(`${label}: ${__("note is required")}`);
-            }
-            if (Number(row.require_failure_photo || 0) === 1 && !String(row.evidence_photo || "").trim()) {
-                const allowReason = Number(row.allow_no_photo_with_reason || 0) === 1;
-                const noPhotoReason = String(row.photo_unavailable_reason || "").trim();
-                if (allowReason && !noPhotoReason) {
-                    problems.push(`${label}: ${__("photo or no-photo reason is required")}`);
-                } else if (!allowReason) {
-                    problems.push(`${label}: ${__("photo is required")}`);
-                }
             }
         });
 

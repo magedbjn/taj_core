@@ -3,25 +3,42 @@
 import frappe
 from frappe.utils import cint, cstr, now_datetime
 
-from taj_core.checklist.action_rules import build_issue_key, observation_effect
+from taj_core.checklist.action_rules import (
+    build_action_title,
+    build_issue_key,
+    observation_effect,
+    operational_scope_matches,
+)
 
 
 def _question_identity(row):
     return cstr(getattr(row, "question_link", None) or getattr(row, "question", None)).strip()
 
 
-def _issue_key(doc, row):
+def _issue_key(doc, row, scheduled_scope=None):
+    if scheduled_scope is None:
+        scheduled_scope = bool(getattr(doc, "schedule", None))
     return build_issue_key(
         getattr(doc, "template", None),
         _question_identity(row),
         getattr(doc, "plant_floor", None),
         getattr(doc, "warehouse", None),
         asset=getattr(doc, "asset", None),
+        company=getattr(doc, "company", None) if scheduled_scope else None,
+        department=getattr(doc, "department", None) if scheduled_scope else None,
+        affected_items=getattr(row, "affected_items", None),
+        issue_type=getattr(row, "issue_type", None),
     )
 
 
 def _observation_time(doc):
     return getattr(doc, "completed_at", None) or now_datetime()
+
+
+def _latest_issue_note(row):
+    return cstr(
+        getattr(row, "user_note", None) or getattr(row, "issue_note", None) or ""
+    ).strip() or None
 
 
 def _append_occurrence(action, doc, row, observation_type):
@@ -45,6 +62,8 @@ def _append_occurrence(action, doc, row, observation_type):
             or frappe.session.user,
             "answer": getattr(row, "answer", None),
             "issue_note": getattr(row, "issue_note", None),
+            "affected_items": getattr(row, "affected_items", None),
+            "issue_type": getattr(row, "issue_type", None),
             "failure_reason": getattr(row, "failure_reason", None),
             "user_note": getattr(row, "user_note", None),
             "evidence_photo": getattr(row, "evidence_photo", None),
@@ -73,11 +92,17 @@ def _create_action(doc, row, issue_key):
     action.status = "Open"
     action.issue_key = issue_key
     action.open_issue_key = issue_key
+    action.action_title = build_action_title(
+        getattr(row, "question", None),
+        getattr(row, "affected_items", None),
+        getattr(row, "issue_type", None),
+    )
     action.source_checklist = doc.name
     action.latest_checklist = doc.name
     action.source_template = getattr(doc, "template", None)
     action.question = getattr(row, "question_link", None)
     action.question_text = getattr(row, "question", None)
+    action.company = getattr(doc, "company", None)
     action.department = getattr(doc, "department", None)
     action.plant_floor = getattr(doc, "plant_floor", None)
     action.warehouse = getattr(doc, "warehouse", None)
@@ -89,14 +114,25 @@ def _create_action(doc, row, issue_key):
     action.requires_verification = cint(getattr(row, "require_verification", 0))
     action.latest_observation = "Issue"
     action.latest_answer = getattr(row, "answer", None)
-    action.latest_issue_note = getattr(row, "issue_note", None)
+    action.latest_issue_note = _latest_issue_note(row)
     action.latest_failure_reason = getattr(row, "failure_reason", None)
+    action.latest_affected_items = getattr(row, "affected_items", None)
+    action.latest_issue_type = getattr(row, "issue_type", None)
     action.latest_evidence_photo = getattr(row, "evidence_photo", None)
     action.occurrence_count = 1
     action.first_detected_at = observed_at
     action.last_detected_at = observed_at
     _append_occurrence(action, doc, row, "Issue")
     action.insert(ignore_permissions=True)
+    return action
+
+
+def _upgrade_legacy_action_scope(action, doc, issue_key):
+    action.company = getattr(doc, "company", None)
+    action.department = getattr(doc, "department", None)
+    action.issue_key = issue_key
+    action.open_issue_key = issue_key
+    action.save(ignore_permissions=True)
     return action
 
 
@@ -118,14 +154,76 @@ def _update_action(action, doc, row, effect):
             cint(getattr(action, "quality_impact", 0)),
             cint(getattr(row, "quality_impact", 0)),
         )
-        action.latest_issue_note = getattr(row, "issue_note", None)
+        action.action_title = build_action_title(
+            getattr(row, "question", None),
+            getattr(row, "affected_items", None),
+            getattr(row, "issue_type", None),
+        )
+        action.latest_issue_note = _latest_issue_note(row)
         action.latest_failure_reason = getattr(row, "failure_reason", None)
+        action.latest_affected_items = getattr(row, "affected_items", None)
+        action.latest_issue_type = getattr(row, "issue_type", None)
         action.latest_evidence_photo = getattr(row, "evidence_photo", None)
         if action.status == "Pending Verification":
             action.status = "In Progress"
 
     action.save(ignore_permissions=True)
     return action
+
+
+def _find_open_actions_for_question(doc, row):
+    """Find every unresolved Action for the same broad question and location.
+
+    A broad question can now have multiple scoped Actions (for example Light /
+    Electrical and Floor / Damage). A later Pass on the broad question is
+    evidence for all of those unresolved scopes, without closing any of them.
+    """
+    question_link = cstr(getattr(row, "question_link", None)).strip()
+    question_text = cstr(getattr(row, "question", None)).strip()
+    filters = {
+        "source_template": getattr(doc, "template", None),
+        "open_issue_key": ["is", "set"],
+    }
+    if question_link:
+        filters["question"] = question_link
+    elif question_text:
+        filters["question_text"] = question_text
+    else:
+        return []
+
+    candidates = frappe.get_all(
+        "Checklist Action",
+        filters=filters,
+        fields=["name", "company", "department", "plant_floor", "warehouse", "asset"],
+        limit_page_length=500,
+    )
+    scheduled_scope = bool(getattr(doc, "schedule", None))
+    scheduled_company = cstr(getattr(doc, "company", None)).strip() if scheduled_scope else ""
+    scheduled_department = cstr(getattr(doc, "department", None)).strip() if scheduled_scope else ""
+    target = (
+        cstr(getattr(doc, "plant_floor", None)).strip(),
+        cstr(getattr(doc, "warehouse", None)).strip(),
+        cstr(getattr(doc, "asset", None)).strip(),
+    )
+    return [
+        item.get("name")
+        for item in candidates
+        if (
+            operational_scope_matches(
+                item.get("company"),
+                item.get("department"),
+                scheduled_company,
+                scheduled_department,
+                scheduled_scope=scheduled_scope,
+            )
+            and (
+                cstr(item.get("plant_floor")).strip(),
+                cstr(item.get("warehouse")).strip(),
+                cstr(item.get("asset")).strip(),
+            ) == target
+            and item.get("name")
+        )
+    ]
 
 
 def process_checklist_actions(doc):
@@ -142,14 +240,47 @@ def process_checklist_actions(doc):
         if not question_identity:
             continue
 
+        row_has_issue = cint(getattr(row, "has_issue", 0))
+        if not row_has_issue:
+            linked = []
+            for action_name in _find_open_actions_for_question(doc, row):
+                action = frappe.get_doc("Checklist Action", action_name)
+                effect = "append_pass"
+                action = _update_action(action, doc, row, effect)
+                processed.append(action.name)
+                linked.append(action.name)
+            if linked:
+                _set_row_action(row, linked[0])
+            continue
+
         issue_key = _issue_key(doc, row)
         action_name = frappe.db.get_value(
             "Checklist Action",
             {"open_issue_key": issue_key},
             "name",
         )
+
+        if not action_name and getattr(doc, "schedule", None):
+            legacy_issue_key = _issue_key(doc, row, scheduled_scope=False)
+            legacy_action_name = frappe.db.get_value(
+                "Checklist Action",
+                {"open_issue_key": legacy_issue_key},
+                "name",
+            )
+            if legacy_action_name:
+                legacy_action = frappe.get_doc("Checklist Action", legacy_action_name)
+                if operational_scope_matches(
+                    getattr(legacy_action, "company", None),
+                    getattr(legacy_action, "department", None),
+                    getattr(doc, "company", None),
+                    getattr(doc, "department", None),
+                    scheduled_scope=True,
+                ):
+                    _upgrade_legacy_action_scope(legacy_action, doc, issue_key)
+                    action_name = legacy_action.name
+
         effect = observation_effect(
-            cint(getattr(row, "has_issue", 0)),
+            row_has_issue,
             cint(getattr(row, "require_follow_up", 0)),
             bool(action_name),
         )

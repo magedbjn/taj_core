@@ -9,7 +9,27 @@ from taj_core.checklist.rules import question_configuration_errors
 
 
 class ChecklistQuestion(Document):
+    def _sync_standard_reference(self):
+        rows = list(self.get("standards") or [])
+        if not rows:
+            return
+
+        seen = set()
+        labels = []
+        for row in rows:
+            standard = str(getattr(row, "standard", None) or "").strip()
+            reference = str(getattr(row, "reference", None) or "").strip()
+            if not standard:
+                continue
+            if standard in seen:
+                frappe.throw(_("Standard {0} can only be added once. Combine multiple clauses in the same reference field.").format(standard))
+            seen.add(standard)
+            labels.append(f"{standard} {reference}".strip())
+
+        self.standard_reference = " | ".join(labels)
+
     def validate(self):
+        self._sync_standard_reference()
         min_value = None
         max_value = None
         if self.type == "Int":

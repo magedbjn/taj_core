@@ -4,6 +4,7 @@ from frappe.model.document import Document
 
 from taj_core.checklist.doctype.checklist_answer.checklist_answer import create_checklist_answer_from_template
 from taj_core.checklist.permissions import is_checklist_manager
+from taj_core.checklist.rules import parse_weeks_of_month
 
 
 class ChecklistQuestionTemplate(Document):
@@ -14,9 +15,6 @@ class ChecklistQuestionTemplate(Document):
 def validate_template(doc):
     if not doc.template_name:
         frappe.throw(_("Template Name is required."))
-
-    if not doc.department:
-        frappe.throw(_("Department is required."))
 
     if not doc.questions:
         frappe.throw(_("At least one checklist question is required."))
@@ -32,6 +30,13 @@ def validate_template(doc):
 
     if doc.assignment_type == "Specific User" and not doc.assigned_user:
         frappe.throw(_("Assigned User is required when Assignment Type is Specific User."))
+
+    if doc.periodicity == "Weeks of Month":
+        try:
+            weeks = parse_weeks_of_month(getattr(doc, "weeks_of_month", None))
+        except ValueError as exc:
+            frappe.throw(_(str(exc)))
+        doc.weeks_of_month = ",".join(str(week) for week in weeks)
 
     if frappe.utils.cint(doc.enable_time_control):
         if not doc.schedule_time:
@@ -65,6 +70,14 @@ def create_checklist_answer_from_template_form(template_name=None):
 
     doc = frappe.get_doc("Checklist Question Template", template_name)
     validate_template(doc)
+
+    if frappe.db.exists("DocType", "Checklist Schedule"):
+        frappe.throw(
+            _(
+                "Use Checklist Schedule to create checklists. Create or open a Manual schedule for this template."
+            ),
+            frappe.ValidationError,
+        )
 
     created = create_checklist_answer_from_template(template_name=doc.name)
     return {

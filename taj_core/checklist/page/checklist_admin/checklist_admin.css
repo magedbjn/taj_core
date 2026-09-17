@@ -847,3 +847,24 @@ body.checklist-drawer-open {
         grid-template-columns: repeat(8, minmax(0, 1fr));
     }
 }
+.checklist-question-group-heading {
+    margin: 1.15rem 0 0.6rem;
+    padding: 0.55rem 0.75rem;
+    border-left: 4px solid var(--cl-primary, #007bff);
+    border-radius: 0.5rem;
+    background: var(--cl-bg, #f8f9fa);
+    color: var(--cl-text, #212529);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.question-reference-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(0, 123, 255, 0.08);
+    color: var(--cl-text-muted, #6c757d);
+    font-size: 0.72rem;
+    font-weight: 600;
+}

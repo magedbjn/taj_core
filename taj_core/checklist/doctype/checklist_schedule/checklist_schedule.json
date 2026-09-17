@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "field:schedule_name",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "schedule_name", "template", "is_active", "column_break_identity", "company", "department",
+  "scope_section", "plant_floor", "warehouse", "asset",
+  "assignment_section", "assignment_type", "assigned_user",
+  "schedule_section", "schedule_type", "interval", "day_of_week", "column_break_schedule",
+  "week_1", "week_2", "week_3", "week_4", "week_5", "day_of_month", "month_of_year",
+  "start_date", "next_due_date",
+  "time_section", "enable_time_control", "schedule_time", "completion_window_minutes",
+  "cycle_section", "cycle_behavior", "required_before_production", "column_break_cycle",
+  "notify_on_overdue", "escalate_after_minutes", "escalation_user"
+ ],
+ "fields": [
+  {"fieldname":"schedule_name","fieldtype":"Data","label":"Schedule Name","reqd":1,"unique":1,"in_list_view":1},
+  {"fieldname":"template","fieldtype":"Link","label":"Template","options":"Checklist Question Template","reqd":1,"in_list_view":1},
+  {"default":"0","fieldname":"is_active","fieldtype":"Check","label":"Active","in_list_view":1},
+  {"fieldname":"column_break_identity","fieldtype":"Column Break"},
+  {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","in_standard_filter":1},
+  {"fieldname":"department","fieldtype":"Link","label":"Department","options":"Department","reqd":1,"in_standard_filter":1},
+
+  {"fieldname":"scope_section","fieldtype":"Section Break","label":"Scope / Location"},
+  {"fieldname":"plant_floor","fieldtype":"Link","label":"Plant Floor","options":"Plant Floor","description":"Optional production-area scope."},
+  {"fieldname":"warehouse","fieldtype":"Link","label":"Warehouse","options":"Warehouse","description":"Optional warehouse/location scope."},
+  {"fieldname":"asset","fieldtype":"Link","label":"Asset","options":"Asset","description":"Optional equipment scope."},
+
+  {"fieldname":"assignment_section","fieldtype":"Section Break","label":"Assignment"},
+  {"default":"Any User in Department","fieldname":"assignment_type","fieldtype":"Select","label":"Assignment Type","options":"Specific User\nAny User in Department","reqd":1},
+  {"depends_on":"eval:doc.assignment_type=='Specific User'","mandatory_depends_on":"eval:doc.assignment_type=='Specific User'","fieldname":"assigned_user","fieldtype":"Link","label":"Assigned User","options":"User"},
+
+  {"fieldname":"schedule_section","fieldtype":"Section Break","label":"Schedule"},
+  {"default":"Manual","fieldname":"schedule_type","fieldtype":"Select","label":"Schedule Type","options":"Manual\nDaily\nWeekly\nMonthly\nWeeks of Month\nQuarterly\nYearly","reqd":1,"in_list_view":1},
+  {"default":"1","depends_on":"eval:['Daily','Weekly','Monthly'].includes(doc.schedule_type)","fieldname":"interval","fieldtype":"Int","label":"Every","non_negative":1,"description":"Repeat every N days, weeks, or months."},
+  {"depends_on":"eval:['Weekly','Weeks of Month'].includes(doc.schedule_type)","fieldname":"day_of_week","fieldtype":"Select","label":"Day of Week","options":"Monday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday"},
+  {"fieldname":"column_break_schedule","fieldtype":"Column Break"},
+  {"default":"0","depends_on":"eval:doc.schedule_type=='Weeks of Month'","fieldname":"week_1","fieldtype":"Check","label":"Week 1 (Days 1-7)"},
+  {"default":"0","depends_on":"eval:doc.schedule_type=='Weeks of Month'","fieldname":"week_2","fieldtype":"Check","label":"Week 2 (Days 8-14)"},
+  {"default":"0","depends_on":"eval:doc.schedule_type=='Weeks of Month'","fieldname":"week_3","fieldtype":"Check","label":"Week 3 (Days 15-21)"},
+  {"default":"0","depends_on":"eval:doc.schedule_type=='Weeks of Month'","fieldname":"week_4","fieldtype":"Check","label":"Week 4 (Days 22-28)"},
+  {"default":"0","depends_on":"eval:doc.schedule_type=='Weeks of Month'","fieldname":"week_5","fieldtype":"Check","label":"Week 5 (Days 29-31)"},
+  {"depends_on":"eval:['Monthly','Quarterly','Yearly'].includes(doc.schedule_type)","fieldname":"day_of_month","fieldtype":"Int","label":"Day of Month","description":"1-31. Short months use their last day."},
+  {"depends_on":"eval:doc.schedule_type=='Yearly'","fieldname":"month_of_year","fieldtype":"Select","label":"Month","options":"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12"},
+  {"depends_on":"eval:doc.schedule_type!='Manual'","mandatory_depends_on":"eval:doc.schedule_type!='Manual'","fieldname":"start_date","fieldtype":"Date","label":"Start Date"},
+  {"fieldname":"next_due_date","fieldtype":"Date","label":"Next Due Date","read_only":1,"in_list_view":1},
+
+  {"fieldname":"time_section","fieldtype":"Section Break","label":"Time & Deadline"},
+  {"default":"0","fieldname":"enable_time_control","fieldtype":"Check","label":"Enable Time Control"},
+  {"depends_on":"eval:doc.enable_time_control","mandatory_depends_on":"eval:doc.enable_time_control","fieldname":"schedule_time","fieldtype":"Time","label":"Schedule Time"},
+  {"depends_on":"eval:doc.enable_time_control","mandatory_depends_on":"eval:doc.enable_time_control","fieldname":"completion_window_minutes","fieldtype":"Int","label":"Completion Window Minutes","non_negative":1},
+
+  {"fieldname":"cycle_section","fieldtype":"Section Break","label":"Cycle & Escalation"},
+  {"default":"Fresh Every Cycle","fieldname":"cycle_behavior","fieldtype":"Select","label":"Cycle Behavior","options":"Fresh Every Cycle\nContinue Until Completed","reqd":1},
+  {"default":"0","fieldname":"required_before_production","fieldtype":"Check","label":"Required Before Production"},
+  {"fieldname":"column_break_cycle","fieldtype":"Column Break"},
+  {"default":"0","depends_on":"eval:doc.enable_time_control","fieldname":"notify_on_overdue","fieldtype":"Check","label":"Notify When Overdue"},
+  {"depends_on":"eval:doc.enable_time_control && doc.notify_on_overdue","fieldname":"escalate_after_minutes","fieldtype":"Int","label":"Escalate After Minutes","non_negative":1},
+  {"depends_on":"eval:doc.enable_time_control && doc.notify_on_overdue && doc.escalate_after_minutes","fieldname":"escalation_user","fieldtype":"Link","label":"Escalation User","options":"User"}
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "module": "Checklist",
+ "name": "Checklist Schedule",
+ "naming_rule": "By fieldname",
+ "permissions": [
+  {"create":1,"delete":1,"email":1,"export":1,"print":1,"read":1,"report":1,"role":"System Manager","share":1,"write":1},
+  {"create":1,"delete":1,"email":1,"export":1,"print":1,"read":1,"report":1,"role":"Checklist Manager","share":1,"write":1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

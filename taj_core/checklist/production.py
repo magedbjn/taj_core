@@ -2,6 +2,7 @@ import frappe
 from frappe.utils import cint, get_datetime, getdate, now_datetime, nowdate
 
 from taj_core.checklist.doctype.checklist_answer.checklist_answer import (
+    create_checklist_answer_from_schedule,
     create_checklist_answer_from_template,
 )
 from taj_core.checklist.rules import summarize_required_answers
@@ -55,6 +56,43 @@ def _today_answer_for_template(template_name, cycle_date):
     return None
 
 
+def _today_answer_for_schedule(schedule_name, cycle_date):
+    names = frappe.get_all(
+        "Checklist Answer",
+        filters={
+            "schedule": schedule_name,
+            "source_due_date": cycle_date,
+        },
+        order_by="creation desc",
+        pluck="name",
+        limit_page_length=1,
+    )
+    if names:
+        return frappe.get_doc("Checklist Answer", names[0])
+    return None
+
+
+def _mark_production_violation(answer, work_order_name, started_at):
+    if getattr(answer, "production_started_at", None):
+        return 0
+    if getattr(answer, "docstatus", 0) == 1 and getattr(answer, "status", None) == "Completed":
+        return 0
+
+    summary, incomplete = _incomplete_snapshot(answer)
+    updates = {
+        "production_started_before_completion": 1,
+        "production_started_at": started_at,
+        "production_work_order": work_order_name,
+        "completion_percent_at_production_start": summary["percent"],
+        "incomplete_items_at_production_start": "\n".join(incomplete),
+    }
+    if getattr(answer, "result_status", None) == "Normal":
+        updates["result_status"] = "Has Issue"
+
+    frappe.db.set_value("Checklist Answer", answer.name, updates, update_modified=False)
+    return 1
+
+
 def _incomplete_snapshot(answer_doc):
     summary = summarize_required_answers(getattr(answer_doc, "answer", None) or [])
     incomplete = list(summary["incomplete"])
@@ -71,25 +109,72 @@ def _incomplete_snapshot(answer_doc):
 
 
 def record_production_start(work_order_name, started_at=None):
-    """Snapshot required pre-production checklists without blocking production.
-
-    Idempotent per checklist occurrence: the first observed production start is
-    the audit point preserved for management reporting.
-    """
+    """Snapshot required pre-production checklists without blocking production."""
     if not work_order_name:
         return 0
 
     started_at = get_datetime(started_at or now_datetime())
     cycle_date = getdate(started_at or nowdate())
+    violations = 0
+    work_order_company = frappe.db.get_value("Work Order", work_order_name, "company")
+    if not work_order_company:
+        return 0
 
-    template_names = frappe.get_all(
+    schedules = frappe.get_all(
+        "Checklist Schedule",
+        filters={
+            "required_before_production": 1,
+            "is_active": 1,
+            "company": work_order_company,
+        },
+        fields=["name", "template", "company"],
+        limit_page_length=1000,
+    )
+    all_scheduled_templates = {
+        template
+        for template in frappe.get_all(
+            "Checklist Schedule",
+            pluck="template",
+            limit_page_length=1000,
+        )
+        if template
+    }
+
+    for row in schedules:
+        schedule_name = row.name
+        try:
+            answer = _today_answer_for_schedule(schedule_name, cycle_date)
+            if not answer:
+                answer = create_checklist_answer_from_schedule(
+                    schedule_name=schedule_name,
+                    source_due_date=cycle_date,
+                    ignore_permissions=True,
+                    from_scheduler=True,
+                )
+            violations += _mark_production_violation(answer, work_order_name, started_at)
+        except Exception:
+            frappe.log_error(
+                title=f"Checklist production readiness snapshot failed for schedule {schedule_name}",
+                message=frappe.get_traceback(),
+            )
+
+    # Backward compatibility for old templates that have not yet been moved to a Schedule.
+    template_rows = frappe.get_all(
         "Checklist Question Template",
         filters={"required_before_production": 1},
-        pluck="name",
+        fields=["name", "department"],
     )
-
-    violations = 0
-    for template_name in template_names:
+    for template_row in template_rows:
+        template_name = template_row.name
+        if template_name in all_scheduled_templates:
+            continue
+        template_department_company = (
+            frappe.db.get_value("Department", template_row.department, "company")
+            if template_row.department
+            else None
+        )
+        if template_department_company and template_department_company != work_order_company:
+            continue
         try:
             answer = _today_answer_for_template(template_name, cycle_date)
             if not answer:
@@ -99,31 +184,7 @@ def record_production_start(work_order_name, started_at=None):
                     ignore_permissions=True,
                     from_scheduler=True,
                 )
-
-            if getattr(answer, "production_started_at", None):
-                continue
-
-            if getattr(answer, "docstatus", 0) == 1 and getattr(answer, "status", None) == "Completed":
-                continue
-
-            summary, incomplete = _incomplete_snapshot(answer)
-            updates = {
-                "production_started_before_completion": 1,
-                "production_started_at": started_at,
-                "production_work_order": work_order_name,
-                "completion_percent_at_production_start": summary["percent"],
-                "incomplete_items_at_production_start": "\n".join(incomplete),
-            }
-            if getattr(answer, "result_status", None) == "Normal":
-                updates["result_status"] = "Has Issue"
-
-            frappe.db.set_value(
-                "Checklist Answer",
-                answer.name,
-                updates,
-                update_modified=False,
-            )
-            violations += 1
+            violations += _mark_production_violation(answer, work_order_name, started_at)
         except Exception:
             frappe.log_error(
                 title=f"Checklist production readiness snapshot failed for {template_name}",

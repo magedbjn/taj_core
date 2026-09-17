@@ -153,5 +153,7 @@ doc_events = {
 
 
 
+before_migrate = "taj_core.checklist.schedule_migration.before_migrate"
+after_migrate = "taj_core.checklist.schedule_migration.after_migrate"
 after_install = "taj_core.install.after_install"
 before_uninstall = "taj_core.uninstall.before_uninstall"

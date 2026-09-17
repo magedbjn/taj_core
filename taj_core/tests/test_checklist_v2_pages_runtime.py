@@ -52,6 +52,7 @@ class TestChecklistV2PagesRuntime(TestCase):
             patch.object(module, "is_checklist_manager", return_value=False),
             patch.object(module, "_get_operational_docs", return_value=rows),
             patch.object(module, "_get_current_employee_identity", return_value={"employee": "EMP-1", "employee_name": "Worker", "department": "Production - Taj"}),
+            patch.object(module, "_get_open_action_rows", return_value=[]),
             patch.object(module, "_get_checklist_settings", return_value={"enable_auto_save": 0}),
         ):
             data = module.get_checklist_today_data()

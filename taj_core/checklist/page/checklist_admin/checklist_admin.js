@@ -80,6 +80,17 @@ class ChecklistAnswerManagerPage {
         return frappe.utils.escape_html(value == null ? "" : String(value));
     }
 
+    render_question_group_heading(row, previousGroup, fragment) {
+        const group = String(row?.question_group || "").trim();
+        if (!group || group === previousGroup) return previousGroup;
+
+        const heading = document.createElement("div");
+        heading.className = "checklist-question-group-heading";
+        heading.textContent = group;
+        fragment.appendChild(heading);
+        return group;
+    }
+
     get_refresh_interval_ms() {
         const minutes = parseInt(this.autoRefreshMinutes, 10);
         return (Number.isFinite(minutes) && minutes > 0 ? minutes : 10) * 60 * 1000;
@@ -154,7 +165,7 @@ class ChecklistAnswerManagerPage {
                                 <div class="filter-control filter-status"></div>
                                 <div class="filter-control filter-issue"></div>
                                 <button class="btn btn-primary btn-search">${__("Search")}</button>
-                                <button class="btn btn-success btn-create-checklist">${__("Create Checklist")}</button>
+                                <button class="btn btn-success btn-create-checklist">${__("Schedules")}</button>
                             </div>
                         </div>
                     </div>
@@ -454,37 +465,7 @@ class ChecklistAnswerManagerPage {
             return;
         }
 
-        const r = await frappe.call({
-            method: "taj_core.checklist.api.create_checklist_answer",
-            args: { template_name: template },
-            freeze: true,
-            freeze_message: __("Creating checklist...")
-        });
-
-        const message = r.message || {};
-        if (message.doc) {
-            this.doc = message.doc;
-            this.selectedDocname = message.doc.name;
-            await this.load_dashboard(false);
-            this.render_doc();
-            this.open_drawer();
-
-            frappe.show_alert({
-                message: message.notice || __("Checklist created successfully."),
-                indicator: message.reused_existing ? "orange" : "green"
-            });
-
-            if (message.reused_existing && message.open_reference) {
-                frappe.msgprint({
-                    title: __("Open Checklist Reused"),
-                    indicator: "orange",
-                    message: __(
-                        "An open checklist already exists for this template without answers. The same document was reused for the new cycle.<br><br><strong>Document:</strong> {0}<br><strong>Date:</strong> {1}",
-                        [message.open_reference.name || "-", message.open_reference.posting_date || "-"]
-                    )
-                });
-            }
-        }
+        frappe.set_route("List", "Checklist Schedule", { template });
     }
 
     start_auto_refresh() {
@@ -841,8 +822,10 @@ class ChecklistAnswerManagerPage {
         }
 
         const fragment = document.createDocumentFragment();
+        let currentGroup = "";
 
         questions.forEach((row, index) => {
+            currentGroup = this.render_question_group_heading(row, currentGroup, fragment);
             const issueClass = row.has_issue ? "has-issue" : "";
             const severity = row.has_issue && row.issue_severity
                 ? `<span class="issue-badge is-issue">${this.escape(row.issue_severity)}</span>`
@@ -855,6 +838,12 @@ class ChecklistAnswerManagerPage {
                 : "";
             const failureReason = row.failure_reason
                 ? `<div class="readonly-answer-value"><strong>${__("Reason")}:</strong> ${this.escape(row.failure_reason)}</div>`
+                : "";
+            const affectedItems = row.affected_items
+                ? `<div class="readonly-answer-value"><strong>${__("Affected Item")}:</strong> ${this.escape(String(row.affected_items).split(/\r?\n/).filter(Boolean).join(", "))}</div>`
+                : "";
+            const issueType = row.issue_type
+                ? `<div class="readonly-answer-value"><strong>${__("Issue Type")}:</strong> ${this.escape(row.issue_type)}</div>`
                 : "";
             const userNote = row.user_note
                 ? `<div class="readonly-answer-value"><strong>${__("Note")}:</strong> ${this.escape(row.user_note)}</div>`
@@ -874,11 +863,11 @@ class ChecklistAnswerManagerPage {
                     <span class="question-number">${index + 1}</span>
                     <span>${this.escape(row.question_text || row.question || "")}</span>
                 </div>
-                <div class="readonly-answer-value">
+                                <div class="readonly-answer-value">
                     <strong>${__("Answer")}:</strong> ${this.escape(row.answer || "-")}
                 </div>
                 ${row.issue_note ? `<div class="readonly-answer-value"><strong>${__("Issue Note")}:</strong> ${this.escape(row.issue_note)}</div>` : ""}
-                ${failureReason}${userNote}${evidencePhoto}${followUp}
+                ${failureReason}${affectedItems}${issueType}${userNote}${evidencePhoto}${followUp}
             `;
             fragment.appendChild(answerCard);
         });
