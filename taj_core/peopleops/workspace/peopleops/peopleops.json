@@ -17,7 +17,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Details",
-   "link_count": 2,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -45,6 +45,26 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Letter Templates",
+   "link_count": 0,
+   "link_to": "Employee Document Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Authorized Signatories",
+   "link_count": 0,
+   "link_to": "Employee Letter Signatory",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Report",
    "link_count": 1,
    "link_type": "DocType",
@@ -62,7 +82,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-04-02 10:08:08.197185",
+ "modified": "2026-09-27 06:29:00.000000",
  "modified_by": "Administrator",
  "module": "PeopleOps",
  "name": "PeopleOps",

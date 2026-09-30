@@ -1,0 +1,222 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:employee",
+ "creation": "2026-09-27 06:29:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "general_tab",
+  "is_active",
+  "employee",
+  "employee_name",
+  "column_break_general",
+  "company",
+  "designation",
+  "identity_section",
+  "signatory_name_english",
+  "signatory_name_arabic",
+  "column_break_identity",
+  "title_english",
+  "title_arabic",
+  "assets_section",
+  "signature_image",
+  "signature_usage",
+  "column_break_assets",
+  "stamp_image",
+  "stamp_usage",
+  "notes_section",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "general_tab",
+   "fieldtype": "Tab Break",
+   "label": "General"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_general",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Printed Identity"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "signatory_name_english",
+   "fieldtype": "Data",
+   "label": "Signatory Name (English)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "signatory_name_arabic",
+   "fieldtype": "Data",
+   "label": "Signatory Name (Arabic)"
+  },
+  {
+   "fieldname": "column_break_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fetch_if_empty": 1,
+   "fieldname": "title_english",
+   "fieldtype": "Data",
+   "label": "Title (English)"
+  },
+  {
+   "fieldname": "title_arabic",
+   "fieldtype": "Data",
+   "label": "Title (Arabic)"
+  },
+  {
+   "fieldname": "assets_section",
+   "fieldtype": "Section Break",
+   "label": "Signature and Stamp"
+  },
+  {
+   "description": "Upload a Private PNG or JPG file, maximum 2 MB. It is embedded only in issued PDFs.",
+   "fieldname": "signature_image",
+   "fieldtype": "Attach Image",
+   "label": "Signature Image"
+  },
+  {
+   "default": "Authorized HR Users",
+   "description": "Authorized HR Users: HR can issue letters using this stored signature. Signatory Only: only the User ID linked to this Employee can use the stored signature when issuing a letter.",
+   "fieldname": "signature_usage",
+   "fieldtype": "Select",
+   "label": "Signature Usage",
+   "options": "Authorized HR Users\nSignatory Only",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_assets",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Optional. Upload a Private PNG or JPG file, maximum 2 MB.",
+   "fieldname": "stamp_image",
+   "fieldtype": "Attach Image",
+   "label": "Stamp Image"
+  },
+  {
+   "default": "Authorized HR Users",
+   "description": "Controls use of the stored stamp independently from the signature.",
+   "fieldname": "stamp_usage",
+   "fieldtype": "Select",
+   "label": "Stamp Usage",
+   "options": "Authorized HR Users\nSignatory Only",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-01 13:55:00.000000",
+ "modified_by": "Administrator",
+ "module": "PeopleOps",
+ "name": "Employee Letter Signatory",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "employee_name,signatory_name_english,signatory_name_arabic,company",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name"
+}

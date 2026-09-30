@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:template_name",
  "creation": "2025-10-27 14:09:06.546214",
@@ -7,20 +8,106 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "general_tab",
+  "general_section",
   "is_active",
-  "requires_approval",
+  "available_for_employee_request",
+  "company",
+  "column_break_general",
   "template_type",
   "template_name",
   "template_name_arabic",
+  "language_section",
+  "language_mode",
+  "bilingual_layout",
+  "column_break_language",
+  "letter_subject_english",
+  "letter_subject_arabic",
+  "content_tab",
+  "content_section",
+  "content_mode",
+  "table_print_style",
   "template_text_english",
-  "template_text_arabic"
+  "arabic_content_help",
+  "template_text_arabic",
+  "sections",
+  "variables_section",
+  "variables_reference",
+  "rules_tab",
+  "request_rules_section",
+  "requires_approval",
+  "requires_purpose",
+  "requires_addressed_to",
+  "prevent_duplicate_while_valid",
+  "duplicate_match_scope",
+  "column_break_request_rules",
+  "has_expiry",
+  "validity_days",
+  "expired_document_policy",
+  "column_break_output_rules",
+  "final_document_method",
+  "letter_head",
+  "signature_section",
+  "requires_signature",
+  "column_break_signature_stamp",
+  "requires_stamp",
+  "column_break_signature_default",
+  "default_signatory",
+  "fee_section",
+  "fee_policy",
+  "column_break_fee",
+  "fee_amount",
+  "column_break_fee_component",
+  "employee_fee_salary_component",
+  "notes_section",
+  "notes"
  ],
  "fields": [
   {
+   "fieldname": "general_tab",
+   "fieldtype": "Tab Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "general_section",
+   "fieldtype": "Section Break",
+   "label": "Template Information"
+  },
+  {
    "default": "1",
-   "fieldname": "requires_approval",
+   "fieldname": "is_active",
    "fieldtype": "Check",
-   "label": "Requires Approval"
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Is Active"
+  },
+  {
+   "default": "1",
+   "fieldname": "available_for_employee_request",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Available for Employee Request"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_general",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Template Type",
+   "options": "Salary Certificate\nEmployment Certificate\nExperience Certificate\nNOC\nSalary Transfer Letter\nBank Letter\nEmbassy Letter\nVisa / Travel Letter\nEmployment Confirmation\nGeneral Official Letter\nAppointment Letter\nJob Offer\nEmployment Contract\nEmployee Letter\nOther",
+   "reqd": 1
   },
   {
    "fieldname": "template_name",
@@ -35,39 +122,298 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Template Name Arabic",
+   "mandatory_depends_on": "eval:doc.language_mode!='English Only'"
+  },
+  {
+   "fieldname": "language_section",
+   "fieldtype": "Section Break",
+   "label": "Language"
+  },
+  {
+   "default": "Bilingual",
+   "fieldname": "language_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Language Mode",
+   "options": "Arabic Only\nEnglish Only\nBilingual",
    "reqd": 1
   },
   {
-   "fieldname": "template_text_english",
-   "fieldtype": "Text Editor",
-   "in_list_view": 1,
-   "label": "Template Text English"
+   "default": "Side by Side",
+   "depends_on": "eval:doc.language_mode=='Bilingual'",
+   "fieldname": "bilingual_layout",
+   "fieldtype": "Select",
+   "label": "Bilingual Layout",
+   "mandatory_depends_on": "eval:doc.language_mode=='Bilingual'",
+   "options": "Side by Side\nArabic then English\nEnglish then Arabic"
   },
   {
+   "fieldname": "column_break_language",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.language_mode!='Arabic Only'",
+   "fieldname": "letter_subject_english",
+   "fieldtype": "Data",
+   "label": "Letter Subject (English)"
+  },
+  {
+   "depends_on": "eval:doc.language_mode!='English Only'",
+   "fieldname": "letter_subject_arabic",
+   "fieldtype": "Data",
+   "label": "Letter Subject (Arabic)"
+  },
+  {
+   "fieldname": "content_tab",
+   "fieldtype": "Tab Break",
+   "label": "Content"
+  },
+  {
+   "fieldname": "content_section",
+   "fieldtype": "Section Break",
+   "label": "Letter Content"
+  },
+  {
+   "default": "Standard Borders",
+   "fieldname": "table_print_style",
+   "fieldtype": "Select",
+   "label": "Table Print Style",
+   "options": "Standard Borders\nBorderless Layout",
+   "reqd": 1,
+   "description": "Controls tables inside the template content only. Borderless Layout keeps table alignment but hides cell borders in Print/PDF."
+  },
+  {
+   "depends_on": "eval:doc.content_mode=='Single Content' && doc.language_mode!='Arabic Only'",
+   "fieldname": "template_text_english",
+   "fieldtype": "Text Editor",
+   "label": "Template Text English",
+   "mandatory_depends_on": "eval:doc.content_mode=='Single Content' && doc.language_mode!='Arabic Only'"
+  },
+  {
+   "depends_on": "eval:doc.language_mode!='English Only'",
+   "fieldname": "arabic_content_help",
+   "fieldtype": "HTML",
+   "label": "Arabic Content Help"
+  },
+  {
+   "depends_on": "eval:doc.content_mode=='Single Content' && doc.language_mode!='English Only'",
    "fieldname": "template_text_arabic",
    "fieldtype": "Text Editor",
-   "in_list_view": 1,
-   "label": "Template Text Arabic"
+   "label": "Template Text Arabic",
+   "mandatory_depends_on": "eval:doc.content_mode=='Single Content' && doc.language_mode!='English Only'"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "variables_section",
+   "fieldtype": "Section Break",
+   "label": "Available Variables"
+  },
+  {
+   "fieldname": "variables_reference",
+   "fieldtype": "HTML",
+   "label": "Available Variables",
+   "description": "Use approved variables in the template. Salary components are loaded from the active Salary Component master."
+  },
+  {
+   "fieldname": "rules_tab",
+   "fieldtype": "Tab Break",
+   "label": "Rules"
+  },
+  {
+   "fieldname": "request_rules_section",
+   "fieldtype": "Section Break",
+   "label": "Request and Validity"
   },
   {
    "default": "1",
-   "fieldname": "is_active",
+   "fieldname": "requires_approval",
    "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Is Active"
+   "label": "Requires Approval"
   },
   {
-   "fieldname": "template_type",
+   "default": "0",
+   "fieldname": "requires_purpose",
+   "fieldtype": "Check",
+   "label": "Purpose is Required"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_addressed_to",
+   "fieldtype": "Check",
+   "label": "Addressed To is Required"
+  },
+  {
+   "fieldname": "column_break_request_rules",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "has_expiry",
+   "fieldtype": "Check",
+   "label": "Has Expiry"
+  },
+  {
+   "default": "30",
+   "depends_on": "eval:doc.has_expiry==1",
+   "fieldname": "validity_days",
+   "fieldtype": "Int",
+   "label": "Validity (Days)",
+   "mandatory_depends_on": "eval:doc.has_expiry==1",
+   "non_negative": 1
+  },
+  {
+   "default": "Historical Copy with EXPIRED Watermark",
+   "depends_on": "eval:doc.has_expiry==1",
+   "description": "Controls employee printing after expiry. System-generated letters can show a historical EXPIRED copy; manually signed/stamped PDFs are blocked for employees after expiry and retained for HR audit.",
+   "fieldname": "expired_document_policy",
    "fieldtype": "Select",
-   "label": "Template Type",
-   "options": "Employment Contract\nEmployee Letter\nExperience Certificate\nTermination Letter\nSalary Certificate\nWarning Letter",
+   "label": "Expired Document Policy",
+   "options": "Historical Copy with EXPIRED Watermark\nBlock Employee Print/Download",
+   "mandatory_depends_on": "eval:doc.has_expiry==1"
+  },
+  {
+   "default": "System Generated PDF",
+   "fieldname": "final_document_method",
+   "fieldtype": "Select",
+   "label": "Final Document Method",
+   "options": "System Generated PDF\nManual Final PDF Upload",
+   "reqd": 1,
+   "description": "System Generated PDF is produced on demand from the issued snapshot and is not stored as an attachment. Manual Final PDF Upload retains the signed/stamped original for audit."
+  },
+  {
+   "fieldname": "letter_head",
+   "fieldtype": "Link",
+   "label": "Letter Head",
+   "options": "Letter Head"
+  },
+  {
+   "fieldname": "signature_section",
+   "fieldtype": "Section Break",
+   "label": "Signature and Stamp"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_signature",
+   "fieldtype": "Check",
+   "label": "Requires Signature",
+   "description": "May be enabled together with Requires Stamp."
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_stamp",
+   "fieldtype": "Check",
+   "label": "Requires Stamp",
+   "description": "May be enabled together with Requires Signature."
+  },
+  {
+   "depends_on": "eval:doc.requires_signature==1 || doc.requires_stamp==1",
+   "fieldname": "default_signatory",
+   "fieldtype": "Link",
+   "label": "Default Signatory",
+   "options": "Employee Letter Signatory",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "fee_section",
+   "fieldtype": "Section Break",
+   "label": "Fee Policy"
+  },
+  {
+   "default": "No Fee",
+   "fieldname": "fee_policy",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Fee Policy",
+   "options": "No Fee\nCompany Pays\nEmployee Pays",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.fee_policy!='No Fee'",
+   "fieldname": "fee_amount",
+   "fieldtype": "Currency",
+   "label": "Fee Amount",
+   "mandatory_depends_on": "eval:doc.fee_policy!='No Fee'",
+   "non_negative": 1,
+   "options": "Company:company:default_currency",
+   "description": "Amount is always in the selected Company default currency."
+  },
+  {
+   "fieldname": "column_break_fee",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.fee_policy=='Employee Pays'",
+   "description": "Optional. If set to an enabled Deduction component, the fee is posted automatically as Additional Salary when the letter is issued.",
+   "fieldname": "employee_fee_salary_component",
+   "fieldtype": "Link",
+   "label": "Employee Fee Salary Component",
+   "options": "Salary Component",
+   "permlevel": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "column_break_output_rules",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_signature_stamp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_signature_default",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fee_component",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Single Content",
+   "fieldname": "content_mode",
+   "fieldtype": "Select",
+   "label": "Content Mode",
+   "options": "Single Content\nSections",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.content_mode=='Sections'",
+   "fieldname": "sections",
+   "fieldtype": "Table",
+   "label": "Document Sections",
+   "options": "Employee Document Template Section",
+   "mandatory_depends_on": "eval:doc.content_mode=='Sections'"
+  },
+  {
+   "default": "1",
+   "fieldname": "prevent_duplicate_while_valid",
+   "fieldtype": "Check",
+   "label": "Prevent Duplicate While Valid"
+  },
+  {
+   "default": "Same Template and Recipient",
+   "depends_on": "eval:doc.prevent_duplicate_while_valid==1",
+   "fieldname": "duplicate_match_scope",
+   "fieldtype": "Select",
+   "label": "Duplicate Match Scope",
+   "options": "Same Template\nSame Template and Recipient"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-07 02:39:28.038321",
+ "modified": "2026-10-01 13:55:00.000000",
  "modified_by": "Administrator",
  "module": "PeopleOps",
  "name": "Employee Document Template",
@@ -96,7 +442,8 @@
    "report": 1,
    "role": "HR Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "permlevel": 0
   },
   {
    "create": 1,
@@ -107,13 +454,38 @@
    "report": 1,
    "role": "HR User",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "permlevel": 0
+  },
+  {
+   "read": 1,
+   "role": "Employee",
+   "permlevel": 0
+  },
+  {
+   "read": 1,
+   "write": 1,
+   "role": "System Manager",
+   "permlevel": 1
+  },
+  {
+   "read": 1,
+   "write": 1,
+   "role": "HR Manager",
+   "permlevel": 1
+  },
+  {
+   "read": 1,
+   "write": 1,
+   "role": "HR User",
+   "permlevel": 1
   }
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "template_name_arabic",
+ "search_fields": "template_name,template_name_arabic,template_type,company",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "template_name"
 }

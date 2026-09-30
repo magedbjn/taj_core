@@ -1,24 +1,753 @@
 {
  "actions": [],
- "allow_rename": 1,
- "autoname": "naming_series:naming_series",
+ "allow_rename": 0,
+ "autoname": "naming_series:",
  "creation": "2025-10-27 14:13:10.311671",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_clpo",
-  "is_expired",
+  "request_tab",
+  "request_header_section",
   "naming_series",
   "post_date",
+  "requested_by",
+  "workflow_state",
+  "employee_section",
   "employee",
+  "employee_name",
+  "employee_name_arabic",
+  "column_break_employee",
+  "company",
+  "department",
+  "column_break_employee_position",
+  "designation",
+  "date_of_joining",
+  "letter_section",
+  "request_type",
   "letter_template",
+  "custom_letter_title_english",
+  "custom_letter_title_arabic",
+  "request_details",
+  "reference_attachment",
+  "language_mode",
+  "bilingual_layout",
+  "column_break_letter",
+  "priority",
+  "required_by",
+  "column_break_letter_policy",
+  "as_of_date",
+  "reissue_of",
+  "reissue_reason",
+  "letter_head",
+  "recipient_section",
+  "addressed_to",
+  "column_break_recipient_arabic",
+  "addressed_to_arabic",
+  "column_break_recipient_purpose",
   "purpose",
+  "processing_tab",
+  "resolution_section",
+  "resolution_mode",
+  "resolved_template",
+  "one_time_subject_english",
+  "one_time_subject_arabic",
+  "one_time_text_english",
+  "one_time_text_arabic",
+  "one_time_has_expiry",
+  "one_time_validity_days",
+  "one_time_expired_document_policy",
+  "one_time_final_document_method",
+  "one_time_requires_signature",
+  "one_time_requires_stamp",
+  "one_time_signatory",
+  "one_time_fee_policy",
+  "one_time_fee_amount",
+  "one_time_fee_salary_component",
+  "policy_section",
+  "requires_approval",
+  "requires_purpose",
+  "requires_addressed_to",
+  "column_break_policy",
+  "requires_signature",
+  "requires_stamp",
+  "column_break_policy_output",
+  "final_document_method",
+  "table_print_style",
+  "has_expiry",
+  "validity_days",
+  "expired_document_policy",
+  "signatory_section",
+  "signatory",
+  "signatory_name_english",
+  "signatory_name_arabic",
+  "column_break_signatory",
+  "signatory_title_english",
+  "signatory_title_arabic",
+  "signature_image_data",
+  "stamp_image_data",
+  "fee_section",
+  "fee_policy",
+  "fee_status",
+  "waive_fee",
+  "fee_waiver_reason",
+  "column_break_fee",
+  "fee_amount",
+  "column_break_fee_payroll",
+  "employee_fee_salary_component",
+  "additional_salary",
+  "issue_tab",
+  "issue_section",
+  "issue_date",
+  "valid_until",
+  "is_expired",
+  "column_break_issue",
+  "issued_by",
+  "issued_on",
+  "final_document_section",
+  "final_document",
+  "final_document_upload",
+  "rendered_section",
+  "rendered_sections",
+  "rendered_subject_english",
+  "rendered_subject_arabic",
+  "rendered_text_english",
+  "rendered_text_arabic",
+  "salary_snapshot_section",
+  "salary_structure",
+  "salary_structure_assignment",
+  "salary_currency",
+  "salary_base",
+  "column_break_salary",
+  "basic_salary",
+  "gross_salary",
+  "regular_deductions",
+  "monthly_salary",
+  "snapshot_json_section",
+  "employee_snapshot_json",
+  "salary_snapshot_json",
+  "hr_notes_section",
+  "hr_notes",
   "amended_from"
  ],
  "fields": [
   {
-   "fieldname": "section_break_clpo",
+   "fieldname": "request_tab",
+   "fieldtype": "Tab Break",
+   "label": "Request"
+  },
+  {
+   "fieldname": "request_header_section",
    "fieldtype": "Section Break"
+  },
+  {
+   "default": "ELR-.YY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "ELR-.YY.-.#####",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "post_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Request Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Link",
+   "label": "Workflow State",
+   "options": "Workflow State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_section",
+   "fieldtype": "Section Break",
+   "label": "Employee"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1,
+   "fetch_from": "employee.employee_name"
+  },
+  {
+   "fieldname": "employee_name_arabic",
+   "fieldtype": "Data",
+   "label": "Employee Name (Arabic)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_employee",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "fetch_from": "employee.company"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1,
+   "fetch_from": "employee.department"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1,
+   "fetch_from": "employee.designation"
+  },
+  {
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "Date of Joining",
+   "read_only": 1,
+   "fetch_from": "employee.date_of_joining"
+  },
+  {
+   "fieldname": "letter_section",
+   "fieldtype": "Section Break",
+   "label": "Letter"
+  },
+  {
+   "fieldname": "letter_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Letter Template",
+   "options": "Employee Document Template",
+   "mandatory_depends_on": "eval:doc.request_type=='Standard Letter'",
+   "depends_on": "eval:doc.request_type=='Standard Letter'"
+  },
+  {
+   "fieldname": "language_mode",
+   "fieldtype": "Select",
+   "label": "Language",
+   "options": "Arabic Only\nEnglish Only\nBilingual",
+   "reqd": 1,
+   "default": "Bilingual"
+  },
+  {
+   "default": "Normal",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "Normal\nUrgent",
+   "reqd": 1
+  },
+  {
+   "fieldname": "required_by",
+   "fieldtype": "Date",
+   "label": "Required By"
+  },
+  {
+   "fieldname": "column_break_letter",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "as_of_date",
+   "fieldtype": "Date",
+   "label": "Data As Of Date",
+   "permlevel": 1,
+   "description": "HR-controlled date used to evaluate employee and salary data for the issued letter."
+  },
+  {
+   "fieldname": "reissue_of",
+   "fieldtype": "Link",
+   "label": "Reissue Of",
+   "options": "Employee Letter Request",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "letter_head",
+   "fieldtype": "Link",
+   "label": "Letter Head",
+   "options": "Letter Head",
+   "read_only": 1,
+   "fetch_from": "letter_template.letter_head"
+  },
+  {
+   "fieldname": "recipient_section",
+   "fieldtype": "Section Break",
+   "label": "Recipient and Purpose"
+  },
+  {
+   "fieldname": "addressed_to",
+   "fieldtype": "Data",
+   "label": "Addressed To (English)",
+   "mandatory_depends_on": "eval:(doc.request_type=='Custom Letter' || doc.requires_addressed_to==1) && doc.language_mode!='Arabic Only'"
+  },
+  {
+   "fieldname": "addressed_to_arabic",
+   "fieldtype": "Data",
+   "label": "Addressed To (Arabic)",
+   "mandatory_depends_on": "eval:(doc.request_type=='Custom Letter' || doc.requires_addressed_to==1) && doc.language_mode!='English Only'"
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "Purpose",
+   "mandatory_depends_on": "eval:doc.request_type=='Custom Letter' || doc.requires_purpose==1"
+  },
+  {
+   "fieldname": "processing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Processing"
+  },
+  {
+   "fieldname": "policy_section",
+   "fieldtype": "Section Break",
+   "label": "Template Policy"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_approval",
+   "fieldtype": "Check",
+   "label": "Requires Approval",
+   "read_only": 1,
+   "fetch_from": "letter_template.requires_approval"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_purpose",
+   "fieldtype": "Check",
+   "label": "Purpose is Required",
+   "read_only": 1,
+   "fetch_from": "letter_template.requires_purpose"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_addressed_to",
+   "fieldtype": "Check",
+   "label": "Addressed To is Required",
+   "read_only": 1,
+   "fetch_from": "letter_template.requires_addressed_to"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_signature",
+   "fieldtype": "Check",
+   "label": "Requires Signature",
+   "read_only": 1,
+   "fetch_from": "letter_template.requires_signature",
+   "description": "May be enabled together with Requires Stamp."
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_stamp",
+   "fieldtype": "Check",
+   "label": "Requires Stamp",
+   "read_only": 1,
+   "fetch_from": "letter_template.requires_stamp",
+   "description": "May be enabled together with Requires Signature."
+  },
+  {
+   "fieldname": "column_break_policy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "final_document_method",
+   "fieldtype": "Select",
+   "label": "Final Document Method",
+   "options": "System Generated PDF\nManual Final PDF Upload",
+   "read_only": 1,
+   "fetch_from": "letter_template.final_document_method",
+   "description": "System Generated PDF is printed/downloaded on demand and is not stored. Manual Final PDF Upload stores the signed/stamped original."
+  },
+  {
+   "default": "Standard Borders",
+   "fieldname": "table_print_style",
+   "fieldtype": "Select",
+   "label": "Table Print Style",
+   "options": "Standard Borders\nBorderless Layout",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "has_expiry",
+   "fieldtype": "Check",
+   "label": "Has Expiry",
+   "read_only": 1,
+   "fetch_from": "letter_template.has_expiry"
+  },
+  {
+   "fieldname": "validity_days",
+   "fieldtype": "Int",
+   "label": "Validity (Days)",
+   "read_only": 1,
+   "fetch_from": "letter_template.validity_days"
+  },
+  {
+   "fieldname": "expired_document_policy",
+   "fieldtype": "Select",
+   "label": "Expired Document Policy",
+   "options": "Historical Copy with EXPIRED Watermark\nBlock Employee Print/Download",
+   "read_only": 1
+  },
+  {
+   "fieldname": "signatory_section",
+   "fieldtype": "Section Break",
+   "label": "Authorized Signatory",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "signatory",
+   "fieldtype": "Link",
+   "label": "Signatory",
+   "options": "Employee Letter Signatory",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "signatory_name_english",
+   "fieldtype": "Data",
+   "label": "Signatory Name (English)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "signatory_name_arabic",
+   "fieldtype": "Data",
+   "label": "Signatory Name (Arabic)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_signatory",
+   "fieldtype": "Column Break",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "signatory_title_english",
+   "fieldtype": "Data",
+   "label": "Signatory Title (English)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "signatory_title_arabic",
+   "fieldtype": "Data",
+   "label": "Signatory Title (Arabic)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "signature_image_data",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Signature Image Snapshot",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "stamp_image_data",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Stamp Image Snapshot",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "fee_section",
+   "fieldtype": "Section Break",
+   "label": "Fee"
+  },
+  {
+   "fieldname": "fee_policy",
+   "fieldtype": "Select",
+   "label": "Fee Policy",
+   "options": "No Fee\nCompany Pays\nEmployee Pays",
+   "read_only": 1,
+   "fetch_from": "letter_template.fee_policy"
+  },
+  {
+   "fieldname": "fee_amount",
+   "fieldtype": "Currency",
+   "label": "Fee Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "fetch_from": "letter_template.fee_amount",
+   "description": "Amount is in the employee Company default currency."
+  },
+  {
+   "fieldname": "fee_status",
+   "fieldtype": "Select",
+   "label": "Fee Status",
+   "options": "Not Applicable\nCompany Paid\nPending Payroll Deduction\nCharged\nWaived",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_fee",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee_fee_salary_component",
+   "fieldtype": "Link",
+   "label": "Employee Fee Salary Component",
+   "options": "Salary Component",
+   "permlevel": 1,
+   "read_only": 1,
+   "fetch_from": "letter_template.employee_fee_salary_component",
+   "fetch_if_empty": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "additional_salary",
+   "fieldtype": "Link",
+   "label": "Additional Salary",
+   "options": "Additional Salary",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_tab",
+   "fieldtype": "Tab Break",
+   "label": "Issue"
+  },
+  {
+   "fieldname": "issue_section",
+   "fieldtype": "Section Break",
+   "label": "Issued Letter"
+  },
+  {
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "valid_until",
+   "fieldtype": "Date",
+   "in_standard_filter": 1,
+   "label": "Valid Until",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_expired",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Is Expired",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_issue",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "issued_by",
+   "fieldtype": "Link",
+   "label": "Issued By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issued_on",
+   "fieldtype": "Datetime",
+   "label": "Issued On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "final_document_section",
+   "fieldtype": "Section Break",
+   "label": "Final Document"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Private signed/stamped original retained only for Manual Final PDF Upload. System-generated letters do not create this attachment.",
+   "fieldname": "final_document",
+   "fieldtype": "Attach",
+   "label": "Archived Manual Final PDF",
+   "read_only": 1,
+   "depends_on": "eval:doc.final_document_method=='Manual Final PDF Upload'"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.final_document_method=='Manual Final PDF Upload'",
+   "description": "HR-only upload of the signed/stamped PDF. The original is retained for audit and is not deleted automatically on expiry.",
+   "fieldname": "final_document_upload",
+   "fieldtype": "Attach",
+   "label": "Final PDF Upload",
+   "permlevel": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "rendered_section",
+   "fieldtype": "Section Break",
+   "label": "Rendered Content",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "rendered_subject_english",
+   "fieldtype": "Data",
+   "label": "Rendered Subject (English)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rendered_subject_arabic",
+   "fieldtype": "Data",
+   "label": "Rendered Subject (Arabic)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rendered_text_english",
+   "fieldtype": "Text Editor",
+   "label": "Rendered Text (English)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rendered_text_arabic",
+   "fieldtype": "Text Editor",
+   "label": "Rendered Text (Arabic)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "salary_snapshot_section",
+   "fieldtype": "Section Break",
+   "label": "Salary Snapshot",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "salary_structure",
+   "fieldtype": "Link",
+   "label": "Salary Structure",
+   "options": "Salary Structure",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "salary_structure_assignment",
+   "fieldtype": "Link",
+   "label": "Salary Structure Assignment",
+   "options": "Salary Structure Assignment",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "salary_currency",
+   "fieldtype": "Link",
+   "label": "Salary Currency",
+   "options": "Currency",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "salary_base",
+   "fieldtype": "Currency",
+   "label": "Salary Base",
+   "options": "salary_currency",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_salary",
+   "fieldtype": "Column Break",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "basic_salary",
+   "fieldtype": "Currency",
+   "label": "Basic Salary",
+   "options": "salary_currency",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "gross_salary",
+   "fieldtype": "Currency",
+   "label": "Gross Salary",
+   "options": "salary_currency",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "regular_deductions",
+   "fieldtype": "Currency",
+   "label": "Regular Deductions",
+   "options": "salary_currency",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "monthly_salary",
+   "fieldtype": "Currency",
+   "label": "Monthly Salary",
+   "options": "salary_currency",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "snapshot_json_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Snapshot JSON",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "employee_snapshot_json",
+   "fieldtype": "Code",
+   "hidden": 1,
+   "label": "Employee Snapshot JSON",
+   "options": "JSON",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "salary_snapshot_json",
+   "fieldtype": "Code",
+   "hidden": 1,
+   "label": "Salary Snapshot JSON",
+   "options": "JSON",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "hr_notes_section",
+   "fieldtype": "Section Break",
+   "label": "HR Notes",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "hr_notes",
+   "fieldtype": "Small Text",
+   "label": "HR Notes",
+   "permlevel": 1
   },
   {
    "fieldname": "amended_from",
@@ -31,55 +760,253 @@
    "search_index": 1
   },
   {
-   "fieldname": "employee",
-   "fieldtype": "Link",
+   "fieldname": "column_break_employee_position",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_letter_policy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_recipient_arabic",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_recipient_purpose",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_policy_output",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fee_payroll",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bilingual_layout",
+   "fieldtype": "Select",
+   "label": "Bilingual Layout",
+   "options": "Side by Side\nArabic then English\nEnglish then Arabic",
+   "depends_on": "eval:doc.language_mode=='Bilingual'",
+   "default": "Side by Side"
+  },
+  {
+   "default": "Standard Letter",
+   "fieldname": "request_type",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Employee",
-   "options": "Employee",
+   "label": "Request Type",
+   "options": "Standard Letter\nCustom Letter",
    "reqd": 1
   },
   {
-   "fieldname": "letter_template",
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.language_mode!='Arabic Only'",
+   "fieldname": "custom_letter_title_english",
+   "fieldtype": "Data",
+   "label": "Requested Letter Title (English)",
+   "mandatory_depends_on": "eval:doc.request_type=='Custom Letter' && doc.language_mode!='Arabic Only'"
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.language_mode!='English Only'",
+   "fieldname": "custom_letter_title_arabic",
+   "fieldtype": "Data",
+   "label": "Requested Letter Title (Arabic)",
+   "mandatory_depends_on": "eval:doc.request_type=='Custom Letter' && doc.language_mode!='English Only'"
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter'",
+   "fieldname": "request_details",
+   "fieldtype": "Small Text",
+   "label": "Request Details",
+   "mandatory_depends_on": "eval:doc.request_type=='Custom Letter'"
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter'",
+   "fieldname": "reference_attachment",
+   "fieldtype": "Attach",
+   "label": "Reference Attachment",
+   "description": "Optional sample or requirement received from the destination entity."
+  },
+  {
+   "depends_on": "eval:doc.reissue_of",
+   "fieldname": "reissue_reason",
+   "fieldtype": "Small Text",
+   "label": "Reissue Reason",
+   "permlevel": 1,
+   "mandatory_depends_on": "eval:doc.reissue_of"
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter'",
+   "fieldname": "resolution_section",
+   "fieldtype": "Section Break",
+   "label": "Custom Request Resolution",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter'",
+   "fieldname": "resolution_mode",
+   "fieldtype": "Select",
+   "label": "Resolution Mode",
+   "options": "Existing Template\nOne-Time Letter",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='Existing Template'",
+   "fieldname": "resolved_template",
    "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Letter Template",
+   "label": "Resolved Template",
    "options": "Employee Document Template",
-   "reqd": 1
+   "permlevel": 1
   },
   {
-   "default": "Today",
-   "fieldname": "post_date",
-   "fieldtype": "Date",
-   "label": "Post Date",
-   "read_only": 1
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter' && doc.language_mode!='Arabic Only'",
+   "fieldname": "one_time_subject_english",
+   "fieldtype": "Data",
+   "label": "One-Time Subject (English)",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter' && doc.language_mode!='English Only'",
+   "fieldname": "one_time_subject_arabic",
+   "fieldtype": "Data",
+   "label": "One-Time Subject (Arabic)",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter' && doc.language_mode!='Arabic Only'",
+   "fieldname": "one_time_text_english",
+   "fieldtype": "Text Editor",
+   "label": "One-Time Content (English)",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter' && doc.language_mode!='English Only'",
+   "fieldname": "one_time_text_arabic",
+   "fieldtype": "Text Editor",
+   "label": "One-Time Content (Arabic)",
+   "permlevel": 1
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter'",
+   "fieldname": "one_time_has_expiry",
+   "fieldtype": "Check",
+   "label": "One-Time Has Expiry",
+   "permlevel": 1
+  },
+  {
+   "default": "30",
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter' && doc.one_time_has_expiry==1",
+   "fieldname": "one_time_validity_days",
+   "fieldtype": "Int",
+   "label": "One-Time Validity (Days)",
+   "non_negative": 1,
+   "permlevel": 1
+  },
+  {
+   "default": "Historical Copy with EXPIRED Watermark",
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter' && doc.one_time_has_expiry==1",
+   "description": "For manual final PDFs, employee access after expiry is blocked and the original is retained for HR audit.",
+   "fieldname": "one_time_expired_document_policy",
+   "fieldtype": "Select",
+   "label": "One-Time Expired Document Policy",
+   "options": "Historical Copy with EXPIRED Watermark\nBlock Employee Print/Download",
+   "permlevel": 1
+  },
+  {
+   "default": "System Generated PDF",
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter'",
+   "fieldname": "one_time_final_document_method",
+   "fieldtype": "Select",
+   "label": "One-Time Final Document Method",
+   "options": "System Generated PDF\nManual Final PDF Upload",
+   "permlevel": 1
   },
   {
    "default": "0",
-   "fieldname": "is_expired",
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter'",
+   "fieldname": "one_time_requires_signature",
    "fieldtype": "Check",
-   "label": "Is Expired",
+   "label": "One-Time Requires Signature",
+   "permlevel": 1,
+   "description": "May be enabled together with Requires Stamp."
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter'",
+   "fieldname": "one_time_requires_stamp",
+   "fieldtype": "Check",
+   "label": "One-Time Requires Stamp",
+   "permlevel": 1,
+   "description": "May be enabled together with Requires Signature."
+  },
+  {
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter' && (doc.one_time_requires_signature==1 || doc.one_time_requires_stamp==1)",
+   "fieldname": "one_time_signatory",
+   "fieldtype": "Link",
+   "label": "One-Time Signatory",
+   "options": "Employee Letter Signatory",
+   "permlevel": 1
+  },
+  {
+   "default": "No Fee",
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter'",
+   "fieldname": "one_time_fee_policy",
+   "fieldtype": "Select",
+   "label": "One-Time Fee Policy",
+   "options": "No Fee\nCompany Pays\nEmployee Pays",
+   "permlevel": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter' && doc.one_time_fee_policy!='No Fee'",
+   "fieldname": "one_time_fee_amount",
+   "fieldtype": "Currency",
+   "label": "One-Time Fee Amount",
+   "options": "Company:company:default_currency",
+   "permlevel": 1,
+   "description": "Amount is in the employee Company default currency."
+  },
+  {
+   "fieldname": "rendered_sections",
+   "fieldtype": "Table",
+   "label": "Rendered Sections",
+   "options": "Employee Letter Rendered Section",
+   "permlevel": 1,
    "read_only": 1
   },
   {
-   "fieldname": "purpose",
-   "fieldtype": "Small Text",
-   "label": "Purpose"
+   "depends_on": "eval:doc.request_type=='Custom Letter' && doc.resolution_mode=='One-Time Letter' && doc.one_time_fee_policy=='Employee Pays'",
+   "fieldname": "one_time_fee_salary_component",
+   "fieldtype": "Link",
+   "label": "One-Time Fee Salary Component",
+   "options": "Salary Component",
+   "permlevel": 1
   },
   {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "label": "Series",
-   "options": "ELR-.YY.-.##",
-   "reqd": 1
+   "default": "0",
+   "depends_on": "eval:doc.fee_policy=='Employee Pays'",
+   "fieldname": "waive_fee",
+   "fieldtype": "Check",
+   "label": "Waive Fee",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:doc.waive_fee==1",
+   "fieldname": "fee_waiver_reason",
+   "fieldtype": "Small Text",
+   "label": "Fee Waiver Reason",
+   "permlevel": 1,
+   "mandatory_depends_on": "eval:doc.waive_fee==1"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-07 02:36:30.119208",
+ "modified": "2026-10-01 13:55:00.000000",
  "modified_by": "Administrator",
  "module": "PeopleOps",
  "name": "Employee Letter Request",
@@ -89,6 +1016,35 @@
   {
    "cancel": 1,
    "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1,
+   "permlevel": 0
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1,
+   "permlevel": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -97,7 +1053,21 @@
    "role": "HR Manager",
    "share": 1,
    "submit": 1,
-   "write": 1
+   "write": 1,
+   "permlevel": 0
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1,
+   "permlevel": 1
   },
   {
    "create": 1,
@@ -108,7 +1078,8 @@
    "report": 1,
    "role": "HR User",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "permlevel": 0
   },
   {
    "create": 1,
@@ -117,23 +1088,25 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Employee",
+   "role": "HR User",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "permlevel": 1
   },
   {
-   "email": 1,
-   "export": 1,
-   "print": 1,
+   "create": 1,
    "read": 1,
-   "report": 1,
-   "role": "All",
-   "share": 1
+   "role": "Employee",
+   "write": 1,
+   "permlevel": 0,
+   "print": 1
   }
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "employee,employee_name,request_type,letter_template,company,addressed_to",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee_name"
 }

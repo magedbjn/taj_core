@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "creation": "2026-09-27 09:50:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_title_english",
+  "section_title_arabic",
+  "column_break_settings",
+  "page_break_before",
+  "keep_together",
+  "content_english",
+  "content_arabic"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_title_english",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section Title (English)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_title_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section Title (Arabic)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_settings",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "page_break_before",
+   "fieldtype": "Check",
+   "label": "Page Break Before",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "keep_together",
+   "fieldtype": "Check",
+   "label": "Keep Section Together",
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_english",
+   "fieldtype": "Text Editor",
+   "label": "English Content",
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_arabic",
+   "fieldtype": "Text Editor",
+   "label": "Arabic Content",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-27 09:50:00.000000",
+ "modified_by": "Administrator",
+ "module": "PeopleOps",
+ "name": "Employee Letter Rendered Section",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -25,11 +25,19 @@ doctype_js = {
 permission_query_conditions = {
     "Checklist Answer": "taj_core.checklist.permissions.checklist_answer_query_conditions",
     "Checklist Action": "taj_core.checklist.permissions.checklist_action_query_conditions",
+    "Employee Document Template":
+        "taj_core.peopleops.doctype.employee_document_template.employee_document_template.get_permission_query_conditions",
+    "Employee Letter Request":
+        "taj_core.peopleops.doctype.employee_letter_request.employee_letter_request.get_permission_query_conditions",
 }
 
 has_permission = {
     "Checklist Answer": "taj_core.checklist.permissions.checklist_answer_has_permission",
     "Checklist Action": "taj_core.checklist.permissions.checklist_action_has_permission",
+     "Employee Document Template":
+        "taj_core.peopleops.doctype.employee_document_template.employee_document_template.has_permission",
+    "Employee Letter Request":
+        "taj_core.peopleops.doctype.employee_letter_request.employee_letter_request.has_permission",
 }
 
 scheduler_events = {
@@ -37,6 +45,7 @@ scheduler_events = {
 		"taj_core.company_documents.doctype.license.license.scheduled_status_update",
         "taj_core.qc.doctype.supplier_qualification.supplier_qualification.update_certificate_statuses",
         "taj_core.checklist.scheduler.daily_checklist_scheduler",
+        "taj_core.peopleops.doctype.employee_letter_request.employee_letter_request.update_expired_employee_letters",
 	],
     "cron": {
         "0 */4 * * *": [
@@ -63,6 +72,9 @@ override_whitelisted_methods = {
 }
 
 doc_events = {
+    "Employee": {
+        "on_update": "taj_core.peopleops.doctype.employee_letter_signatory.employee_letter_signatory.sync_signatory_with_employee_status",
+    },
     "Work Order": {
         "on_update_after_submit": "taj_core.checklist.production.on_work_order_update_after_submit",
     },

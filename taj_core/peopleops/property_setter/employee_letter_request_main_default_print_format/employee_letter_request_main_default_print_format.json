@@ -1,0 +1,17 @@
+{
+ "doctype": "Property Setter",
+ "name": "Employee Letter Request-main-default_print_format",
+ "doctype_or_field": "DocType",
+ "doc_type": "Employee Letter Request",
+ "property": "default_print_format",
+ "property_type": "Data",
+ "value": "Employee Letter Request",
+ "module": "PeopleOps",
+ "is_system_generated": 1,
+ "docstatus": 0,
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "creation": "2026-09-30 13:30:00.000000",
+ "modified": "2026-09-30 13:30:00.000000",
+ "idx": 0
+}
