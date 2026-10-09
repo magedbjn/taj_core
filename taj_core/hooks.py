@@ -5,6 +5,17 @@ app_description = "Core Customizations and common utilities for Taj ERPNext impl
 app_email = "m.bajandooh@tajff.sa"
 app_license = "mit"
 
+app_home = "/desk/taj"
+
+add_to_apps_screen = [
+    {
+        "name": app_name,
+        "title": app_title,
+        "route": app_home,
+        "sequence_id": 10,
+    }
+]
+
 required_apps = ["erpnext", "hrms"]
 
 app_include_js = [
