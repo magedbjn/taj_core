@@ -1,0 +1,95 @@
+{
+ "app": "taj_core",
+ "creation": "2026-10-10 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Dock",
+ "idx": 0,
+ "items": [
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "house",
+   "link_to": "Taj",
+   "link_type": "Workspace",
+   "title": "Taj"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "utensils",
+   "link_to": "Catering",
+   "link_type": "Sidebar",
+   "title": "Catering"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "shield-check",
+   "link_to": "QC",
+   "link_type": "Sidebar",
+   "title": "QC"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "flask-conical",
+   "link_to": "RND",
+   "link_type": "Sidebar",
+   "title": "RND"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "factory",
+   "link_to": "Taj Manufacturing",
+   "link_type": "Sidebar",
+   "title": "Taj Manufacturing"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "wrench",
+   "link_to": "Engineering",
+   "link_type": "Sidebar",
+   "title": "Engineering"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "users",
+   "link_to": "PeopleOps",
+   "link_type": "Sidebar",
+   "title": "PeopleOps"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "files",
+   "link_to": "Company Documents",
+   "link_type": "Sidebar",
+   "title": "Company Documents"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "list-checks",
+   "link_to": "Checklist",
+   "link_type": "Sidebar",
+   "title": "Checklist"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "blocks",
+   "link_to": "Taj Core",
+   "link_type": "Sidebar",
+   "title": "Taj Core"
+  }
+ ],
+ "modified": "2026-10-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "taj_core",
+ "owner": "Administrator",
+ "standard": 1,
+ "user": ""
+}
