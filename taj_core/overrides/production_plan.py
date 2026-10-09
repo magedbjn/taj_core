@@ -72,6 +72,7 @@ class CustomProductionPlan(ERPNextProductionPlan):
         sub_assembly_items_store = []
         source_name_to_final_name = {}
         bin_details = frappe._dict()
+        track_semi_finished_goods = True
 
         for row in self.po_items:
             if self.skip_available_sub_assembly_item and not self.sub_assembly_warehouse:
@@ -83,6 +84,15 @@ class CustomProductionPlan(ERPNextProductionPlan):
             if not row.bom_no:
                 frappe.throw(_("Row #{0}: Please select the BOM No in Assembly Items").format(row.idx))
 
+            if frappe.db.get_value("BOM", row.bom_no, "track_semi_finished_goods"):
+                frappe.msgprint(
+                    _(
+                        "Row #{0}: Since 'Track Semi Finished Goods' is enabled, the BOM {1} cannot be used for Sub Assembly Items"
+                    ).format(row.idx, row.bom_no)
+                )
+                continue
+
+            track_semi_finished_goods = False
             bom_data = []
 
             build_sub_assembly_items(
@@ -105,7 +115,11 @@ class CustomProductionPlan(ERPNextProductionPlan):
 
             sub_assembly_items_store.extend(bom_data)
 
-        if not sub_assembly_items_store and self.skip_available_sub_assembly_item:
+        if (
+            not track_semi_finished_goods
+            and not sub_assembly_items_store
+            and self.skip_available_sub_assembly_item
+        ):
             message = (
                 _(
                     "As there are sufficient Sub Assembly Items, Work Order is not required for Warehouse {0}."

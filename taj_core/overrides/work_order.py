@@ -70,6 +70,7 @@ def create_pick_list(source_name, target_doc=None, for_qty=None):
 			"Work Order": {"doctype": "Pick List", "validation": {"docstatus": ["=", 1]}},
 			"Work Order Item": {
 				"doctype": "Pick List Item",
+				"field_no_map": ["transferred_qty"],
 				"postprocess": update_item_quantity,
 				"condition": lambda doc: abs(doc.transferred_qty) < abs(doc.required_qty)
 				and doc.item_code not in bom_items,
@@ -118,7 +119,8 @@ def create_pick_list(source_name, target_doc=None, for_qty=None):
 		)
 
 	doc.parent_warehouse = parent_wh
-	doc.set_item_locations()
+	if not doc.pick_manually:
+		doc.set_item_locations()
 
 	return doc
 

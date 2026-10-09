@@ -1,0 +1,25 @@
+name: Taj Core v16 contracts
+
+on:
+  push:
+    branches:
+      - version-16
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v16-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout version-16
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile all Taj Core Python sources
+        run: python -m compileall -q taj_core
+      - name: Run isolated v16 contract regression tests
+        run: python -m unittest discover -s taj_core/tests -p 'test_v16_*py' -v

@@ -247,6 +247,7 @@ def get_number_of_leave_days(
 	half_day: int | str | None = None,
 	half_day_date: datetime.date | str | None = None,
 	holiday_list: str | None = None,
+	leave_application: str | None = None,
 ) -> float:
 	"""
 	Return leave days.
@@ -265,8 +266,10 @@ def get_number_of_leave_days(
 			half_day=half_day,
 			half_day_date=half_day_date,
 			holiday_list=holiday_list,
+			leave_application=leave_application,
 		)
 
+	core_leave_application.validate_leave_access(employee, leave_application)
 	return _compute_taj_public_holiday_leave_days(
 		employee=employee,
 		leave_type=leave_type,
@@ -346,6 +349,7 @@ class LeaveApplication(HRMSLeaveApplication):
 			return super().validate_balance_leaves()
 
 		precision = cint(frappe.db.get_single_value("System Settings", "float_precision")) or 2
+		leave_application = None if self.is_new() else self.name
 
 		if self.from_date and self.to_date:
 			self.total_leave_days = _compute_taj_public_holiday_leave_days(
@@ -372,6 +376,7 @@ class LeaveApplication(HRMSLeaveApplication):
 					self.to_date,
 					consider_all_leaves_in_the_allocation_period=True,
 					for_consumption=True,
+					leave_application=leave_application,
 				)
 
 				leave_balance_for_consumption = flt(
