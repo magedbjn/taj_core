@@ -182,3 +182,12 @@ before_migrate = "taj_core.checklist.schedule_migration.before_migrate"
 after_migrate = "taj_core.checklist.schedule_migration.after_migrate"
 after_install = "taj_core.install.after_install"
 before_uninstall = "taj_core.uninstall.before_uninstall"
+
+# BEGIN TAJ QC QUALITY MEETING ATTENDEES V16
+# Native app-level script, scoped to Quality Meeting (not a Client Script record).
+doctype_js["Quality Meeting"] = "public/js/quality_meeting.js"
+# Enforce uniqueness and refresh names on the server, including API saves.
+doc_events.setdefault("Quality Meeting", {})["validate"] = (
+    "taj_core.qc.quality_meeting.validate_attendees"
+)
+# END TAJ QC QUALITY MEETING ATTENDEES V16

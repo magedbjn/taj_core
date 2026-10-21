@@ -1,0 +1,38 @@
+{
+ "doctype": "DocType",
+ "name": "Quality Meeting Attendee",
+ "module": "QC",
+ "custom": 0,
+ "istable": 1,
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "label": "Employee",
+   "fieldtype": "Link",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 0,
+   "ignore_user_permissions": 1,
+   "link_filters": "[[\"Employee\", \"status\", \"=\", \"Active\"]]"
+  },
+  {
+   "fieldname": "employee_name",
+   "label": "Employee Name",
+   "fieldtype": "Data",
+   "fetch_from": null,
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 6
+  }
+ ],
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "track_changes": 0
+}

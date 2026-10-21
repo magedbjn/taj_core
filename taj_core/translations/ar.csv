@@ -242,3 +242,37 @@ Grand Total Cost,إجمالي التكلفة الكلي,
 "This checklist is view-only until its scheduled start time.","قائمة الفحص للعرض فقط حتى يحين وقت البدء المجدول."
 "Asset","الأصل"
 "Optional physical equipment scope. Use this when multiple assets share the same maintenance template.","ربط اختياري بالمعدة الفعلية لتمييز الأصول التي تستخدم نفس نموذج الصيانة."
+NC Category,تصنيف عدم المطابقة
+Category Name,اسم التصنيف
+Severity,درجة الخطورة
+Product / Item,المنتج / الصنف
+Batch No.,رقم التشغيلة
+Quantity Affected,الكمية المتأثرة
+Incident Details,تفاصيل عدم المطابقة
+Immediate Containment,إجراء الاحتواء الفوري
+Resolution & Follow-Up,المعالجة والمتابعة
+Product Disposition,قرار التصرف في المنتج
+Corrective & Preventive Actions,الإجراءات التصحيحية والوقائية
+Follow-Up,المتابعة
+Responsible Person,الشخص المسؤول
+Due Date,تاريخ الاستحقاق
+Food Safety,سلامة الغذاء
+Packaging,التعبئة والتغليف
+Metal Detection,كشف المعادن
+Retort,التعقيم الحراري
+Labeling,وضع الملصقات
+Minor,بسيط
+Major,رئيسي
+Critical,حرج
+Hold,حجز
+Re-inspect,إعادة الفحص
+Rework,إعادة العمل
+Reprocess,إعادة المعالجة
+Reject,رفض
+Release,إفراج
+Duplicate Attendee,حضور مكرر,
+Employee {0} is already in Attendees (rows {1} and {2}).,الموظف {0} مضاف بالفعل إلى الحضور (السطران {1} و{2}).,
+Only active employees may be added to Attendees: {0}.,يمكن إضافة الموظفين النشطين فقط إلى الحضور: {0}.,
+Employee {0} could not be found.,لم يتم العثور على الموظف {0}.,
+Select a valid Employee.,اختر موظفًا صحيحًا.,
+Not permitted to retrieve meeting attendee names.,ليس لديك صلاحية لعرض أسماء حضور الاجتماع.,
