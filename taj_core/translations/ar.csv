@@ -276,3 +276,7 @@ Only active employees may be added to Attendees: {0}.,يمكن إضافة الم
 Employee {0} could not be found.,لم يتم العثور على الموظف {0}.,
 Select a valid Employee.,اختر موظفًا صحيحًا.,
 Not permitted to retrieve meeting attendee names.,ليس لديك صلاحية لعرض أسماء حضور الاجتماع.,
+"Brand Tracking","تتبع الماركة"
+"Enable Brand Tracking","تفعيل تتبع الماركات"
+"Item {0}: existing Batch {1} has current stock {2} but no Actual Brand. Assign the actual Brand to current stock before enabling Brand Tracking.","الصنف {0}: الدفعة {1} تحتوي على رصيد حالي {2} بدون ماركة فعلية. حدد الماركة الفعلية للمخزون الحالي قبل تفعيل تتبع الماركة."
+"Stock Entry row {0}: Brand-tracked Item {1} requires a verified Batch for incoming stock.","إدخال المخزون، السطر {0}: الصنف {1} المتتبع حسب الماركة يتطلب دفعة ذات ماركة فعلية مؤكدة للمخزون الوارد."

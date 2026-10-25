@@ -178,9 +178,25 @@ doc_events = {
 
 
 
+# Taj brand-specific BOM requirements: additive hooks (v16).
+from taj_core.brand.registration import register_hooks as _taj_register_brand_hooks
+_taj_register_brand_hooks(doc_events, override_whitelisted_methods)
+
+# v16 additive Pick List behavior: native controller + Taj Brand mixin.
+extend_doctype_class = {
+    "Pick List": ["taj_core.brand.pick_list.BrandAwarePickList"],
+}
+
+
 before_migrate = "taj_core.checklist.schedule_migration.before_migrate"
-after_migrate = "taj_core.checklist.schedule_migration.after_migrate"
-after_install = "taj_core.install.after_install"
+after_migrate = [
+    "taj_core.checklist.schedule_migration.after_migrate",
+    "taj_core.brand.setup.apply",
+]
+after_install = [
+    "taj_core.install.after_install",
+    "taj_core.brand.setup.apply",
+]
 before_uninstall = "taj_core.uninstall.before_uninstall"
 
 # BEGIN TAJ QC QUALITY MEETING ATTENDEES V16

@@ -128,3 +128,11 @@ class CustomStockEntry(StockEntry):
 			return
 
 		super().validate_component_and_quantities()
+
+	def update_stock_ledger(self, *args, **kwargs):
+		# Final guard: check the resolved Serial and Batch Bundle immediately
+		# before ERPNext mutates Stock Ledger / accounting.
+		if self.docstatus == 1:
+			from taj_core.brand.validation import validate_stock_entry
+			validate_stock_entry(self, final=True)
+		return super().update_stock_ledger(*args, **kwargs)

@@ -37,7 +37,8 @@ def make_material_request_from_production_plan(source_name, target_doc=None, arg
 		target_doc.qty = source_doc.quantity
 		target_doc.schedule_date = source_doc.schedule_date or frappe.utils.nowdate()
 		target_doc.production_plan = source_parent.name
-		target_doc.production_plan_item = source_doc.name
+		target_doc.material_request_plan_item = source_doc.name
+		target_doc.taj_required_brand = source_doc.get("taj_required_brand") or ""
 
 	doclist = get_mapped_doc(
 		"Production Plan",
@@ -50,7 +51,7 @@ def make_material_request_from_production_plan(source_name, target_doc=None, arg
 			"Material Request Plan Item": {  # 👈 اسم الـ DocType للجدول الفرعي
 				"doctype": "Material Request Item",
 				"field_map": {
-					"name": "production_plan_item",
+					"name": "material_request_plan_item",
 					"parent": "production_plan",
 					"item_code": "item_code",
 					"item_name": "item_name",

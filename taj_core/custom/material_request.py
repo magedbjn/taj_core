@@ -36,6 +36,7 @@ def collect_similar_items(docname):
                 str(item.schedule_date or ""),
                 getattr(item, "production_plan", None) or "",
                 getattr(item, "material_request_plan_item", None) or "",
+                getattr(item, "taj_required_brand", None) or "",
             )
 
         # Collect data for compatible item rows.
