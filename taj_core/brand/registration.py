@@ -34,7 +34,7 @@ def register_hooks(doc_events, override_whitelisted_methods):
 
     # The validator lives in brand.pick_list, NOT brand.validation.  Keeping
     # these paths importable is essential: Frappe resolves them on every
-    # Pick List save/submit even when Brand enforcement is turned off.
+    # Pick List save/submit even when no Items are Brand-tracked.
     pick_list_validator = "taj_core.brand.pick_list.validate_pick_list"
     for event in ("before_save", "before_submit", "on_update_after_submit"):
         add_event(doc_events, "Pick List", event, pick_list_validator)

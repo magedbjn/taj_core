@@ -8,7 +8,6 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import cint
 
 BRAND = {"fieldtype": "Link", "options": "Brand", "label": "Required Brand", "read_only": 1}
 ACTUAL = {"fieldtype": "Link", "options": "Brand", "label": "Actual Brand"}
@@ -23,7 +22,7 @@ FIELDS = {
     },
     "Material Request Item": {"taj_required_brand": {**BRAND, "insert_after": "item_code"}},
     "Pick List Item": {"taj_required_brand": {**BRAND, "insert_after": "item_code", "description": "Required Brand from the linked Work Order BOM; read only."}},
-    "Work Order Item": {"taj_required_brand": {**BRAND, "insert_after": "item_code"}},
+    "Work Order Item": {"taj_required_brand": {**BRAND, "insert_after": "item_code", "in_list_view": 1}},
     "Stock Entry Detail": {"taj_required_brand": {**BRAND, "insert_after": "item_code"}},
     "Purchase Order Item": {"taj_required_brand": {**BRAND, "insert_after": "item_code"}},
     "Purchase Receipt Item": {"taj_required_brand": {**BRAND, "insert_after": "item_code"}},
@@ -226,7 +225,7 @@ def preflight():
             "Custom Field", {"dt": "Item", "fieldname": "taj_brand_column"},
             ["name", "fieldtype", "insert_after"], as_dict=True
         ),
-        "enforcement_enabled": bool(cint(frappe.conf.get("taj_brand_requirements_enabled"))),
+        "enforcement_mode": "Item.taj_brand_tracking",
         "ledger_snapshot": _ledger_snapshot(),
     }
     print("TAJ BRAND PREFLIGHT (READ ONLY):", frappe.as_json(values, indent=2))
@@ -253,6 +252,7 @@ def apply():
                 for property_name in (
                     ("insert_after", "read_only_depends_on") if dt == "Item"
                     else ("insert_after", "read_only", "label") if dt == "Batch"
+                    else ("insert_after", "read_only", "in_list_view") if dt == "Work Order Item"
                     else ("insert_after", "read_only")
                 ):
                     if property_name in spec and field.get(property_name) != spec[property_name]:
@@ -297,9 +297,14 @@ def audit_integrity():
     )
     result["required_bom_lines"] = len(requirements)
     for row in requirements:
-        item = frappe.get_cached_value("Item", row.item_code, ["has_batch_no", "is_stock_item"], as_dict=True)
+        item = frappe.get_cached_value(
+            "Item", row.item_code,
+            ["has_batch_no", "is_stock_item", "taj_brand_tracking"], as_dict=True,
+        )
         if not item or not item.has_batch_no or not item.is_stock_item:
             result["issues"].append("Required BOM item without batch tracking: " + row.parent + " / " + row.item_code)
+        elif not item.taj_brand_tracking:
+            result["issues"].append("Required BOM item without Brand Tracking: " + row.parent + " / " + row.item_code)
     actual_field = batch_brand_field()
     if frappe.get_meta("Batch").has_field(actual_field):
         # Existing brand values on historical batches are not modified.
@@ -324,6 +329,9 @@ def verify():
     tracking = frappe.get_meta("Item").get_field("taj_brand_tracking")
     if not tracking or tracking.read_only_depends_on != FIELDS["Item"]["taj_brand_tracking"]["read_only_depends_on"]:
         missing.append("Item.taj_brand_tracking must be disabled when Batch/Stock tracking is off")
+    work_order_brand = frappe.get_meta("Work Order Item").get_field("taj_required_brand")
+    if not work_order_brand or not work_order_brand.in_list_view:
+        missing.append("Work Order Item.taj_required_brand must be visible in the grid")
     for dt in LEGACY_COMMERCIAL_ACTUAL:
         cf = frappe.db.get_value(
             "Custom Field", {"dt": dt, "fieldname": "taj_actual_brand"}, "name"
@@ -342,7 +350,7 @@ def verify():
     missing.extend(batch_state["errors"])
     if not frappe.get_meta("Batch").has_field(batch_state["selected_field"]):
         missing.append("Missing canonical Batch Brand field: " + batch_state["selected_field"])
-    status = {"metadata_errors": missing, "batch_brand_source": batch_state, "integrity": audit_integrity(), "enforcement_enabled": bool(cint(frappe.conf.get("taj_brand_requirements_enabled")))}
+    status = {"metadata_errors": missing, "batch_brand_source": batch_state, "integrity": audit_integrity(), "enforcement_mode": "Item.taj_brand_tracking"}
     print("VERIFY (READ ONLY):", frappe.as_json(status, indent=2))
     if missing:
         frappe.throw(_("Brand metadata verification failed."))

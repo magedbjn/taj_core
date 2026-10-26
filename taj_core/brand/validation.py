@@ -1,21 +1,17 @@
-"""Non-bypassable server validations for source-specific manufacturing.
+"""Server-side Brand rules, activated exclusively by Item.taj_brand_tracking.
 
-The feature is opt-in per site via taj_brand_requirements_enabled.  Standard
-ERPNext is untouched when the flag is off or the BOM brand is empty.
+An empty BOM Required Brand permits any *verified* actual Batch Brand for a
+tracked Item.  Non-tracked Items retain ERPNext's native behavior.
 """
 from collections import defaultdict
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt
+from frappe.utils import flt
 
 from .bom import bom_brand_map, validate_bom_item_restrictions
 from .rules import MixedBrandRequirementError, brand, same_requirement, unique_brand_requirements
 from .setup import batch_brand_field
-
-
-def enabled():
-    return bool(cint(frappe.conf.get("taj_brand_requirements_enabled")))
 
 
 def _lineage_brand(doctype, name):
@@ -86,6 +82,16 @@ def _tracked(item_code):
     return _validate_item_tracking_contract(data, item_code)
 
 
+def require_tracked_brand(item_code, value, context):
+    """Reject a brand requirement for a non-tracked Item, never silently skip it."""
+    required = brand(value)
+    if required and not _tracked(item_code):
+        frappe.throw(_(
+            "Item {0}: Enable Brand Tracking before setting Required Brand in {1}."
+        ).format(item_code, _(context)))
+    return required
+
+
 def _batches(row):
     batch_names = set()
     if row.get("batch_no"):
@@ -127,8 +133,6 @@ def _stock_moved_before(batch_name, current_doctype, current_name):
 
 
 def validate_bom(doc, method=None):
-    if not enabled():
-        return
     validate_bom_item_restrictions(doc)
     # Work Order Item in v16 is an Item-level row; two different required
     # brands for a single item inside ONE BOM cannot be represented safely.
@@ -147,9 +151,7 @@ def validate_bom(doc, method=None):
 def validate_batch(doc, method=None):
     if not doc.get("item"):
         return
-    # Mandatory identity of a tracked Batch is not conditional on either of
-    # the independent feature switches; otherwise a partially enabled site
-    # may create unlabeled physical inventory.
+    # A tracked Batch always needs a physical identity, without any site flag.
     tracked = bool(frappe.get_cached_value("Item", doc.item, "taj_brand_tracking"))
     field = batch_brand_field()
     current = brand(doc.get(field))
@@ -238,7 +240,7 @@ def validate_item_tracking_transition(doc, method=None):
             ).format(doc.name))
 
 def validate_production_plan(doc, method=None):
-    if not enabled() or doc.docstatus == 2:
+    if doc.docstatus == 2:
         return
     from .planning import restricted_items, get_items_for_material_requests
     affected = restricted_items(doc)
@@ -268,14 +270,11 @@ def validate_production_plan(doc, method=None):
 
 
 def validate_material_request(doc, method=None):
-    if not enabled() or doc.docstatus == 2:
+    if doc.docstatus == 2:
         return
     for row in doc.get("items") or []:
         _sync_required(row, "Material Request Plan Item", row.get("material_request_plan_item"), "Material Request")
-        if brand(row.get("taj_required_brand")):
-            _tracked(row.item_code)  # A restricted BOM may be brand-specific even if tracking flag is off.
-            if not frappe.get_cached_value("Item", row.item_code, "has_batch_no"):
-                frappe.throw(_("Material Request item {0} needs Batch tracking for the required brand.").format(row.item_code))
+        require_tracked_brand(row.item_code, row.get("taj_required_brand"), "Material Request")
 
 
 def _resolve_stock_actual_brand(row, label, infer=True):
@@ -310,16 +309,18 @@ def _resolve_stock_actual_brand(row, label, infer=True):
 def _purchase_lines(doc, source_doctype, source_link, label, is_submit=False, stock=False):
     for row in doc.get("items") or []:
         _sync_required(row, source_doctype, row.get(source_link), label)
-        required = brand(row.get("taj_required_brand"))
+        required = require_tracked_brand(row.item_code, row.get("taj_required_brand"), label)
+        tracking = _tracked(row.item_code)
+        # An ordinary Item's commercial Brand and Batch are ERPNext's concern.
+        # Never infer or enforce Batch.taj_brand for non-tracked Items.
+        if not tracking:
+            continue
         # The native row.brand is the single purchasing identity: offered or
         # ordered on SQ/PO, physically verified on PR/stock-updating PI.
-        tracking = _tracked(row.item_code)
         actual = (
             _resolve_stock_actual_brand(row, label, infer=bool(tracking or required))
             if stock else brand(row.get("brand"))
         )
-        if required and not frappe.get_cached_value("Item", row.item_code, "has_batch_no"):
-            frappe.throw(_("Item {0} cannot require a brand without Batch tracking.").format(row.item_code))
         if required and actual and required != actual:
             frappe.throw(_("{0}, row {1}: Brand {2} differs from required Brand {3}.").format(
                 label, row.idx, actual, required
@@ -334,7 +335,8 @@ def _purchase_lines(doc, source_doctype, source_link, label, is_submit=False, st
 
 def _check_source_brand(doc, row, upstream_doctype, link, label, inherit_on_order=False):
     source_name = row.get(link)
-    if not source_name:
+    # Do not reinterpret ERPNext's native commercial Brand for ordinary Items.
+    if not source_name or not _tracked(row.item_code):
         return
     source = _sync_required(row, upstream_doctype, source_name, label, include_brand=True)
     source_brand = brand(source.brand)
@@ -350,20 +352,21 @@ def _check_source_brand(doc, row, upstream_doctype, link, label, inherit_on_orde
 
 
 def validate_request_for_quotation(doc, method=None):
-    if not enabled() or doc.docstatus == 2:
+    if doc.docstatus == 2:
         return
     for row in doc.get("items") or []:
         _sync_required(row, "Material Request Item", row.get("material_request_item"), "Request for Quotation")
+        require_tracked_brand(row.item_code, row.get("taj_required_brand"), "Request for Quotation")
 
 
 def validate_supplier_quotation(doc, method=None):
-    if not enabled() or doc.docstatus == 2:
+    if doc.docstatus == 2:
         return
     _purchase_lines(doc, "Request for Quotation Item", "request_for_quotation_item", "Supplier Quotation", doc._action == "submit")
 
 
 def validate_purchase_order(doc, method=None):
-    if not enabled() or doc.docstatus == 2:
+    if doc.docstatus == 2:
         return
     for row in doc.get("items") or []:
         _check_source_brand(doc, row, "Supplier Quotation Item", "supplier_quotation_item", "Purchase Order", inherit_on_order=True)
@@ -371,7 +374,7 @@ def validate_purchase_order(doc, method=None):
 
 
 def validate_purchase_receipt(doc, method=None):
-    if not enabled() or doc.docstatus == 2:
+    if doc.docstatus == 2:
         return
     _purchase_lines(doc, "Purchase Order Item", "purchase_order_item", "Purchase Receipt", doc._action == "submit", stock=True)
     # Compare after deriving row.brand from Batch; otherwise a blank commercial
@@ -381,7 +384,7 @@ def validate_purchase_receipt(doc, method=None):
 
 
 def validate_purchase_invoice(doc, method=None):
-    if not enabled() or doc.docstatus == 2:
+    if doc.docstatus == 2:
         return
     _purchase_lines(doc, "Purchase Order Item", "po_detail", "Purchase Invoice", doc._action == "submit", stock=bool(doc.get("update_stock")))
     for row in doc.get("items") or []:
@@ -393,17 +396,11 @@ def _bind_batches(doc):
     if doc.docstatus != 1:
         return
 
-    requirements_enabled = enabled()
-
     for row in doc.get("items") or []:
         if not row.get("item_code"):
             continue
         tracked = _tracked(row.item_code)
-        required = (
-            brand(row.get("taj_required_brand"))
-            if requirements_enabled
-            else ""
-        )
+        required = require_tracked_brand(row.item_code, row.get("taj_required_brand"), doc.doctype)
         if not tracked and not required:
             continue
         actual = _resolve_stock_actual_brand(row, doc.doctype)
@@ -448,7 +445,7 @@ def validate_work_order(doc, method=None):
     snapshot. Editing the BOM does NOT silently rewrite those requirements.
     An intentional BOM / multi-level setting change recalculates the snapshot.
     """
-    if not enabled() or doc.docstatus == 2 or not doc.get("bom_no"):
+    if doc.docstatus == 2 or not doc.get("bom_no"):
         return
 
     rows = [row for row in doc.get("required_items") or [] if row.get("item_code")]
@@ -510,7 +507,9 @@ def validate_work_order(doc, method=None):
         requirements = bom_brand_map(doc.bom_no, bool(doc.get("use_multi_level_bom")))
 
     for row in rows:
-        expected = brand(requirements.get(row.item_code))
+        expected = require_tracked_brand(
+            row.item_code, requirements.get(row.item_code), "Work Order"
+        )
         current = brand(row.get("taj_required_brand"))
         # An intentional BOM change resets the source requirement; otherwise
         # reject attempts to replace an already captured Brand via API.
@@ -529,7 +528,9 @@ def _work_order_brand_requirements(work_order_name):
         if not row.item_code:
             continue
 
-        required = brand(row.get("taj_required_brand"))
+        required = require_tracked_brand(
+            row.item_code, row.get("taj_required_brand"), "Work Order"
+        )
 
         if (
             row.item_code in requirements
@@ -634,8 +635,7 @@ def preserve_pick_list_stock_entry_batches(doc, method=None):
     Pick List transfers; non-restricted Item rows retain native behavior.
     """
     if (
-        not enabled()
-        or doc.docstatus == 2
+        doc.docstatus == 2
         or not doc.get("pick_list")
         or not doc.get("work_order")
     ):
@@ -708,9 +708,6 @@ def validate_stock_entry(doc, method=None, final=False):
     _validate_tracked_stock_entry_inbound(doc, final=final)
     _validate_tracked_stock_entry_outbound(doc, final=final)
 
-    if not enabled():
-        return
-
     restrictions = _stock_entry_requirements(doc)
     for row in doc.get("items") or []:
         if not row.get("item_code"):
@@ -731,9 +728,15 @@ def validate_stock_entry(doc, method=None, final=False):
             # specific requirement from the Work Order or BOM.
             required = required or source or ""
         # Required Brand is inherited from the authoritative MR/BOM/WO source.
+        # An alternate Item must itself be brand-tracked to fulfill this source.
+        required = require_tracked_brand(row.item_code, required, "Stock Entry")
         # Blank fields may be filled from that source, but a different explicit
         # value is tampering and must be rejected rather than silently replaced.
-        declared = brand(row.get("taj_required_brand"))
+        declared = require_tracked_brand(
+            row.item_code, row.get("taj_required_brand"), "Stock Entry"
+        )
+        if not _tracked(row.item_code) and not required and not declared:
+            continue
         if required and declared and declared != required:
             frappe.throw(_("Stock Entry row {0}: Required Brand {1} conflicts with source Required Brand {2}.").format(
                 row.idx, declared, required

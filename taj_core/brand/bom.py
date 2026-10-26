@@ -72,6 +72,13 @@ def validate_bom_item_restrictions(doc):
         required = brand(row.get("taj_required_brand"))
         if not required:
             continue
-        data = frappe.get_cached_value("Item", row.item_code, ["is_stock_item", "has_batch_no"], as_dict=True)
+        data = frappe.get_cached_value(
+            "Item", row.item_code,
+            ["is_stock_item", "has_batch_no", "taj_brand_tracking"], as_dict=True,
+        )
         if not data or not data.is_stock_item or not data.has_batch_no:
             frappe.throw(_("BOM row {0}: Item {1} requires batch tracking before a specific brand can be required.").format(row.idx, row.item_code))
+        if not data.taj_brand_tracking:
+            frappe.throw(_(
+                "Item {0}: Enable Brand Tracking before setting Required Brand in {1}."
+            ).format(row.item_code, _("BOM")))

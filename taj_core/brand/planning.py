@@ -19,7 +19,7 @@ from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
 from .bom import bom_components
 from .rules import allocate_requirements, brand
 from .setup import batch_brand_field
-from .validation import enabled as brand_enforcement_enabled
+from .validation import require_tracked_brand
 
 
 def _plan_demands(doc):
@@ -55,7 +55,13 @@ def _plan_demands(doc):
 
 
 def restricted_items(doc):
-    return {d["item_code"] for d in _plan_demands(doc) if brand(d.get("required_brand"))}
+    restricted = set()
+    for component in _plan_demands(doc):
+        if require_tracked_brand(
+            component["item_code"], component.get("required_brand"), "Production Plan"
+        ):
+            restricted.add(component["item_code"])
+    return restricted
 
 
 def _warehouse_for(item_code, component, company, target):
@@ -263,11 +269,14 @@ def get_items_for_material_requests(doc, warehouses=None, get_parent_warehouse_d
         payload = doc.as_dict()
     else:
         payload = doc
-    if not brand_enforcement_enabled():
-        return standard.get_items_for_material_requests(payload, warehouses, get_parent_warehouse_data)
     document = frappe._dict(payload)
     demand = _plan_demands(document)
-    affected = {r["item_code"] for r in demand if brand(r.get("required_brand"))}
+    affected = set()
+    for component in demand:
+        if require_tracked_brand(
+            component["item_code"], component.get("required_brand"), "Production Plan"
+        ):
+            affected.add(component["item_code"])
     if not affected:
         return standard.get_items_for_material_requests(payload, warehouses, get_parent_warehouse_data)
     if warehouses:

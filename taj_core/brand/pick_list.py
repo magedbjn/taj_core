@@ -2,8 +2,8 @@
 
 Frappe's extend_doctype_class hook adds this mixin without overriding ERPNext's
 Pick List controller.  Every stock lookup, reservation adjustment and UOM
-split uses ERPNext's native functions.  A blank BOM required Brand delegates
-completely to the native Pick List behavior.
+split uses ERPNext's native functions.  A blank BOM Required Brand permits any verified actual Batch Brand for a
+tracked Item; ordinary Items keep the native Pick List behavior.
 """
 
 import frappe
@@ -12,13 +12,11 @@ from frappe.utils import flt
 
 from .rules import brand
 from .setup import batch_brand_field
-from .validation import _batches, _brand_from_batch, _work_order_brand_requirements, enabled
+from .validation import _batches, _brand_from_batch, _tracked, _work_order_brand_requirements, require_tracked_brand
 
 
 def requirements_for_pick_list(pick_list):
     """Return (work_order, {item_code: required_brand}) for WO picking."""
-    if not enabled():
-        return None, {}
     # Check the Work Order link even if a caller tampers with Purpose.
     if not pick_list.get("work_order"):
         return None, {}
@@ -34,27 +32,36 @@ def validate_pick_list(doc, method=None):
     No batch selection is allowed to silently bypass the source Work Order BOM.
     """
     work_order, requirements = requirements_for_pick_list(doc)
-    if not work_order:
-        return
     for row in doc.get("locations") or []:
-        expected = brand(requirements.get(row.item_code))
-        provided = brand(row.get("taj_required_brand"))
+        if not row.get("item_code"):
+            continue
+        tracked = _tracked(row.item_code)
+        expected = require_tracked_brand(
+            row.item_code, requirements.get(row.item_code), "Pick List"
+        )
+        provided = require_tracked_brand(
+            row.item_code, row.get("taj_required_brand"), "Pick List"
+        )
         if provided and provided != expected:
             frappe.throw(_("Pick List row {0}: Required Brand must match the Work Order BOM.").format(row.idx))
         row.taj_required_brand = expected
-        if not expected:
+        if not tracked:
             continue
         batch_names = _batches(row)
         quantity = max(flt(row.get("stock_qty")), flt(row.get("picked_qty")))
-        if quantity > 0 and not batch_names:
+        if expected and quantity > 0 and not batch_names:
             frappe.throw(_("Pick List row {0}: Select a Batch with required Brand {1} for Item {2}.").format(
                 row.idx, expected, row.item_code
             ))
         for batch_no in batch_names:
             actual = _brand_from_batch(row.item_code, batch_no)
-            if actual != expected:
+            if not actual:
+                frappe.throw(_("Pick List row {0}: Batch {1} is missing its verified actual Brand.").format(
+                    row.idx, batch_no
+                ))
+            if expected and actual != expected:
                 frappe.throw(_("Pick List row {0}: Batch {1} has Brand {2}; required Brand is {3}.").format(
-                    row.idx, batch_no, actual or _("Unverified"), expected
+                    row.idx, batch_no, actual, expected
                 ))
 
 
