@@ -1,5 +1,6 @@
 # file : taj_core.taj_manufacutring.api.preparation_labels.py
 import frappe
+from decimal import Decimal, ROUND_HALF_UP
 from math import ceil
 from frappe.utils import flt, cint
 from taj_core.taj_manufacturing.production_plan_helpers import (
@@ -595,14 +596,12 @@ def _resolve_merged_sources(current_sub):
         return []
 
     sources = []
-    seen_source_names = set()
+    sources_by_key = {}
 
     for split_row in split_rows:
         actual_pp_item = _resolve_pp_item_reference(
-            current_sub.get("parent"),
-            split_row.get("source_assembly_item"),
+            current_sub.get("parent"), split_row.get("source_assembly_item")
         )
-
         if not actual_pp_item:
             frappe.throw(
                 "Could not resolve source Production Plan Item from split row reference "
@@ -615,20 +614,22 @@ def _resolve_merged_sources(current_sub):
             linked_bom_hint=current_sub.get("bom_no"),
             linked_operation_hint=current_sub.get("operation"),
         )
-
         if not source:
             frappe.throw(f"Could not build source from Production Plan Item: {actual_pp_item}")
-
         if not source.get("linked_rows"):
             frappe.throw(
                 f"Item {current_sub.get('production_item')} was not found in source BOM {source.get('bom_no')}."
             )
 
         source_key = _norm_txt(source.get("source_name")) or _norm_txt(actual_pp_item)
-        if source_key in seen_source_names:
+        if source_key in sources_by_key:
+            # Preserve every selected Split row, including distinct operations
+            # for the same FG and source PRE item.
+            sources_by_key[source_key]["_taj_split_rows"].append(split_row)
             continue
 
-        seen_source_names.add(source_key)
+        source["_taj_split_rows"] = [split_row]
+        sources_by_key[source_key] = source
         sources.append(source)
 
     return sources
@@ -856,6 +857,111 @@ def _build_regular_work_order_labels(doc, source, selected_item_filters=None, so
     return labels
 
 
+
+def _taj_decimal(value):
+    """Decimal conversion for stored amounts; avoids binary-float centigram drift."""
+    return Decimal(str(value if value is not None else 0))
+
+
+def _taj_precision(split_qty):
+    """Respect current planning precision without erasing old saved precision."""
+    current = cint(frappe.get_precision("Production Plan Sub Assembly Item", "qty") or 0)
+    stored = max(0, -_taj_decimal(split_qty).as_tuple().exponent)
+    return max(current, stored)
+
+
+def _taj_allocate_to_total(raw_chunks, planned_total, precision):
+    """Assign displayable weights whose sum is exactly the saved planned qty.
+
+    Uses cumulative rounding rather than individually rounding every load,
+    which would accumulate error over many loads. No arbitrary extra material.
+    """
+    raw = [_taj_decimal(q) for q in raw_chunks]
+    total = sum(raw, Decimal(0))
+    target = _taj_decimal(planned_total)
+    unit = Decimal(1).scaleb(-precision)
+    if not raw or total <= 0 or target <= 0:
+        frappe.throw("PRE label split has no positive BOM or planned quantity")
+    if target != target.quantize(unit):
+        frappe.throw("PRE split quantity has more decimal places than planned precision")
+
+    out = []
+    cumulative = Decimal(0)
+    assigned = Decimal(0)
+    for idx, raw_qty in enumerate(raw):
+        cumulative += raw_qty
+        new_assigned = (
+            target if idx == len(raw) - 1 else
+            (target * cumulative / total).quantize(unit, rounding=ROUND_HALF_UP)
+        )
+        qty = new_assigned - assigned
+        if qty <= 0:
+            frappe.throw(
+                "PRE label weight becomes zero or negative at current precision. "
+                "Increase Float Precision before creating new production plans."
+            )
+        out.append(float(qty))
+        assigned = new_assigned
+    return out
+
+
+def _taj_assign_splits_to_link_rows(source, link_rows):
+    """Map each saved planning split to exactly one BOM operation row.
+
+    Never guess when the same PRE item appears in multiple indistinguishable
+    BOM rows. Mismatches must be reviewed, not silently reassigned.
+    """
+    splits = list(source.get("_taj_split_rows") or [])
+    if not splits:
+        return None
+
+    available = set(range(len(link_rows)))
+    matches = {}
+    source_qty = _taj_decimal(source.get("qty"))
+    for split in splits:
+        planned = _taj_decimal(split.get("sub_assembly_qty"))
+        precision = _taj_precision(planned)
+        if planned <= 0:
+            frappe.throw("PRE split has zero or negative sub_assembly_qty")
+
+        choices = []
+        for idx in sorted(available):
+            link = link_rows[idx]
+            split_bom = _norm_txt(split.get("sub_assembly_bom_no"))
+            link_bom = _norm_txt(link.get("linked_bom_no"))
+            if split_bom and link_bom and split_bom != link_bom:
+                continue
+            bom_qty = _taj_decimal(link.get("source_bom_qty") or 0)
+            if bom_qty <= 0:
+                continue
+            expected = _taj_decimal(link.get("linked_item_qty")) * source_qty / bom_qty
+            # Mirror ERPNext's own planning calculation and precision.
+            if flt(float(expected), precision) == flt(float(planned), precision):
+                choices.append((abs(expected - planned), idx))
+
+        if not choices:
+            frappe.throw(
+                f"PRE split quantity {planned} does not match any unused "
+                f"BOM row for FG source {source.get('source_name')}. "
+                "Review the BOM or manually adjusted Production Plan."
+            )
+        choices.sort()
+        if len(choices) > 1 and choices[0][0] == choices[1][0]:
+            a, b = link_rows[choices[0][1]], link_rows[choices[1][1]]
+            if (a.get("linked_item_operation"), a.get("batch_size")) != (
+                b.get("linked_item_operation"), b.get("batch_size")
+            ):
+                frappe.throw(
+                    "Ambiguous PRE split: two BOM operations use the same "
+                    "item and quantity. Cannot infer which operation was selected."
+                )
+
+        idx = choices[0][1]
+        available.remove(idx)
+        matches[idx] = (planned, precision)
+    return matches
+
+
 def _build_sub_assembly_chunks(doc, sources, source_job_card=None):
     job_card_stage = _get_job_card_stage(source_job_card)
     chunks = []
@@ -865,7 +971,12 @@ def _build_sub_assembly_chunks(doc, sources, source_job_card=None):
         if source_qty <= 0:
             continue
 
-        for link_row in _get_relevant_link_rows(source):
+        link_rows = _get_relevant_link_rows(source)
+        split_targets = _taj_assign_splits_to_link_rows(source, link_rows)
+        for link_idx, link_row in enumerate(link_rows):
+            if split_targets is not None and link_idx not in split_targets:
+                # Only the operations explicitly included in this merge group.
+                continue
             source_stage = _norm_txt(link_row.get("production_stage")).lower()
             if not _should_allow_print(job_card_stage, source_stage):
                 continue
@@ -876,17 +987,15 @@ def _build_sub_assembly_chunks(doc, sources, source_job_card=None):
 
             source_bom_qty = flt(link_row.get("source_bom_qty") or 1)
             linked_item_qty = flt(link_row.get("linked_item_qty") or 0)
-
             if source_bom_qty <= 0 or linked_item_qty <= 0:
                 continue
 
+            operation_chunks = []
             for load in _build_loads(source_qty, batch_size):
                 sub_chunk_qty = linked_item_qty * (flt(load["qty"]) / source_bom_qty)
-
                 if sub_chunk_qty <= 0:
                     continue
-
-                chunks.append({
+                operation_chunks.append({
                     "chunk_qty": flt(sub_chunk_qty),
                     "load_i": load["load_i"],
                     "loads": load["loads"],
@@ -895,8 +1004,19 @@ def _build_sub_assembly_chunks(doc, sources, source_job_card=None):
                     "planned_start_date": source.get("planned_start_date"),
                     "product_name": source.get("item_name") or "",
                     "label_operation": _norm_txt(link_row.get("linked_item_operation")),
+                    "taj_source_name": _norm_txt(source.get("source_name")),
                 })
 
+            if split_targets is not None and operation_chunks:
+                planned_total, precision = split_targets[link_idx]
+                assigned = _taj_allocate_to_total(
+                    [chunk["chunk_qty"] for chunk in operation_chunks],
+                    planned_total, precision,
+                )
+                for chunk, assigned_qty in zip(operation_chunks, assigned):
+                    chunk["chunk_qty"] = assigned_qty
+
+            chunks.extend(operation_chunks)
     return chunks
 
 
