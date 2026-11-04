@@ -1,3 +1,5 @@
+import inspect
+
 import frappe
 from frappe import _
 from frappe.utils import flt
@@ -74,6 +76,8 @@ class CustomProductionPlan(ERPNextProductionPlan):
         bin_details = frappe._dict()
         track_semi_finished_goods = True
 
+        builder_params = inspect.signature(build_sub_assembly_items).parameters
+
         for row in self.po_items:
             if self.skip_available_sub_assembly_item and not self.sub_assembly_warehouse:
                 frappe.throw(_("Row #{0}: Please select the Sub Assembly Warehouse").format(row.idx))
@@ -95,16 +99,22 @@ class CustomProductionPlan(ERPNextProductionPlan):
             track_semi_finished_goods = False
             bom_data = []
 
-            build_sub_assembly_items(
-                [item.production_item for item in sub_assembly_items_store],
-                bin_details,
-                row.bom_no,
-                bom_data,
-                row.planned_qty,
-                self.company,
-                warehouse=self.sub_assembly_warehouse,
-                skip_available_sub_assembly_item=self.skip_available_sub_assembly_item,
-            )
+            builder_args = {
+                "bin_details": bin_details,
+                "bom_no": row.bom_no,
+                "bom_data": bom_data,
+                "to_produce_qty": row.planned_qty,
+                "company": self.company,
+                "warehouse": self.sub_assembly_warehouse,
+                "skip_available_sub_assembly_item": self.skip_available_sub_assembly_item,
+            }
+
+            if "sub_assembly_items" in builder_params:
+                builder_args["sub_assembly_items"] = [
+                    item.production_item for item in sub_assembly_items_store
+                ]
+
+            build_sub_assembly_items(**builder_args)
 
             self.set_sub_assembly_items_based_on_level(row, bom_data, manufacturing_type)
 
