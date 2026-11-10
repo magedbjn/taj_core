@@ -1,0 +1,447 @@
+{
+ "actions": [],
+ "autoname": "format:MRCL-{YYYY}-{#####}",
+ "creation": "2026-11-09 10:19:35.495575",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "overview_tab",
+  "identity_section",
+  "title",
+  "company",
+  "identity_col_1",
+  "status",
+  "result",
+  "identity_col_2",
+  "is_simulation",
+  "snapshot_date",
+  "scenario_section",
+  "scenario_type",
+  "scenario_col_1",
+  "item_code",
+  "scenario_col_2",
+  "batch_no",
+  "summary_section",
+  "trace_row_count",
+  "summary_col_1",
+  "customer_count",
+  "summary_col_2",
+  "elapsed_seconds",
+  "purpose_section",
+  "reason",
+  "purpose_col",
+  "objective",
+  "timing_tab",
+  "trace_section",
+  "trace_rows",
+  "started_at",
+  "completed_at",
+  "evidence_version",
+  "snapshot_issues",
+  "distribution_tab",
+  "distribution_section",
+  "distribution_rows",
+  "review_tab",
+  "checks_section",
+  "quantity_verified",
+  "checks_col_1",
+  "customers_verified",
+  "checks_col_2",
+  "genealogy_verified",
+  "coverage_section",
+  "coverage_notes",
+  "coverage_col",
+  "exceptions",
+  "outcome_section",
+  "review_notes",
+  "closing_tab",
+  "reviewer_section",
+  "reviewed_by",
+  "reviewer_col",
+  "reviewed_at",
+  "closure_section",
+  "closure_notes",
+  "links_section",
+  "quality_action",
+  "links_col",
+  "quality_review"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nTraced\nUnder Review\nClosed",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_simulation",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Simulation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scenario_section",
+   "fieldtype": "Section Break",
+   "label": "Scenario and Scope"
+  },
+  {
+   "fieldname": "scenario_type",
+   "fieldtype": "Select",
+   "label": "Scenario Type",
+   "options": "Finished Product\nRaw Material\nPreparation\nPackaging Material",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "batch_no",
+   "fieldtype": "Link",
+   "label": "Batch",
+   "options": "Batch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Hypothetical Recall Reason",
+   "reqd": 1
+  },
+  {
+   "fieldname": "objective",
+   "fieldtype": "Small Text",
+   "label": "Objective"
+  },
+  {
+   "fieldname": "timing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Traceability Evidence"
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Started At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Tracing Completed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "elapsed_seconds",
+   "fieldtype": "Float",
+   "label": "Tracing Duration (seconds)",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "snapshot_date",
+   "fieldtype": "Datetime",
+   "label": "Snapshot Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trace_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "trace_rows",
+   "fieldtype": "Table",
+   "label": "Traceability Evidence",
+   "options": "Mock Recall Trace",
+   "read_only": 1
+  },
+  {
+   "fieldname": "distribution_tab",
+   "fieldtype": "Tab Break",
+   "label": "Customer Distribution"
+  },
+  {
+   "fieldname": "distribution_rows",
+   "fieldtype": "Table",
+   "label": "Customer Distribution",
+   "options": "Mock Recall Distribution",
+   "read_only": 1
+  },
+  {
+   "fieldname": "review_tab",
+   "fieldtype": "Tab Break",
+   "label": "Quality Review"
+  },
+  {
+   "fieldname": "trace_row_count",
+   "fieldtype": "Int",
+   "label": "Trace Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer_count",
+   "fieldtype": "Int",
+   "label": "Customers Found",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "quantity_verified",
+   "fieldtype": "Check",
+   "label": "Quantity Reconciliation Verified"
+  },
+  {
+   "default": "0",
+   "fieldname": "customers_verified",
+   "fieldtype": "Check",
+   "label": "Customer List Verified"
+  },
+  {
+   "default": "0",
+   "fieldname": "genealogy_verified",
+   "fieldtype": "Check",
+   "label": "Production Genealogy Verified"
+  },
+  {
+   "fieldname": "coverage_notes",
+   "fieldtype": "Small Text",
+   "label": "Quantity Reconciliation / Coverage Evidence"
+  },
+  {
+   "fieldname": "exceptions",
+   "fieldtype": "Text Editor",
+   "label": "Unresolved Exceptions"
+  },
+  {
+   "default": "Not Evaluated",
+   "fieldname": "result",
+   "fieldtype": "Select",
+   "label": "Assessment",
+   "options": "Not Evaluated\nPassed\nFailed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "review_notes",
+   "fieldtype": "Text Editor",
+   "label": "Quality Review Notes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quality_action",
+   "fieldtype": "Link",
+   "label": "Quality Action",
+   "options": "Quality Action"
+  },
+  {
+   "fieldname": "quality_review",
+   "fieldtype": "Link",
+   "label": "Quality Review",
+   "options": "Quality Review"
+  },
+  {
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "label": "Reviewed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviewed_at",
+   "fieldtype": "Datetime",
+   "label": "Reviewed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Closure and Attachments"
+  },
+  {
+   "fieldname": "closure_notes",
+   "fieldtype": "Text Editor",
+   "label": "Closure and Lessons Learned"
+  },
+  {
+   "default": "0",
+   "fieldname": "evidence_version",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Evidence Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "snapshot_issues",
+   "fieldtype": "Small Text",
+   "label": "Source Evidence Issues",
+   "read_only": 1,
+   "hidden": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "overview_tab",
+   "fieldtype": "Tab Break",
+   "label": "Recall Overview"
+  },
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Document Details"
+  },
+  {
+   "fieldname": "identity_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "identity_col_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "scenario_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "scenario_col_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break",
+   "label": "Execution Summary"
+  },
+  {
+   "fieldname": "summary_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "summary_col_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "purpose_section",
+   "fieldtype": "Section Break",
+   "label": "Reason and Objective"
+  },
+  {
+   "fieldname": "purpose_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "distribution_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "checks_section",
+   "fieldtype": "Section Break",
+   "label": "Evidence Reconciliation"
+  },
+  {
+   "fieldname": "coverage_section",
+   "fieldtype": "Section Break",
+   "label": "Coverage and Exceptions"
+  },
+  {
+   "fieldname": "coverage_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "outcome_section",
+   "fieldtype": "Section Break",
+   "label": "Review Notes"
+  },
+  {
+   "fieldname": "reviewer_section",
+   "fieldtype": "Section Break",
+   "label": "Review Confirmation"
+  },
+  {
+   "fieldname": "reviewer_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "closure_section",
+   "fieldtype": "Section Break",
+   "label": "Closure Lessons"
+  },
+  {
+   "fieldname": "links_section",
+   "fieldtype": "Section Break",
+   "label": "Linked Quality Documents"
+  },
+  {
+   "fieldname": "links_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "checks_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "checks_col_2",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-09 16:34:10.994463",
+ "modified_by": "m.bajandooh@tajff.sa",
+ "module": "QC",
+ "name": "Mock Recall",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Quality Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QC User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

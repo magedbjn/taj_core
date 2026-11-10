@@ -1,0 +1,120 @@
+{
+  "doctype": "DocType",
+  "name": "Mock Recall Distribution",
+  "module": "QC",
+  "engine": "InnoDB",
+  "field_order": [
+    "customer",
+    "voucher_type",
+    "voucher_no",
+    "item_code",
+    "batch_no",
+    "qty",
+    "returned_qty",
+    "net_qty",
+    "evidence_type",
+    "source_notes",
+    "uom",
+    "verification",
+    "notes",
+    "return_references"
+  ],
+  "fields": [
+    {
+      "fieldname": "customer",
+      "fieldtype": "Link",
+      "label": "Customer",
+      "options": "Customer",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "voucher_type",
+      "fieldtype": "Link",
+      "label": "Voucher Type",
+      "options": "DocType"
+    },
+    {
+      "fieldname": "voucher_no",
+      "fieldtype": "Dynamic Link",
+      "label": "Voucher",
+      "options": "voucher_type",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "item_code",
+      "fieldtype": "Link",
+      "label": "Item",
+      "options": "Item"
+    },
+    {
+      "fieldname": "batch_no",
+      "fieldtype": "Link",
+      "label": "Batch",
+      "options": "Batch"
+    },
+    {
+      "fieldname": "qty",
+      "fieldtype": "Float",
+      "label": "Dispatched Qty",
+      "in_list_view": 1,
+      "precision": "9"
+    },
+    {
+      "fieldname": "uom",
+      "fieldtype": "Link",
+      "label": "UOM",
+      "options": "UOM"
+    },
+    {
+      "fieldname": "verification",
+      "fieldtype": "Select",
+      "label": "Verification",
+      "options": "Unverified\nVerified\nDiscrepancy",
+      "default": "Unverified"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes"
+    },
+    {
+      "fieldname": "returned_qty",
+      "fieldtype": "Float",
+      "label": "Returned Quantity",
+      "read_only": 1,
+      "precision": "9"
+    },
+    {
+      "fieldname": "net_qty",
+      "fieldtype": "Float",
+      "label": "Net Quantity",
+      "read_only": 1,
+      "precision": "9"
+    },
+    {
+      "fieldname": "evidence_type",
+      "fieldtype": "Select",
+      "label": "Distribution Evidence Type",
+      "options": "Batch\nItem Candidate",
+      "read_only": 1
+    },
+    {
+      "fieldname": "source_notes",
+      "fieldtype": "Small Text",
+      "label": "Source Scope and Return References",
+      "read_only": 1
+    },
+    {
+      "fieldname": "return_references",
+      "fieldtype": "Small Text",
+      "label": "Saved Return References",
+      "read_only": 1,
+      "hidden": 1
+    }
+  ],
+  "permissions": [],
+  "istable": 1,
+  "track_changes": 0,
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}
