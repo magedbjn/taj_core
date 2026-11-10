@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"YNmWwiaJp-\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">QC</span>\",\"col\":12}},{\"id\":\"aw1lKW8tyx\",\"type\":\"card\",\"data\":{\"card_name\":\"Qualification\",\"col\":4}},{\"id\":\"oHVpj4a6Re\",\"type\":\"card\",\"data\":{\"card_name\":\"Specification\",\"col\":4}},{\"id\":\"XOQtwbvMgx\",\"type\":\"card\",\"data\":{\"card_name\":\"Visitor\",\"col\":4}},{\"id\":\"mvKLjQP3Lu\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}}]",
+ "content": "[{\"id\":\"YNmWwiaJp-\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">QC</span>\",\"col\":12}},{\"id\":\"aw1lKW8tyx\",\"type\":\"card\",\"data\":{\"card_name\":\"Qualification\",\"col\":4}},{\"id\":\"oHVpj4a6Re\",\"type\":\"card\",\"data\":{\"card_name\":\"Specification\",\"col\":4}},{\"id\":\"XOQtwbvMgx\",\"type\":\"card\",\"data\":{\"card_name\":\"Visitor\",\"col\":4}},{\"id\":\"mvKLjQP3Lu\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}},{\"id\":\"tajMockRecall\",\"type\":\"card\",\"data\":{\"card_name\":\"Mock Recall\",\"col\":4}}]",
  "creation": "2025-10-20 13:39:39.163992",
  "custom_blocks": [],
  "docstatus": 0,
@@ -46,7 +46,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Specification",
-   "link_count": 2,
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -67,6 +67,16 @@
    "label": "Laboratory Test",
    "link_count": 0,
    "link_to": "Laboratory Test",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Finished Product Nutrition Facts",
+   "link_count": 0,
+   "link_to": "Finished Product Nutrition Facts",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -118,6 +128,34 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Mock Recall",
+   "link_count": 2,
+   "link_type": "DocType",
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Mock Recall",
+   "link_count": 0,
+   "link_to": "Mock Recall",
+   "link_type": "DocType",
+   "type": "Link",
+   "onboard": 0
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Mock Recall Summary",
+   "link_count": 0,
+   "link_to": "Mock Recall Summary",
+   "link_type": "Report",
+   "type": "Link",
+   "onboard": 0
   }
  ],
  "modified": "2026-04-02 10:04:18.098119",

@@ -1,0 +1,30 @@
+{
+ "doctype": "DocType",
+ "name": "Finished Product Label Amount Rule",
+ "module": "QC",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 1,
+ "field_order": [
+  "nutrient",
+  "less_than_one"
+ ],
+ "fields": [
+  {
+   "fieldname": "nutrient",
+   "fieldtype": "Select",
+   "label": "Nutrient",
+   "options": "\nProtein\nTotal Fat\nSaturated Fat\nTrans Fat\nCholesterol\nTotal Carbohydrates\nTotal Sugars\nAdded Sugars\nDietary Fiber\nSodium",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "less_than_one",
+   "fieldtype": "Check",
+   "label": "Less than 1",
+   "default": "1",
+   "in_list_view": 1
+  }
+ ],
+ "permissions": []
+}

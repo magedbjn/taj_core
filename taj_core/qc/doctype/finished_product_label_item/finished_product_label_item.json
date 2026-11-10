@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "creation": "2026-11-10 09:02:09.011098",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "item_name_arabic"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "item_code.item_name_arabic",
+   "fieldname": "item_name_arabic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name Arabic",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-10 15:29:17.269968",
+ "modified_by": "m.bajandooh@tajff.sa",
+ "module": "QC",
+ "name": "Finished Product Label Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

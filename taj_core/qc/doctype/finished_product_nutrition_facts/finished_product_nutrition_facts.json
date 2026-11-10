@@ -1,0 +1,375 @@
+{
+ "actions": [],
+ "autoname": "format:FPL-{YYYY}-{#####}",
+ "creation": "2026-11-10 09:13:46.865610",
+ "description": "QC master per 100 g: standard Item variants inherit automatically; additional standalone Finished Goods Items can share the approved label.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "products_tab",
+  "item_code",
+  "item_name",
+  "item_name_arabic",
+  "independent_items_section",
+  "additional_items",
+  "nutrients_tab",
+  "nutrients_section",
+  "calories_kcal",
+  "protein_g",
+  "total_fat_g",
+  "saturated_fat_g",
+  "trans_fat_g",
+  "cholesterol_mg",
+  "nutrition_column",
+  "carbohydrates_g",
+  "total_sugars_g",
+  "added_sugars_g",
+  "dietary_fiber_g",
+  "sodium_mg",
+  "amount_rules_section",
+  "amount_rules",
+  "label_tab",
+  "label_details_section",
+  "ingredients_ar",
+  "label_column",
+  "amended_from",
+  "allergen_checks_section",
+  "allergen_gluten",
+  "allergen_milk",
+  "allergen_eggs",
+  "allergen_fish",
+  "allergen_crustaceans",
+  "allergen_molluscs",
+  "allergen_peanuts",
+  "allergen_checks_column",
+  "allergen_tree_nuts",
+  "allergen_soybeans",
+  "allergen_sesame",
+  "allergen_mustard",
+  "allergen_celery",
+  "allergen_lupin",
+  "allergen_sulphites"
+ ],
+ "fields": [
+  {
+   "fieldname": "products_tab",
+   "fieldtype": "Tab Break",
+   "label": "Products"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "item_code.item_name_arabic",
+   "fieldname": "item_name_arabic",
+   "fieldtype": "Data",
+   "label": "Item Name (Arabic)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "independent_items_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "additional_items",
+   "fieldtype": "Table",
+   "label": "Additional Items",
+   "options": "Finished Product Label Item"
+  },
+  {
+   "fieldname": "nutrients_tab",
+   "fieldtype": "Tab Break",
+   "label": "Nutrition Facts"
+  },
+  {
+   "fieldname": "nutrients_section",
+   "fieldtype": "Section Break",
+   "label": "Per 100 g"
+  },
+  {
+   "fieldname": "calories_kcal",
+   "fieldtype": "Int",
+   "label": "Calories (kcal)"
+  },
+  {
+   "fieldname": "protein_g",
+   "fieldtype": "Int",
+   "label": "Protein (g)"
+  },
+  {
+   "fieldname": "total_fat_g",
+   "fieldtype": "Int",
+   "label": "Total Fat (g)"
+  },
+  {
+   "fieldname": "saturated_fat_g",
+   "fieldtype": "Int",
+   "label": "Saturated Fat (g)"
+  },
+  {
+   "fieldname": "trans_fat_g",
+   "fieldtype": "Int",
+   "label": "Trans Fat (g)"
+  },
+  {
+   "fieldname": "cholesterol_mg",
+   "fieldtype": "Int",
+   "label": "Cholesterol (mg)"
+  },
+  {
+   "fieldname": "nutrition_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "carbohydrates_g",
+   "fieldtype": "Int",
+   "label": "Carbohydrates (g)"
+  },
+  {
+   "fieldname": "total_sugars_g",
+   "fieldtype": "Int",
+   "label": "Total Sugars (g)"
+  },
+  {
+   "fieldname": "added_sugars_g",
+   "fieldtype": "Int",
+   "label": "Added Sugars (g)"
+  },
+  {
+   "fieldname": "dietary_fiber_g",
+   "fieldtype": "Int",
+   "label": "Dietary Fiber (g)"
+  },
+  {
+   "fieldname": "sodium_mg",
+   "fieldtype": "Int",
+   "label": "Sodium (mg)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "amount_rules_section",
+   "fieldtype": "Section Break",
+   "label": "Special Amounts"
+  },
+  {
+   "fieldname": "amount_rules",
+   "fieldtype": "Table",
+   "label": "Less Than Values",
+   "options": "Finished Product Label Amount Rule"
+  },
+  {
+   "fieldname": "label_tab",
+   "fieldtype": "Tab Break",
+   "label": "Label Details"
+  },
+  {
+   "fieldname": "label_details_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ingredients_ar",
+   "fieldtype": "Small Text",
+   "label": "Ingredients",
+   "reqd": 1
+  },
+  {
+   "fieldname": "label_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Finished Product Nutrition Facts",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "allergen_checks_section",
+   "fieldtype": "Section Break",
+   "label": "Allergens"
+  },
+  {
+   "fieldname": "allergen_checks_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "allergen_gluten",
+   "fieldtype": "Check",
+   "label": "Gluten",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_milk",
+   "fieldtype": "Check",
+   "label": "Milk",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_eggs",
+   "fieldtype": "Check",
+   "label": "Eggs",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_fish",
+   "fieldtype": "Check",
+   "label": "Fish",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_crustaceans",
+   "fieldtype": "Check",
+   "label": "Crustaceans",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_molluscs",
+   "fieldtype": "Check",
+   "label": "Molluscs",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_peanuts",
+   "fieldtype": "Check",
+   "label": "Peanuts",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_tree_nuts",
+   "fieldtype": "Check",
+   "label": "Tree Nuts",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_soybeans",
+   "fieldtype": "Check",
+   "label": "Soybeans",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_sesame",
+   "fieldtype": "Check",
+   "label": "Sesame",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_mustard",
+   "fieldtype": "Check",
+   "label": "Mustard",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_celery",
+   "fieldtype": "Check",
+   "label": "Celery",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_lupin",
+   "fieldtype": "Check",
+   "label": "Lupin",
+   "default": "0"
+  },
+  {
+   "fieldname": "allergen_sulphites",
+   "fieldtype": "Check",
+   "label": "Sulphites",
+   "default": "0"
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-11-10 10:19:20.842966",
+ "modified_by": "m.bajandooh@tajff.sa",
+ "module": "QC",
+ "name": "Finished Product Nutrition Facts",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Quality Manager",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QC User",
+   "write": 1
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "role": "Manufacturing Manager"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "role": "Manufacturing User"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "role": "Stock User"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "role": "Sales User"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "role": "Sales Manager"
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "item_code,item_name,item_name_arabic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "item_name",
+ "track_changes": 1
+}

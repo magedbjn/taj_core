@@ -282,3 +282,345 @@ Not permitted to retrieve meeting attendee names.,ليس لديك صلاحية �
 "Stock Entry row {0}: Brand-tracked Item {1} requires a verified Batch for incoming stock.","إدخال المخزون، السطر {0}: الصنف {1} المتتبع حسب الماركة يتطلب دفعة ذات ماركة فعلية مؤكدة للمخزون الوارد."
 Calories (kcal / 100 g),السعرات الحرارية (كيلو كالوري / 100 جم)
 Energy content in kilocalories per 100 g of item.,الطاقة بالكيلو كالوري لكل 100 جرام من الصنف.
+"Assessment Result","نتيجة التقييم","Mock Recall Quality Report"
+"Assessment and Closure","النتيجة والإغلاق","Mock Recall Quality Report"
+"Attachment Notes","ملاحظات المرفقات","Mock Recall Quality Report"
+"Backward Trace","تتبع خلفي","Mock Recall Quality Report"
+"Batch No.","رقم الدفعة","Mock Recall Quality Report"
+"Batch traceability and product distribution assessment","تتبع الدفعات وتقييم توزيع المنتجات","Mock Recall Quality Report"
+"Batch-linked evidence","دليل مرتبط بالدفعة","Mock Recall Quality Report"
+"Candidate or unclassified distribution scope prevents a Passed assessment.","وجود توزيع مرشح أو غير مصنف يمنع تقييم المحاكاة بأنها مجتازة.","Mock Recall Quality Report"
+"Checklist values record the saved review. Structured source issues, row discrepancies, and candidate scope remain subject to review.","تعكس قيم القائمة المراجعة المحفوظة. وتظل مشكلات المصادر المسجلة واختلافات الصفوف ونطاق الترشيح خاضعة للمراجعة.","Mock Recall Quality Report"
+"Closed","مغلق","Mock Recall Quality Report"
+"Closure Notes","ملاحظات الإغلاق","Mock Recall Quality Report"
+"Company","الشركة","Mock Recall Quality Report"
+"Customer","العميل","Mock Recall Quality Report"
+"Customer / Reference","العميل / المرجع","Mock Recall Quality Report"
+"Customer Verification","التحقق من العملاء","Mock Recall Quality Report"
+"Customers Found (snapshot)","العملاء المسجلون في اللقطة","Mock Recall Quality Report"
+"Data Limitations and Warnings","تنبيهات وحدود البيانات","Mock Recall Quality Report"
+"Date","التاريخ","Mock Recall Quality Report"
+"Did not pass the exercise assessment","لم يجتز تقييم المحاكاة","Mock Recall Quality Report"
+"Direction / Level","الاتجاه / المستوى","Mock Recall Quality Report"
+"Discrepancy","اختلاف","Mock Recall Quality Report"
+"Dispatch, linked returns and net quantities are shown in stock UOM. Item/date candidates do not establish batch-specific distribution. Customer receipt and acknowledgements are not inferred.","تعرض كميات الصرف والمرتجعات المرتبطة والصافي بوحدة قياس المخزون. المرشحون بحسب الصنف والتاريخ لا يثبتون توزيعاً خاصاً بالدفعة. لا يستنتج استلام العملاء أو إقراراتهم.","Mock Recall Quality Report"
+"Distribution Data Limitations","حدود بيانات التوزيع","Mock Recall Quality Report"
+"Distribution Rows","صفوف التوزيع","Mock Recall Quality Report"
+"Distribution and Customer Evidence","أدلة التوزيع والعملاء","Mock Recall Quality Report"
+"Do not treat the recorded result, review names, or signature spaces as approval of unresolved evidence.","لا تعد النتيجة المسجلة أو أسماء المراجعين أو خانات التوقيع اعتماداً للأدلة غير المحسومة.","Mock Recall Quality Report"
+"Document Status","حالة المستند","Mock Recall Quality Report"
+"Draft","مسودة","Mock Recall Quality Report"
+"Duration measures tracing only; it does not measure the full review or recall exercise.","تقيس المدة عملية التتبع فقط، ولا تشمل كامل المراجعة أو محاكاة الاستدعاء.","Mock Recall Quality Report"
+"Evidence Scope","نطاق الأدلة","Mock Recall Quality Report"
+"Evidence Verification Checklist","قائمة التحقق من الأدلة","Mock Recall Quality Report"
+"Exceptions","الاستثناءات والملاحظات","Mock Recall Quality Report"
+"Exceptions and Review Notes","الاستثناءات والملاحظات","Mock Recall Quality Report"
+"Executive Snapshot","ملخص سريع","Mock Recall Quality Report"
+"Exercise Objective","الهدف من المحاكاة","Mock Recall Quality Report"
+"Exercise Scope and Details","بيانات المحاكاة ونطاقها","Mock Recall Quality Report"
+"Finished Product","منتج نهائي","Mock Recall Quality Report"
+"Forward Trace","تتبع أمامي","Mock Recall Quality Report"
+"Gross Qty","كمية الصرف الإجمالية","Mock Recall Quality Report"
+"Gross dispatch, linked returns, and net quantity are stored snapshot values in the displayed UOM. Row verification does not prove candidate batch scope.","الصرف الإجمالي والمرتجعات المرتبطة وصافي الكمية قيم محفوظة في اللقطة بوحدة القياس المعروضة. التحقق من الصف لا يثبت ارتباط التوزيع المرشح بالدفعة.","Mock Recall Quality Report"
+"Historical evidence is preserved. Return and net quantities are unknown, even where old fields contain zero. Batch scope was not classified by this snapshot.","الأدلة التاريخية محفوظة. كميات المرتجعات والصافي غير معروفة حتى إن احتوت الحقول القديمة على صفر. لم يصنف نطاق الدفعة في هذه اللقطة.","Mock Recall Quality Report"
+"Includes candidate or unclassified evidence","يتضمن أدلة مرشحة أو غير مصنفة","Mock Recall Quality Report"
+"Incomplete row evidence or QC notes prevent a Passed assessment.","عدم اكتمال أدلة الصفوف أو ملاحظات مراقبة الجودة يمنع تقييم المحاكاة بأنها مجتازة.","Mock Recall Quality Report"
+"Internal simulation report - not an actual recall notice","تقرير داخلي للمحاكاة - لا يجوز استخدامه كإشعار استدعاء فعلي","Mock Recall Quality Report"
+"Item / Batch","الصنف / الدفعة","Mock Recall Quality Report"
+"Item / Batch / Scope","الصنف / الدفعة / النطاق","Mock Recall Quality Report"
+"Item Under Review","الصنف محل الفحص","Mock Recall Quality Report"
+"Item/date Candidates","مرشحو الصنف والتاريخ","Mock Recall Quality Report"
+"Item/date candidate - batch link not established","مرشح بحسب الصنف والتاريخ - لم يثبت ارتباطه بالدفعة","Mock Recall Quality Report"
+"Item/date candidates identify possible dispatches only. They do not establish batch lineage, even after row verification.","تحدد مرشحات الصنف والتاريخ عمليات صرف محتملة فقط، ولا تثبت تسلسل الدفعة حتى بعد التحقق من الصف.","Mock Recall Quality Report"
+"Legacy scope - not classified","نطاق قديم - غير مصنف","Mock Recall Quality Report"
+"Legacy snapshot - evidence version below 2","لقطة قديمة - إصدار الأدلة أقل من 2","Mock Recall Quality Report"
+"Manual signature spaces do not constitute digital approval.","خانات التوقيع اليدوي لا تمثل اعتماداً رقمياً.","Mock Recall Quality Report"
+"Manufacturing Genealogy","تتبع مدخلات التصنيع","Mock Recall Quality Report"
+"Mock Recall - Quality Report","تقرير محاكاة استدعاء منتج","Mock Recall Quality Report"
+"Mock Recall Reference","رقم التقرير","Mock Recall Quality Report"
+"Net Qty","صافي الكمية","Mock Recall Quality Report"
+"No Batch","بدون رقم دفعة","Mock Recall Quality Report"
+"No Records Available","لا توجد بيانات مسجلة","Mock Recall Quality Report"
+"No combined quantity total is certified across different items or units of measure.","لا يعتمد إجمالي موحد للكميات عبر أصناف أو وحدات قياس مختلفة.","Mock Recall Quality Report"
+"No.","م","Mock Recall Quality Report"
+"Not Evaluated","غير مقيّم","Mock Recall Quality Report"
+"Not Verified","لم يتم التحقق","Mock Recall Quality Report"
+"Packaging Material (Legacy)","مواد تعبئة وتغليف (قديم)","Mock Recall Quality Report"
+"Passed the exercise assessment","اجتاز تقييم المحاكاة","Mock Recall Quality Report"
+"Posting Date and Time","تاريخ ووقت الترحيل","Mock Recall Quality Report"
+"Preparation","تحضير","Mock Recall Quality Report"
+"QC Notes","ملاحظات مراقبة الجودة","Mock Recall Quality Report"
+"Quality Assurance","ضمان الجودة","Mock Recall Quality Report"
+"Quality Manager Name and Signature","اسم وتوقيع مدير الجودة","Mock Recall Quality Report"
+"Quality Officer Name and Signature","اسم وتوقيع مسؤول الجودة","Mock Recall Quality Report"
+"Quality Review Notes","ملاحظات مراجع الجودة","Mock Recall Quality Report"
+"Quantity / UOM","الكمية / وحدة القياس","Mock Recall Quality Report"
+"Quantity Reconciliation","مطابقة الكميات","Mock Recall Quality Report"
+"Quantity Reconciliation and Coverage Notes","ملاحظات مطابقة الكميات والتغطية","Mock Recall Quality Report"
+"Quantity reconciliation evidence is required before a Passed assessment.","يجب توثيق أدلة مطابقة الكميات قبل تقييم المحاكاة بأنها مجتازة.","Mock Recall Quality Report"
+"Raw Material","مواد خام","Mock Recall Quality Report"
+"Reason for Exercise","سبب إجراء المحاكاة","Mock Recall Quality Report"
+"Record ID","رقم التقرير","Mock Recall Quality Report"
+"Recorded Passed - review required","مسجل كمجتاز - يتطلب مراجعة","Mock Recall Quality Report"
+"Recorded Passed result is not supported by this report evidence. Review is required.","نتيجة الاجتياز المسجلة غير مدعومة بأدلة هذا التقرير. المراجعة مطلوبة.","Mock Recall Quality Report"
+"Related Quality Action","إجراء جودة مرتبط","Mock Recall Quality Report"
+"Related Quality Review","مراجعة جودة مرتبطة","Mock Recall Quality Report"
+"Return and net quantities are unknown for this historical snapshot and are shown as dashes.","كميات المرتجعات والصافي غير معروفة في هذه اللقطة التاريخية وتعرض بشرطة.","Mock Recall Quality Report"
+"Returned Qty","الكمية المرتجعة","Mock Recall Quality Report"
+"Reviewed At","تاريخ المراجعة","Mock Recall Quality Report"
+"Reviewed By","تمت المراجعة بواسطة","Mock Recall Quality Report"
+"Saved batch trace and distribution evidence","أدلة محفوظة لتتبع الدفعة وتوزيعها","Mock Recall Quality Report"
+"Scenario Type","نوع السيناريو","Mock Recall Quality Report"
+"Simulation Only","محاكاة تدريبية فقط","Mock Recall Quality Report"
+"Simulation only. This is a saved extraction snapshot, not an actual recall. Trace quantities can be allocations; verify each source and the manufacturing batch links. No mixed-UOM coverage percentage is calculated.","محاكاة فقط. هذه لقطة بيانات محفوظة وليست استدعاءً فعلياً. قد تمثل كميات التتبع تخصيصات؛ تحقق من كل مصدر وروابط دفعات التصنيع. لا تحسب نسبة تغطية عبر وحدات قياس مختلفة.","Mock Recall Quality Report"
+"Snapshot Evidence Version","إصدار أدلة اللقطة","Mock Recall Quality Report"
+"Snapshot Source Issues","مشكلات مصادر اللقطة","Mock Recall Quality Report"
+"Some return or net quantities are unknown. A dash is not a reconciled zero.","بعض كميات المرتجعات أو الصافي غير معروفة. الشرطة لا تعني صفراً تمت مطابقته.","Mock Recall Quality Report"
+"Source Notes","ملاحظات المصدر","Mock Recall Quality Report"
+"Source and Parties","المصدر والأطراف","Mock Recall Quality Report"
+"Source references and scope notes are shown with each distribution row.","تعرض مراجع المصادر وملاحظات النطاق مع كل صف توزيع.","Mock Recall Quality Report"
+"Source: saved Mock Recall document. A Failed result does not establish a product defect.","مصدر المعلومات: مستند Mock Recall المحفوظ. لا تعني نتيجة Failed ثبوت عيب في المنتج.","Mock Recall Quality Report"
+"Started At","وقت البدء","Mock Recall Quality Report"
+"Supplier","المورد","Mock Recall Quality Report"
+"The recorded trace count does not match the saved evidence rows.","عدد سجلات التتبع المسجل لا يطابق صفوف الأدلة المحفوظة.","Mock Recall Quality Report"
+"This is an internal exercise, not an actual product recall decision or regulatory notification.","هذا التقرير محاكاة داخلية ولا يمثل قرار استدعاء فعلياً أو إشعاراً للجهات المختصة.","Mock Recall Quality Report"
+"Trace Level","مستوى التتبع","Mock Recall Quality Report"
+"Trace Records","سجلات التتبع","Mock Recall Quality Report"
+"Trace Snapshot","تاريخ التتبع","Mock Recall Quality Report"
+"Trace records are saved evidence. Unverified does not mean incorrect.","الصفوف أدلة محفوظة من وقت تشغيل المحاكاة؛ حالة Unverified لا تعني خطأ السجل.","Mock Recall Quality Report"
+"Traceability Data Limitations","حدود بيانات التتبع","Mock Recall Quality Report"
+"Traceability Evidence","سجل أدلة التتبع","Mock Recall Quality Report"
+"Traced","تم التتبع","Mock Recall Quality Report"
+"Tracing Completed At","وقت اكتمال التتبع","Mock Recall Quality Report"
+"Tracing Duration (seconds)","مدة التتبع (ثانية)","Mock Recall Quality Report"
+"UOM","وحدة القياس","Mock Recall Quality Report"
+"Unclassified evidence - review required","دليل غير مصنف - يتطلب مراجعة","Mock Recall Quality Report"
+"Under Review","قيد المراجعة","Mock Recall Quality Report"
+"Unverified","غير متحقق","Mock Recall Quality Report"
+"Verification","التحقق","Mock Recall Quality Report"
+"Verification and Source Notes","التحقق وملاحظات المصدر","Mock Recall Quality Report"
+"Verified","تم التحقق","Mock Recall Quality Report"
+"Warehouse","المستودع","Mock Recall Quality Report"
+"Work Order","أمر عمل","Mock Recall Quality Report"
+"A company is required for distribution evidence.","يجب تحديد الشركة لأدلة التوزيع.",""
+"A manufacturing output cannot be later than the distribution snapshot.","لا يمكن أن يكون تاريخ إنتاج الصنف بعد تاريخ لقطة التوزيع.",""
+"A new mock recall cannot contain generated evidence or review metadata.","لا يمكن أن تحتوي محاكاة جديدة على أدلة مستخرجة أو بيانات اعتماد مسبقة.",""
+"A new mock recall must start as Draft / Not Evaluated.","يجب أن تبدأ المحاكاة الجديدة بحالة مسودة ونتيجة غير مقيّمة.",""
+"A quality review is required before closing.","مراجعة الجودة مطلوبة قبل الإغلاق.",""
+"A source transaction changed status or company after capture. Run a new trace.","تغيرت حالة مستند مصدر أو شركته بعد استخراج الأدلة. شغّل تتبعًا جديدًا.",""
+"A trace row requires a source transaction, nonzero quantity and stock UOM before verification.","يتطلب اعتماد صف التتبع مستند مصدر وكمية غير صفرية ووحدة مخزون.",""
+"A valid site-local posting datetime is required for distribution evidence.","يلزم تاريخ ووقت ترحيل صحيحان وفق توقيت الموقع لأدلة التوزيع.",""
+"An unbatched manufacturing output requires an item and source reference.","يتطلب مخرج التصنيع دون دفعة صنفًا ومرجعًا للمصدر.",""
+"Assessment","التقييم",""
+"Batch","الدفعة",""
+"Batch and item do not match.","الدفعة لا تطابق الصنف.",""
+"Close Simulation","إغلاق المحاكاة",""
+"Closed mock recalls are immutable. Start a new simulation instead.","لا يمكن تعديل المحاكاة المغلقة. أنشئ محاكاة جديدة.",""
+"Closed simulations cannot be rerun.","لا يمكن إعادة تشغيل المحاكاة المغلقة.",""
+"Company","الشركة",""
+"Customer Distribution","توزيع العملاء",""
+"Customers","العملاء",""
+"Date","التاريخ",""
+"Dispatch, linked returns and net quantities are shown in stock UOM. Item/date candidates do not establish batch-specific distribution. Customer receipt and acknowledgements are not inferred.","تُعرض كميات الصرف والمرتجعات المرتبطة والصافي بوحدة المخزون. لا تثبت ترشيحات الصنف والفترة توزيع دفعة محددة، ولا يُفترض منها استلام العميل أو تأكيده.",""
+"Distribution Evidence Type","نوع دليل التوزيع",""
+"Distribution batch {0} does not belong to item {1}.","دفعة التوزيع {0} لا تخص الصنف {1}.",""
+"Distribution evidence limit exceeded. Narrow the recall scope before continuing.","تجاوزت أدلة التوزيع الحد المسموح. ضيّق نطاق المحاكاة قبل المتابعة.",""
+"Distribution limit exceeded; no partial snapshot was saved.","تم تجاوز حد التوزيع؛ لم تُحفظ لقطة جزئية.",""
+"Distribution stock movement quantities must be positive finite values.","يجب أن تكون كميات حركات التوزيع موجبة ومحدودة.",""
+"Each distribution batch selection requires an item and batch.","يتطلب كل تحديد لدفعة التوزيع صنفًا ودفعة.",""
+"Every distribution row must have verified batch evidence before passing.","يجب التحقق من دليل الدفعة لكل صف توزيع قبل اعتماد النجاح.",""
+"Every trace evidence row must be checked and verified before passing.","يجب مراجعة واعتماد التحقق من كل صف تتبع قبل اعتماد النجاح.",""
+"Evidence Row","صف الدليل",""
+"Evidence Table","جدول الأدلة",""
+"Evidence Version","إصدار الأدلة",""
+"Evidence can only be verified on an open traced simulation.","يمكن التحقق من الأدلة فقط في محاكاة مفتوحة أُجري لها التتبع.",""
+"Evidence rows can only be saved through the parent Mock Recall actions.","لا يمكن حفظ صفوف الأدلة إلا من خلال إجراءات مستند المحاكاة الرئيسي.",""
+"Evidence rows cannot be deleted independently of their Mock Recall.","لا يمكن حذف صفوف الأدلة منفصلة عن محاكاتها.",""
+"Evidence snapshots cannot be deleted. Start a new simulation instead.","لا يمكن حذف لقطات الأدلة. أنشئ محاكاة جديدة.",""
+"Finalize Review","إنهاء المراجعة",""
+"From Date","من تاريخ",""
+"Invalid evidence verification status.","حالة التحقق من الدليل غير صحيحة.",""
+"Invalid saved return references. Run a new trace.","مراجع المرتجعات المحفوظة غير صحيحة. شغّل تتبعًا جديدًا.",""
+"Item","الصنف",""
+"Item Group selection limit exceeded.","تم تجاوز حد مجموعات الأصناف في الاختيار.",""
+"Item and batch are required.","الصنف والدفعة مطلوبان.",""
+"Item/date candidates cannot be verified as batch distribution evidence.","لا يمكن اعتماد ترشيحات الصنف والفترة كأدلة توزيع دفعة محددة.",""
+"Legacy scenario types cannot be used for new or changed scenarios.","لا يمكن استخدام أنواع السيناريو القديمة في سيناريو جديد أو معدل.",""
+"Linked stock returns exceed the dispatched quantity for {0}, item {1}, batch {2}.","تتجاوز المرتجعات المخزنية المرتبطة كمية الصرف للمستند {0} والصنف {1} والدفعة {2}.",""
+"Manufacturing finished stock quantity is missing or invalid.","كمية المخزون للمنتج المصنع مفقودة أو غير صحيحة.",""
+"Manufacturing source UOM conversion is missing or invalid.","معامل تحويل وحدة مصدر التصنيع مفقود أو غير صحيح.",""
+"Mock Recall","محاكاة استدعاء منتج",""
+"Net Quantity","صافي الكمية",""
+"No complete trace evidence was found. The simulation cannot pass.","لم يُعثر على أدلة تتبع مكتملة. لا يمكن اعتماد نجاح المحاكاة.",""
+"No manufacturing output batch is recorded. Item/date candidate scope: all actual stock dispatches of {0} in {1} from {2} through {3}. Manufacturing references: {4}. This does not establish batch genealogy.","لا توجد دفعة مسجلة لمخرج التصنيع. نطاق الترشيح: جميع حركات الصرف الفعلية للصنف {0} في الشركة {1} من {2} إلى {3}. مراجع التصنيع: {4}. لا يثبت ذلك نسب الدفعة.",""
+"Only a traced simulation can enter quality review.","يمكن إدخال محاكاة أُجري لها التتبع فقط إلى مراجعة الجودة.",""
+"Preparation items must start with PRE.","يجب أن يبدأ كود صنف التحضير بـ PRE.",""
+"Processing mock recall...","جارٍ معالجة محاكاة الاستدعاء...",""
+"Quality Review","مراجعة الجودة",""
+"Ration Pack items are excluded from new Finished Product scenarios.","أصناف الحزم التموينية مستبعدة من سيناريوهات المنتج النهائي الجديدة.",""
+"Re-running replaces this snapshot and resets all verification and review notes. Continue?","تستبدل إعادة التشغيل هذه اللقطة وتعيد ضبط جميع حالات التحقق وملاحظات المراجعة. هل تريد المتابعة؟",""
+"Record Verification","تسجيل التحقق",""
+"Resolve the source evidence limitations before passing.","عالج قيود أدلة المصدر قبل اعتماد النجاح.",""
+"Returned Quantity","الكمية المرتجعة",""
+"Returned quantities require saved source references. Run a new trace.","تتطلب كميات المرتجعات مراجع مصدر محفوظة. شغّل تتبعًا جديدًا.",""
+"Review Notes","ملاحظات المراجعة",""
+"Reviewed By","تمت المراجعة بواسطة",""
+"Run Mock Recall Trace","تشغيل تتبع المحاكاة",""
+"Run traceability before entering evidence verification.","شغّل التتبع قبل إدخال اعتماد الأدلة.",""
+"Run traceability before reviewing.","شغّل التتبع قبل المراجعة.",""
+"SIMULATION ONLY: No stock movement, external communication or actual recall is performed.","محاكاة فقط: لا تُنفذ حركة مخزون أو مراسلة خارجية أو عملية استدعاء فعلية.",""
+"Saved Return References","مراجع المرتجعات المحفوظة",""
+"Scenario","السيناريو",""
+"Select a valid assessment and enter review notes.","اختر نتيجة تقييم صحيحة وأدخل ملاحظات المراجعة.",""
+"Select an enabled item.","اختر صنفًا مفعّلًا.",""
+"Selected batch does not belong to the selected item.","الدفعة المختارة لا تخص الصنف المختار.",""
+"Showing the latest {0} matching records. Narrow the filters to see the remaining records.","تُعرض أحدث {0} سجلات مطابقة. ضيّق الفلاتر لعرض السجلات المتبقية.",""
+"Simulation evidence is immutable. Run a new simulation to refresh it.","لا يمكن تعديل أدلة المحاكاة يدويًا. أعد تشغيل المحاكاة لتحديثها.",""
+"Simulation only. This is a saved extraction snapshot, not an actual recall. Trace quantities can be allocations; verify each source and the manufacturing batch links. No mixed-UOM coverage percentage is calculated.","محاكاة فقط. هذه لقطة استخراج محفوظة وليست عملية استدعاء فعلية. قد تكون كميات التتبع موزعة نسبيًا؛ تحقق من كل مصدر وروابط دفعات التصنيع. لا تُحسب نسبة تغطية تجمع وحدات مختلفة.",""
+"Some source movements fall outside the selected company.","بعض حركات المصدر تقع خارج الشركة المحددة.",""
+"Some trace rows have no source transaction reference.","بعض صفوف التتبع لا تحتوي مرجع مستند مصدر.",""
+"Some trace rows have no stock UOM.","بعض صفوف التتبع لا تحتوي وحدة مخزون.",""
+"Some trace sources are not submitted.","بعض مستندات مصدر التتبع غير معتمدة.",""
+"Some trace sources use an unsupported document type.","تستخدم بعض مصادر التتبع نوع مستند غير مدعوم.",""
+"Source Posting Date","تاريخ ترحيل المصدر",""
+"Source Scope and Return References","نطاق المصدر ومراجع المرتجعات",""
+"Source-check Notes","ملاحظات فحص المصدر",""
+"Source-check notes are required for evidence verification.","ملاحظات فحص المصدر مطلوبة للتحقق من الأدلة.",""
+"Start Quality Review","بدء مراجعة الجودة",""
+"Start a new simulation to change the {0}.","أنشئ محاكاة جديدة لتغيير الحقل {0}.",""
+"Start quality review before passing the exercise.","ابدأ مراجعة الجودة قبل اعتماد نجاح المحاكاة.",""
+"Status","الحالة",""
+"Stock UOM is missing for item {0}.","وحدة المخزون مفقودة للصنف {0}.",""
+"Submitted batch stock movement. Quantities are in the item stock UOM.","حركة مخزون دفعة معتمدة. الكميات بوحدة مخزون الصنف.",""
+"Submitted inward returns linked to the original voucher: {0}.","المرتجعات الواردة المعتمدة والمرتبطة بالمستند الأصلي: {0}.",""
+"The evidence row was not found. Reload the document.","لم يُعثر على صف الدليل. أعد تحميل المستند.",""
+"The previous mock recall state could not be loaded. Reload the document.","تعذر تحميل الحالة السابقة للمحاكاة. أعد تحميل المستند.",""
+"The selected Item does not match the Scenario Type.","الصنف المختار لا يطابق نوع السيناريو.",""
+"The {0} field is managed by server actions.","يُدار الحقل {0} من خلال إجراءات الخادم.",""
+"This is a legacy snapshot. Run a new trace before verifying or passing it.","هذه لقطة قديمة. شغّل تتبعًا جديدًا قبل التحقق منها أو اعتماد نجاحها.",""
+"To Date","إلى تاريخ",""
+"Trace Duration (s)","مدة التتبع بالثواني",""
+"Trace Evidence Rows","صفوف أدلة التتبع",""
+"Trace limit exceeded; no partial snapshot was saved.","تم تجاوز حد التتبع؛ لم تُحفظ لقطة جزئية.",""
+"Trace source batch and item do not match.","دفعة مصدر التتبع لا تطابق الصنف.",""
+"Traceability Evidence","سجل أدلة التتبع",""
+"Traceability safety limit exceeded. Investigate the source chain before continuing.","تم تجاوز حد أمان التتبع. افحص سلسلة المصادر قبل المتابعة.",""
+"Traceability time limit exceeded.","تم تجاوز الحد الزمني للتتبع.",""
+"Unbatched output distributions are item/date candidates, not proven batch lineage.","توزيعات المخرجات دون دفعة هي ترشيحات حسب الصنف والفترة، وليست نسب دفعات مثبتًا.",""
+"Unresolved Source Limitations","قيود المصدر غير المعالجة",""
+"Unresolved exceptions prevent passing.","الاستثناءات غير المعالجة تمنع اعتماد النجاح.",""
+"Use the Mock Recall action buttons to change status.","استخدم أزرار إجراءات المحاكاة لتغيير الحالة.",""
+"Use the evidence verification action; generated source evidence cannot be edited.","استخدم إجراء التحقق من الأدلة؛ لا يمكن تعديل أدلة المصدر المستخرجة.",""
+"Verification","التحقق",""
+"Verify Evidence","التحقق من الأدلة",""
+"Verify quantities, customers and genealogy, and document their reconciliation before passing.","تحقق من الكميات والعملاء ونسب التصنيع ووثّق المطابقة قبل اعتماد النجاح.",""
+"You do not have permission to read one or more source records.","لا تملك صلاحية قراءة سجل مصدر واحد أو أكثر.",""
+"You do not have permission to select recall items.","لا تملك صلاحية اختيار أصناف المحاكاة.",""
+"You do not have the required quality review role.","لا تملك الدور المطلوب لمراجعة الجودة.",""
+Products,الأصناف
+Label Name,اسم الملصق
+Additional Items,أصناف إضافية
+Nutrition Facts,الحقائق الغذائية
+Nutritional Values per 100 g,القيم الغذائية لكل 100 جم
+Label Details,بيانات الملصق
+Ingredients and Allergens,المكونات ومسببات الحساسية
+Ingredients,المكونات
+Allergens,مسببات الحساسية
+Finished Item,الصنف النهائي
+The selected Item has variants. Remove the existing Additional Items?,الصنف المحدد له متغيرات. هل تريد إزالة الأصناف الإضافية الحالية؟
+Additional Items must be removed before saving an Item with variants.,يجب إزالة الأصناف الإضافية قبل حفظ صنف له متغيرات.
+Calories (kcal),السعرات الحرارية (كيلو كالوري)
+Protein (g),البروتين (جم)
+Total Fat (g),مجموع الدهون (جم)
+Saturated Fat (g),دهون مشبعة (جم)
+Trans Fat (g),دهون متحولة (جم)
+Cholesterol (mg),الكوليسترول (ملجم)
+Carbohydrates (g),إجمالي الكربوهيدرات (جم)
+Total Sugars (g),إجمالي السكريات (جم)
+Added Sugars (g),السكر المضاف (جم)
+Dietary Fiber (g),ألياف غذائية (جم)
+Sodium (mg),الصوديوم (ملجم)
+Net Weight,الوزن الصافي
+Nutritional Values,بيانات العناصر الغذائية
+Calories,السعرات الحرارية
+"Percent Daily Values are based on a 2,000 calorie diet. Your Daily Values may be higher or lower depending on your calorie needs.",نسبة القيمة اليومية محسوبة على أساس نظام غذائي ٢٠٠٠ سعرة حرارية. قد تكون القيمة اليومية الخاصة بك أعلى أو أقل حسب السعرات الحرارية التي تحتاجها.
+Allergens:,مسببات الحساسية:
+Ingredients:,المكونات:
+Warnings:,التحذيرات:
+"Do not consume if the food is spoiled or the package is damaged or swollen. After opening, consume the contents immediately.",لا تأكل من هذه العبوة إذا كان الطعام تالفًا أو إذا كانت العبوة تالفة أو منتفخة. بعد فتح العبوة، يُنصح باستهلاك المحتوى بالكامل فورًا.
+Facility Notice:,تنبيه المنشأة:
+"This facility also processes products containing gluten, nuts, mustard, celery, soy, eggs, molluscs, crustaceans and milk.",التصنيع في المنشأة يقوم بمعالجة منتجات الجلوتين والمكسرات والخردل والكرفس والصويا والبيض والرخويات والقشريات والحليب.
+Storage:,طريقة التخزين:
+Store in a dry place at room temperature not exceeding 30°C and protect from sunlight.,يحفظ المغلف في درجة حرارة الغرفة الجافة على أن لا يزيد عن ٣٠°C درجة مئوية ولا يتم تعريضه لأشعة الشمس.
+Produced by,أُنتج بواسطة
+Taj Food Factory for Ready Meals,مصنع تاج الطعام للوجبات الجاهزة
+Makkah Region - Jeddah Second Industrial City - Street 16,منطقة مكة المكرمة - المدينة الصناعية الثانية بجدة - شارع رقم ١٦
+Total Fat,مجموع الدهون
+Saturated Fat,دهون مشبعة
+Trans Fat,دهون متحولة
+Sodium,صوديوم
+Cholesterol,الكوليسترول
+Total Carbohydrates,إجمالي الكربوهيدرات
+Dietary Fiber,ألياف غذائية
+Total Sugars,إجمالي السكريات
+Added Sugars,السكر المضاف
+Protein,بروتين
+g,جم
+mg,ملجم
+Less than 1 {0},أقل من ١ {0}
+Per 100 g,لكل ١٠٠ جم
+Per Package,للعبوة كاملة
+Item Name,اسم الصنف
+Item Name (Arabic),اسم الصنف بالعربية
+Serving Size,حجم الحصة
+Special Amounts,القيم الاستثنائية
+Less Than Values,قيم أقل من ١
+Nutrient,العنصر الغذائي
+Less than 1,أقل من ١
+Less than {0} {1},أقل من {0} {1}
+Select a valid Nutrient for Less Than Values.,اختر عنصرًا غذائيًا صحيحًا في قيم أقل من ١.
+Less Than Values contains the same nutrient more than once: {0}.,العنصر الغذائي مكرر في قيم أقل من ١: {0}.
+{0} cannot be marked Less than 1 when its numeric value is 1 or greater.,لا يمكن تحديد أقل من ١ للعنصر {0} عندما تكون قيمته الرقمية ١ أو أكثر.
+Allergen,مسبب الحساسية
+Allergen Code,رمز مسبب الحساسية
+Allergen Name (Arabic),مسبب الحساسية بالعربية
+Select an allergen in every row.,اختر مسبب الحساسية في كل صف.
+The same allergen cannot be selected twice.,لا يمكن اختيار مسبب الحساسية نفسه مرتين.
+An invalid allergen was selected.,تم اختيار مسبب حساسية غير صحيح.
+Duplicate allergens on the approved label.,مسببات حساسية مكررة في الملصق المعتمد.
+An allergen on the approved label no longer exists.,أحد مسببات الحساسية في الملصق المعتمد لم يعد موجودًا.
+Cereals Containing Gluten,الجلوتين
+Crustaceans,القشريات
+Fish,الأسماك
+Eggs,البيض
+Peanuts,الفول السوداني
+Mustard,الخردل
+Tree Nuts,المكسرات
+Sesame,السمسم
+Milk,الحليب
+Molluscs,الرخويات
+Sulphites,الكبريتيت
+Lupin,الترمس
+Celery,الكرفس
+Soybeans,فول الصويا
+{0}: Nutritional values must be whole numbers.,{0}: يجب أن تكون القيم الغذائية أعدادًا صحيحة.
+Select an Item before printing the label.,اختر صنفًا قبل طباعة الملصق.
+The primary Item must be an enabled Finished Goods sales item.,يجب أن يكون الصنف الرئيسي منتجًا نهائيًا مخصصًا للبيع وغير معطل.
+An Item with variants cannot have Additional Items.,لا يمكن إضافة أصناف إضافية لصنف له متغيرات.
+Too many variants to print in one batch. Print the needed variants from Item.,عدد المتغيرات كبير؛ اطبع الأصناف المطلوبة من مستند Item.
+No eligible Item Variants were found for this specification.,لم يتم العثور على متغيرات صالحة للطباعة لهذا المستند.
+Duplicate Item Variants were found.,تم العثور على متغيرات مكررة.
+"Additional Items must contain unique, valid Item codes.",يجب أن تحتوي الأصناف الإضافية على أكواد صحيحة وغير مكررة.
+Additional Item {0} is not an eligible standalone/variant Item.,الصنف الإضافي {0} غير مؤهل للطباعة.
+Too many Items to print in one batch.,عدد الأصناف كبير جدًا للطباعة في دفعة واحدة.
+Duplicate allergens were selected.,تم تحديد مسبب حساسية أكثر من مرة.
+Food Allergen master is missing.,مستند Food Allergen غير موجود.
+Some selected allergens were not found.,تعذر العثور على بعض مسببات الحساسية المحددة.
+Unsupported label mode.,طريقة طباعة الملصق غير مدعومة.
+Invalid label source document.,مستند مصدر الملصق غير صحيح.
+Not permitted to read the label specification.,لا توجد صلاحية لقراءة مواصفات الملصق.
+Item {0}: {1},الصنف {0}: {1}
+Gluten,الجلوتين,
+Less than,أقل من
+Finished Product Nutrition Facts,الحقائق الغذائية للمنتج النهائي
+Calorie,كالوري
