@@ -11,13 +11,13 @@ from datetime import date
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 NUTRIENTS = (
-    ("total_fat_g", "Total Fat", "g", "70"),
+    ("total_fat_g", "Total Fat", "g", "65"),
     ("saturated_fat_g", "Saturated Fat", "g", "20"),
     ("trans_fat_g", "Trans Fat", "g", None),
     ("sodium_mg", "Sodium", "mg", "2400"),
     ("cholesterol_mg", "Cholesterol", "mg", "300"),
-    ("carbohydrates_g", "Total Carbohydrates", "g", "260"),
-    ("dietary_fiber_g", "Dietary Fiber", "g", "28"),
+    ("carbohydrates_g", "Total Carbohydrates", "g", "300"),
+    ("dietary_fiber_g", "Dietary Fiber", "g", "25"),
     ("total_sugars_g", "Total Sugars", "g", None),
     ("added_sugars_g", "Added Sugars", "g", None),
     ("protein_g", "Protein", "g", "50"),
@@ -53,6 +53,12 @@ def quantity(value):
         digits += 1
     q = d.quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP)
     return ar(format(q.normalize(), "f"))
+
+
+def whole(value):
+    """Round displayed nutrition amounts HALF_UP to integer; 0.5 becomes 1."""
+    # TAJ_NUTRITION_WHOLE_DISPLAY_V1
+    return num(value).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
 
 
 def mass_in_grams(value, uom):
@@ -170,11 +176,19 @@ def build_label(profile, item, *, group_ok=True, permission_ok=True, today=None,
     rows = []
     for field, title, unit, daily in NUTRIENTS:
         special = title in rules
-        amount = ("Less than " + ar("1") + " " + unit) if special else quantity(scaled[field]) + " " + unit
         pct = ""
-        if daily and not special:
-            share = (scaled[field] * Decimal(100) / Decimal(daily)).quantize(Decimal(1), rounding=ROUND_HALF_UP)
-            pct = ar(format(share, "f")) + "\u066a"
+        if special:
+            # Literal Less Than 1: never scale, round, or calculate a percentage.
+            amount = "Less than " + ar("1") + " " + unit
+        else:
+            shown = whole(scaled[field])
+            amount = ar(format(shown, "f")) + " " + unit
+            if daily:
+                # Percentage uses the displayed rounded amount, not hidden decimals.
+                share = (shown * Decimal("100") / Decimal(daily)).quantize(
+                    Decimal("1"), rounding=ROUND_HALF_UP
+                )
+                pct = ar(format(share, "f")) + "\u066a"
         rows.append({"field": field, "label": title, "amount": amount, "percent": pct, "raw": "" if special else format(scaled[field], "f")})
 
     return {
@@ -185,7 +199,7 @@ def build_label(profile, item, *, group_ok=True, permission_ok=True, today=None,
         "basis_label": "Per package" if mode == "per_pack" else "Per 100 g",
         "weight_display": quantity(grams) if grams is not None else "",
         "factor": str(factor),
-        "calories": quantity(scaled["calories_kcal"]),
+        "calories": ar(format(whole(scaled["calories_kcal"]), "f")),
         "rows": rows,
         "demo": bool(demo),
         "weight_unverified": mode == "per_pack",

@@ -2,19 +2,12 @@
 
 ## [Unreleased]
 
-### 2026-11-12 - Nutrition Facts Ar: Less Than 1
+### Changed
+- Nutrition Facts Ar (10x7): display "الوزن الصافي: <weight> جم" and "القيم الغذائية لكل: <weight> جم" using the actual Item package weight; retain the per-100-g fallback.
+- Nutrition Facts Ar (10x7): round displayed calories and nutrient quantities to whole numbers using HALF_UP (0.5 rounds upward) after applying package weight.
+- Calculate whole-number daily-value percentages from the rounded printed quantities using: total fat 65 g, saturated fat 20 g, sodium 2400 mg, carbohydrates 300 g, cholesterol 300 mg, fiber 25 g, and protein 50 g.
 
-**Component:** Nutrition Facts Ar
-**Compatibility:** ERPNext / Frappe v16
-
-#### Fixed
+### Fixed
 - Allow Item and Variant printing when Less Than 1 rules exist.
-- Display the fixed phrase "أقل من ١ جم" or "أقل من ١ ملجم".
-- Do not scale flagged nutrient values.
-- Leave daily-value percentages blank for flagged nutrients.
+- Display the literal phrase "أقل من ١ جم" or "أقل من ١ ملجم" for selected nutrients, without scaling or calculating their daily-value percentage.
 - Continue scaling other nutrients by package weight.
-
-#### Testing
-- 8 synthetic test scenarios: PASS on test1.com.
-- No database or Print Format changes.
-- QC review is required before production label use.
