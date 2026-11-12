@@ -158,24 +158,24 @@ def build_label(profile, item, *, group_ok=True, permission_ok=True, today=None,
             return status_error(str(exc), code)
         mode = "per_pack"
 
-    rules = [get(r, "nutrient") for r in (get(profile, "amount_rules") or []) if int(get(r, "less_than_one", 0) or 0)]
-    if mode == "per_pack" and rules:
-        return status_error("Less-Than-1 reference values need exact measurement before scaling", code)
+    # TAJ_NUTRITION_LESS_THAN_LITERAL_V1: explicit amount rules are fixed print declarations.
+    rules = {get(r, "nutrient") for r in (get(profile, "amount_rules") or []) if int(get(r, "less_than_one", 0) or 0)}
+    special_fields = {field for field, title, _, _ in NUTRIENTS if title in rules}
 
     factor = (grams / Decimal(100)) if grams is not None else Decimal(1)
-    scaled = {field: value * factor for field, value in values.items()}
+    scaled = {field: (value if field in special_fields else value * factor) for field, value in values.items()}
     if any(not v.is_finite() for v in scaled.values()):
         return status_error("Non-finite calculated quantity", code)
 
     rows = []
     for field, title, unit, daily in NUTRIENTS:
-        special = mode == "per_100g" and title in rules
+        special = title in rules
         amount = ("Less than " + ar("1") + " " + unit) if special else quantity(scaled[field]) + " " + unit
         pct = ""
         if daily and not special:
             share = (scaled[field] * Decimal(100) / Decimal(daily)).quantize(Decimal(1), rounding=ROUND_HALF_UP)
             pct = ar(format(share, "f")) + "\u066a"
-        rows.append({"field": field, "label": title, "amount": amount, "percent": pct, "raw": format(scaled[field], "f")})
+        rows.append({"field": field, "label": title, "amount": amount, "percent": pct, "raw": "" if special else format(scaled[field], "f")})
 
     return {
         "ok": True, "error": "", "item_code": code,
