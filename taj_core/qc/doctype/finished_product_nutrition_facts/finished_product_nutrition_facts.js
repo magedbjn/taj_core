@@ -1,12 +1,17 @@
 frappe.ui.form.on('Finished Product Nutrition Facts', {
     setup(frm) {
         frm.set_query('item_code', () => ({
-            filters: { is_sales_item: 1, item_group: 'Finished Goods', disabled: 0 }
+            filters: {
+                is_sales_item: 1,
+                item_group: ['descendants of (inclusive)', 'Finished Goods'],
+                disabled: 0,
+                variant_of: ['is', 'not set']
+            }
         }));
         frm.set_query('item_code', 'additional_items', () => ({
             filters: {
                 is_sales_item: 1,
-                item_group: 'Finished Goods',
+                item_group: ['descendants of (inclusive)', 'Finished Goods'],
                 disabled: 0,
                 has_variants: 0
             }

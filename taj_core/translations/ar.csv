@@ -624,3 +624,14 @@ Gluten,الجلوتين,
 Less than,أقل من
 Finished Product Nutrition Facts,الحقائق الغذائية للمنتج النهائي
 Calorie,كالوري
+Invalid Nutritional Values,القيم الغذائية غير صحيحة
+Missing nutritional value: {0},قيمة العنصر الغذائي {0} مفقودة.
+Invalid nutritional value: {0},قيمة العنصر الغذائي {0} غير صحيحة.
+Cannot approve Nutrition Facts: {0},لا يمكن اعتماد الحقائق الغذائية: {0}
+Nutrient grams exceed 100 g per 100 g of food,يوجد عنصر غذائي تتجاوز كميته 100 جم لكل 100 جم من الغذاء.
+Protein + fat + carbohydrates exceed 100 g,مجموع البروتين والدهون والكربوهيدرات يتجاوز 100 جم لكل 100 جم من الغذاء.
+Fat subtypes exceed total fat,مجموع الدهون المشبعة والمتحولة يتجاوز الدهون الكلية.
+Sugars exceed carbohydrates,السكريات الكلية تتجاوز الكربوهيدرات.
+Added sugars exceed total sugars,السكريات المضافة تتجاوز السكريات الكلية.
+Dietary fiber exceeds total carbohydrates,الألياف الغذائية تتجاوز الكربوهيدرات.
+Milligrams exceed the mass of 100 g,قيمة عنصر بالملجم تتجاوز كتلة 100 جم.

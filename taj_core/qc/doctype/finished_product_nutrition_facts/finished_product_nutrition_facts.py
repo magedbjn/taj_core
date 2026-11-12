@@ -73,7 +73,7 @@ class FinishedProductNutritionFacts(Document):
                 # Validate actual, currently eligible variants before approval.
                 variants = frappe.get_all("Item", filters={
                     "variant_of": self.item_code, "disabled": 0,
-                    "is_sales_item": 1, "item_group": "Finished Goods",
+                    "is_sales_item": 1, "item_group": ["descendants of (inclusive)", "Finished Goods"],
                 }, fields=["name", "weight_per_unit", "weight_uom"])
                 for variant in variants:
                     self.check_item_weight(variant.name, variant)
@@ -82,12 +82,22 @@ class FinishedProductNutritionFacts(Document):
 
     @staticmethod
     def get_valid_item(item_code):
-        item = frappe.db.get_value("Item", item_code, ITEM_FIELDS, as_dict=True)
-        if not item or item.disabled or not item.is_sales_item or item.item_group != "Finished Goods":
+        items = frappe.get_all(
+            "Item",
+            filters={
+                "name": item_code,
+                "is_sales_item": 1,
+                "disabled": 0,
+                "item_group": ["descendants of (inclusive)", "Finished Goods"],
+            },
+            fields=ITEM_FIELDS,
+            limit_page_length=1,
+        )
+        if not items:
             frappe.throw(
                 _("Item {0} must be an enabled sales Item in Finished Goods.").format(item_code)
             )
-        return item
+        return items[0]
 
     @staticmethod
     def check_item_weight(item_code, item):
@@ -110,6 +120,37 @@ class FinishedProductNutritionFacts(Document):
             if not self.ingredients_ar:
                 frappe.throw(_("Ingredients are mandatory."))
             self.validate_no_other_approved_profile()
+
+    # TAJ_NUTRITION_APPROVAL_GUARD_V1_BEGIN
+    def before_submit(self):
+        """Apply the same per-100-g checks used by the print service."""
+        from taj_core.qc.nutrition_label_service import KEYS, check_plausibility
+
+        values = {}
+        for fieldname in KEYS:
+            raw = self.get(fieldname)
+            field = self.meta.get_field(fieldname)
+            label = field.label if field else fieldname
+            if raw is None or raw == "":
+                frappe.throw(
+                    _("Missing nutritional value: {0}").format(_(label)),
+                    title=_("Invalid Nutritional Values"),
+                )
+            try:
+                values[fieldname] = decimal_value(raw)
+            except ValueError:
+                frappe.throw(
+                    _("Invalid nutritional value: {0}").format(_(label)),
+                    title=_("Invalid Nutritional Values"),
+                )
+
+        reason = check_plausibility(values)
+        if reason:
+            frappe.throw(
+                _("Cannot approve Nutrition Facts: {0}").format(_(reason)),
+                title=_("Invalid Nutritional Values"),
+            )
+    # TAJ_NUTRITION_APPROVAL_GUARD_V1_END
 
     def validate_amount_rules(self):
         """Keep measured amounts numeric; allow optional '<1 unit' display rules.

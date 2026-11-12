@@ -28,10 +28,11 @@ app_include_js = [
 doctype_js = {
     "Material Request": "public/js/material_request.js",
     "Purchase Order": "public/js/purchase_order.js",
-    "BOM": "public/js/bom.js",
+    "Item": "public/js/nutrition_facts_navigation.js",
+    "BOM": ["public/js/bom.js", "public/js/nutrition_facts_navigation.js"],
     "Production Plan": "public/js/production_plan.js",
     "Work Order": "public/js/work_order.js",
-    "Job Card": "public/js/job_card.js",
+    "Job Card": ["public/js/job_card.js", "public/js/nutrition_facts_navigation.js"],
     "Leave Encashment": "public/js/leave_encashment.js",
 }
 
@@ -207,3 +208,7 @@ doc_events.setdefault("Quality Meeting", {})["validate"] = (
     "taj_core.qc.quality_meeting.validate_attendees"
 )
 # END TAJ QC QUALITY MEETING ATTENDEES V16
+
+# BEGIN TAJ_NUTRITION_AUTO_V2
+jinja = {"methods": ["taj_core.qc.nutrition_label_service.get_public_print_context"]}
+# END TAJ_NUTRITION_AUTO_V2
