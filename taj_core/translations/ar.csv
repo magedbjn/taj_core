@@ -635,3 +635,128 @@ Sugars exceed carbohydrates,السكريات الكلية تتجاوز الكر�
 Added sugars exceed total sugars,السكريات المضافة تتجاوز السكريات الكلية.
 Dietary fiber exceeds total carbohydrates,الألياف الغذائية تتجاوز الكربوهيدرات.
 Milligrams exceed the mass of 100 g,قيمة عنصر بالملجم تتجاوز كتلة 100 جم.
+Pick List Receiving,استلام قوائم التجهيز
+Pick List Receiver,مستلم قوائم التجهيز
+Pick List Receiving QR,رمز QR لاستلام قائمة التجهيز
+Scan to open Pick List Receiving,امسح الرمز لفتح استلام قوائم التجهيز
+Read-only test mode,وضع الاختبار دون ترحيل
+"Scan Pick List codes, then verify received quantities. No stock movement will be posted.",امسح رموز قوائم التجهيز، ثم راجع الكميات المستلمة. لن تُرحّل أي حركة مخزون.
+{0} of {1} verified,تمت مراجعة {0} من {1}
+Scan multiple QR codes,مسح عدة رموز QR
+Pick List number or QR link,رقم قائمة التجهيز أو رابط QR
+Add Pick List,إضافة قائمة تجهيز
+Available Pick Lists,قوائم التجهيز المتاحة
+Clear session,مسح قائمة الجلسة
+Each scan adds one independent Pick List. Scanning never submits a Stock Entry.,كل مسح يضيف قائمة تجهيز مستقلة. لا يؤدي المسح إلى اعتماد حركة مخزون.
+Pending review,بانتظار المراجعة
+Item and batch,الصنف والدفعة
+Requested,المطلوب
+Picked,المجهز
+Pending transfer,المتبقي للنقل
+Received,المستلم
+Confirmed,تم التحقق
+Brand,العلامة التجارية
+Received quantity,الكمية المستلمة
+Remove from session,إزالة من الجلسة
+Refresh Pick List,تحديث قائمة التجهيز
+Simulate confirmation,محاكاة التأكيد
+Simulate verified Pick Lists ({0}),محاكاة القوائم المتحقق منها ({0})
+Preview only: documents are not saved or submitted and no Stock Entry is created.,معاينة فقط: لا تُحفظ المستندات أو تُعتمد ولا تُنشأ أي حركة مخزون.
+{0} items,{0} أصناف
+Invalid Pick List number or QR link,رقم قائمة التجهيز أو رابط QR غير صحيح
+Pick List {0} added,أُضيفت قائمة التجهيز {0}
+Read-only verification passed,نجح التحقق دون ترحيل
+Simulation rejected. Review the ERPNext message and refresh the Pick List.,رفض النظام المحاكاة. راجع رسالة ERPNext ثم حدّث قائمة التجهيز.
+Scanner is not available. Use the manual code field.,الماسح غير متاح. أدخل رقم القائمة يدويًا.
+Clear only the receiving session? No ERPNext documents will be deleted.,هل تريد مسح قائمة الاستلام فقط؟ لن يُحذف أي مستند في ERPNext.
+Unable to generate QR code,تعذر إنشاء رمز QR
+Material Request,طلب مواد
+Material Transfer,نقل مواد
+Material Transfer for Manufacture,نقل مواد للتصنيع
+Please log in to receive material.,يجب تسجيل الدخول لاستلام المواد.
+You do not have permission to receive Pick Lists.,ليس لديك صلاحية استلام قوائم التجهيز.
+Company is required.,الشركة مطلوبة.
+Not permitted for company {0},لا توجد صلاحية للشركة {0}
+Set explicit Warehouse User Permissions before using Pick List Receiving.,حدّد صلاحيات المستودعات صراحة قبل استخدام استلام قوائم التجهيز.
+Source and target warehouses must be set for every receiving row.,يجب تحديد المستودع المصدر والهدف لكل صف استلام.
+Not permitted to receive through warehouse {0},لا توجد صلاحية للاستلام عبر المستودع {0}
+Invalid warehouse for company: {0},مستودع غير صحيح لهذه الشركة: {0}
+This Pick List has previous partial transfers. Review it in ERPNext.,هذه القائمة بها تحويلات جزئية سابقة. راجعها في ERPNext.
+A valid Pick List number is required.,رقم قائمة تجهيز صحيح مطلوب.
+Only submitted material-transfer Pick Lists can be received.,يمكن استلام قوائم نقل المواد المعتمدة فقط.
+This Pick List is already completed or cancelled.,قائمة التجهيز مكتملة أو ملغاة بالفعل.
+Pick List Receiving requires a linked Material Request or Work Order.,يجب ربط قائمة التجهيز بطلب مواد أو أمر عمل.
+A Stock Entry already exists for Pick List {0}. Review it in ERPNext first.,توجد حركة مخزون للقائمة {0}. راجعها في ERPNext أولًا.
+No pending picked items were found for this Pick List.,لم تُوجد أصناف مجهزة تنتظر النقل في هذه القائمة.
+Unable to map Stock Entry rows to unique Pick List rows.,تعذر مطابقة صفوف المخزون مع صفوف قائمة التجهيز بشكل مستقل.
+Invalid pending transfer quantity.,الكمية المتبقية للنقل غير صحيحة.
+Pick List details changed. Refresh and review the items again.,تغيّرت بيانات قائمة التجهيز. حدّثها وراجع الأصناف من جديد.
+All items verified. Stock movement remains disabled in this test release.,تم التحقق من جميع الأصناف. نقل المخزون معطل في نسخة الاختبار هذه.
+Pick List Receiving stock submission is not available in this read-only release.,اعتماد حركة المخزون غير متاح في نسخة استلام قوائم التجهيز التجريبية.
+Invalid QR input,مدخل QR غير صحيح
+Invalid Pick List identifier,معرف قائمة التجهيز غير صحيح
+Unsupported QR URL,رابط QR غير مدعوم
+The QR code belongs to a different site,رمز QR تابع لموقع آخر
+The QR code does not point to Pick List Receiving,رمز QR لا يشير إلى صفحة استلام قوائم التجهيز
+Invalid Pick List link,رابط قائمة التجهيز غير صحيح
+Invalid received quantity,الكمية المستلمة غير صحيحة
+Received items must be a list,يجب تقديم الأصناف المستلمة ضمن قائمة
+Each transfer row must have a unique Pick List row,يجب أن يكون لكل صف نقل صف مستقل في قائمة التجهيز
+Confirm every Pick List row before continuing,تحقق من كل صف في قائمة التجهيز قبل المتابعة
+Invalid confirmation row,صف تأكيد غير صحيح
+Repeated confirmation row,تكرر صف التأكيد
+Confirmation rows do not match the Pick List,صفوف التأكيد لا تطابق قائمة التجهيز
+Confirm every item before continuing,تحقق من كل صنف قبل المتابعة
+Received quantity differs from the picked quantity,الكمية المستلمة تختلف عن الكمية المجهزة
+Review each item and select Confirmed. Quantities are read-only; no stock movement will be posted.,راجع كل صنف واختر «تم التأكيد». الكميات للعرض فقط، ولن تُرحّل أي حركة مخزون.
+Only submitted Material Transfer for Manufacture Pick Lists linked to a Work Order are supported.,تُقبل فقط قوائم التجهيز المعتمدة من نوع نقل مواد للتصنيع والمرتبطة بأمر عمل.
+Only submitted Pick Lists can be received.,يمكن استلام قوائم التجهيز المعتمدة فقط.
+Only Material Transfer for Manufacture Pick Lists can be received.,يمكن استلام قوائم التجهيز من نوع نقل مواد للتصنيع فقط.
+A linked Work Order is required for Pick List Receiving.,يلزم ربط قائمة التجهيز بأمر عمل لاستلامها.
+Test environment: test1.com,بيئة الاختبار: test1.com
+"Review every item, select Confirmed, then Confirm & Transfer to submit the Stock Entry.",راجع كل صنف وحدد تم التأكيد، ثم اضغط تأكيد وتحويل لاعتماد حركة المخزون.
+Scanning only adds a Pick List; stock moves only after Confirm & Transfer.,المسح يضيف قائمة التجهيز فقط؛ يتم نقل المخزون بعد التأكيد والتحويل.
+Transferred,تم النقل
+Confirm & Transfer,تأكيد وتحويل
+One confirmed Pick List creates and submits one Stock Entry. Stock transfer changes inventory in test1.com.,كل قائمة تجهيز مؤكدة تنشئ وتعتمد حركة مخزون واحدة. يتم تحديث المخزون في test1.com.
+{0} Pick Lists transferred in this session,تم نقل {0} قائمة تجهيز في هذه الجلسة
+Confirm and transfer all picked quantities for Pick List {0}? This will submit a Stock Entry and change inventory in test1.com.,هل تؤكد تحويل جميع الكميات المجهزة للقائمة {0}؟ سيتم اعتماد حركة مخزون وتغيير المخزون في test1.com.
+Stock Entry {0} submitted and stock transferred.,تم اعتماد حركة المخزون {0} ونقل الكميات.
+Transfer not completed. Check the ERPNext error. Do not retry before checking Stock Entries.,لم يكتمل النقل. راجع خطأ ERPNext وتحقق من حركات المخزون قبل إعادة المحاولة.
+View Stock Entry,عرض حركة المخزون
+Stock transfer is available only on test1.com.,نقل المخزون متاح فقط على test1.com.
+Stock transfer is disabled. A test administrator must enable it.,نقل المخزون معطل. يجب أن يفعّله مسؤول بيئة الاختبار.
+ERPNext mapped Stock Entry does not match the Pick List.,حركة المخزون المولدة لا تطابق قائمة التجهيز.
+Every Pick List row must be fully picked and confirmed.,يجب تجهيز وتأكيد كل صف في قائمة التجهيز.
+Stock Entry mapping has invalid Pick List row references.,ارتباط صفوف حركة المخزون بقائمة التجهيز غير صحيح.
+This Pick List is not eligible for a single full transfer.,قائمة التجهيز هذه لا تسمح بتحويل كامل واحد.
+Mapped Stock Entry changed. Refresh the Pick List and confirm again.,تغيرت بيانات حركة المخزون. حدّث قائمة التجهيز وأعد التأكيد.
+Pick List not found.,قائمة التجهيز غير موجودة.
+A Stock Entry already exists for Pick List {0}.,توجد حركة مخزون مرتبطة مسبقًا بقائمة التجهيز {0}.
+Stock Entry was not submitted; the transaction will be rolled back.,لم يتم اعتماد حركة المخزون؛ ستُلغى العملية.
+All items verified. This was a simulation; no Stock Entry was created.,تم التحقق من جميع الأصناف. كانت هذه محاكاة ولم تُنشأ حركة مخزون.
+Use Confirm & Transfer on the Pick List Receiving page.,استخدم تأكيد وتحويل من صفحة استلام قوائم التجهيز.
+Stock Ledger movement was not posted; the transaction will be rolled back.,لم تُسجل حركة دفتر المخزون؛ سيتم التراجع عن العملية.
+Enable Pick List Receiving Transfers,تفعيل تحويل المخزون عند استلام قوائم التجهيز
+"When enabled, Confirm & Transfer submits a Stock Entry and moves inventory. Restricted to test1.com during testing.",عند التفعيل يؤدي تأكيد الاستلام والتحويل إلى اعتماد حركة مخزون فعلية. متاح في بيئة test1.com التجريبية فقط.
+Stock transfer is disabled. Enable it in Stock Settings > Taj.,نقل المخزون غير مفعّل. يمكنك تفعيله من إعدادات المخزون في تبويب Taj.
+Transfer is controlled by Stock Settings > Taj.,يتم التحكم في تحويل المخزون من إعدادات المخزون > Taj.
+Required Qty,الكمية المطلوبة
+Picked Qty,الكمية المجهزة
+From,من
+To,إلى
+Quantities,الكميات
+Already Transferred,تم النقل مسبقًا
+Open a Pick List QR code,افتح رمز QR لقائمة التجهيز
+Unable to open Pick List,تعذر فتح قائمة التجهيز
+Retry,إعادة المحاولة
+Loading,جارٍ التحميل
+{0}/{1} confirmed,تم تأكيد {0} من {1}
+Completed — review in ERPNext,مكتملة — راجع المستند في ERPNext
+Cancelled,ملغاة
+Check transfer status before retrying,تحقق من حالة النقل قبل إعادة المحاولة
+Check status,التحقق من الحالة
+Transfer Pick List {0}?,هل تريد نقل قائمة التجهيز {0}؟
+Transferring,جارٍ النقل
+Only manufacturing Pick Lists linked to a Work Order are supported.,يسمح فقط بقوائم تجهيز الإنتاج المرتبطة بأمر عمل
+Transferred Successfully,تم النقل بنجاح

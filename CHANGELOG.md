@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+- Pick List Receiving: QR scanning, multi-list receiving, item-level confirmation, and controlled Stock Entry transfers for manufacturing Pick Lists.
+- Stock Settings: configurable receiving-transfer switch, restricted to the test environment during validation.
+- Arabic translations for the Pick List Receiving interface.
+
 ### Changed
 - Nutrition Facts Ar (10x7): display "الوزن الصافي: <weight> جم" and "القيم الغذائية لكل: <weight> جم" using the actual Item package weight; retain the per-100-g fallback.
 - Nutrition Facts Ar (10x7): round displayed calories and nutrient quantities to whole numbers using HALF_UP (0.5 rounds upward) after applying package weight.

@@ -1,0 +1,25 @@
+{
+  "doctype": "Stock Settings",
+  "fields": [
+    {
+      "fieldname": "taj_settings_tab",
+      "fieldtype": "Tab Break",
+      "label": "Taj",
+      "insert_after": "transaction_naming_html"
+    },
+    {
+      "fieldname": "taj_pick_list_receiving_section",
+      "fieldtype": "Section Break",
+      "label": "Pick List Receiving",
+      "insert_after": "taj_settings_tab"
+    },
+    {
+      "fieldname": "taj_enable_pick_list_receiving_transfer",
+      "fieldtype": "Check",
+      "label": "Enable Pick List Receiving Transfers",
+      "insert_after": "taj_pick_list_receiving_section",
+      "default": "0",
+      "description": "When enabled, Confirm & Transfer submits a Stock Entry and moves inventory. Restricted to test1.com during testing."
+    }
+  ]
+}

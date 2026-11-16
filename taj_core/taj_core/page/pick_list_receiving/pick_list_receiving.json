@@ -1,0 +1,12 @@
+{
+  "doctype": "Page",
+  "name": "pick-list-receiving",
+  "page_name": "pick-list-receiving",
+  "title": "Pick List Receiving",
+  "module": "Taj Core",
+  "standard": "Yes",
+  "roles": [
+    { "role": "System Manager" },
+    { "role": "Pick List Receiver" }
+  ]
+}

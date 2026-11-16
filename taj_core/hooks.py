@@ -210,5 +210,26 @@ doc_events.setdefault("Quality Meeting", {})["validate"] = (
 # END TAJ QC QUALITY MEETING ATTENDEES V16
 
 # BEGIN TAJ_NUTRITION_AUTO_V2
-jinja = {"methods": ["taj_core.qc.nutrition_label_service.get_public_print_context"]}
+jinja = {
+    "methods": [
+        "taj_core.qc.nutrition_label_service.get_public_print_context",
+        "frappe.utils.print_format_generator.get_qr_code",
+    ]
+}
 # END TAJ_NUTRITION_AUTO_V2
+
+
+
+# BEGIN TAJ_PICK_LIST_RECEIVING_V03
+# Additive Pick List QR button; preserves all pre-existing hooks.
+_taj_receiving_js = "public/js/pick_list_receiving_qr.js"
+_taj_receiving_existing = doctype_js.get("Pick List")
+if isinstance(_taj_receiving_existing, list):
+    if _taj_receiving_js not in _taj_receiving_existing:
+        _taj_receiving_existing.append(_taj_receiving_js)
+elif isinstance(_taj_receiving_existing, str):
+    if _taj_receiving_existing != _taj_receiving_js:
+        doctype_js["Pick List"] = [_taj_receiving_existing, _taj_receiving_js]
+else:
+    doctype_js["Pick List"] = _taj_receiving_js
+# END TAJ_PICK_LIST_RECEIVING_V03
