@@ -16,7 +16,8 @@ DAILY_VALUES = {
     "carbohydrates_g": Decimal("260"),
     "dietary_fiber_g": Decimal("28"),
     "protein_g": Decimal("50"),
-    # Screenshot intentionally leaves total/added sugar % blank.
+    "added_sugars_g": Decimal("50"),
+    # Total sugars have no daily-value percentage; added sugars do.
 }
 
 NUTRIENTS = (

@@ -9,18 +9,20 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from taj_core.qc.finished_product_label_math import DAILY_VALUES
 
+# One reference table for all daily-value percentages.
 NUTRIENTS = (
-    ("total_fat_g", "Total Fat", "g", "65"),
-    ("saturated_fat_g", "Saturated Fat", "g", "20"),
+    ("total_fat_g", "Total Fat", "g", DAILY_VALUES["total_fat_g"]),
+    ("saturated_fat_g", "Saturated Fat", "g", DAILY_VALUES["saturated_fat_g"]),
     ("trans_fat_g", "Trans Fat", "g", None),
-    ("sodium_mg", "Sodium", "mg", "2400"),
-    ("cholesterol_mg", "Cholesterol", "mg", "300"),
-    ("carbohydrates_g", "Total Carbohydrates", "g", "300"),
-    ("dietary_fiber_g", "Dietary Fiber", "g", "25"),
+    ("sodium_mg", "Sodium", "mg", DAILY_VALUES["sodium_mg"]),
+    ("cholesterol_mg", "Cholesterol", "mg", DAILY_VALUES["cholesterol_mg"]),
+    ("carbohydrates_g", "Total Carbohydrates", "g", DAILY_VALUES["carbohydrates_g"]),
+    ("dietary_fiber_g", "Dietary Fiber", "g", DAILY_VALUES["dietary_fiber_g"]),
     ("total_sugars_g", "Total Sugars", "g", None),
-    ("added_sugars_g", "Added Sugars", "g", None),
-    ("protein_g", "Protein", "g", "50"),
+    ("added_sugars_g", "Added Sugars", "g", DAILY_VALUES["added_sugars_g"]),
+    ("protein_g", "Protein", "g", DAILY_VALUES["protein_g"]),
 )
 KEYS = ("calories_kcal",) + tuple(r[0] for r in NUTRIENTS)
 UNIT_TO_G = {
